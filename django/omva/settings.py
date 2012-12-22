@@ -1,5 +1,6 @@
 import os
 import sys
+from netkes import common
 
 PROJECT_DIR = os.path.abspath(os.path.dirname(__file__))
 
@@ -13,6 +14,9 @@ ADMINS = ()
 
 MANAGERS = ADMINS
 
+common.set_config(common.read_config_file())
+config = common.get_config()
+
 DATABASE_ENGINE = 'postgresql_psycopg2'           # 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
 DATABASE_NAME = 'openmanage'             # Or path to database file if using sqlite3.
 DATABASE_USER = 'admin_console'             # Not used with sqlite3.
@@ -20,17 +24,7 @@ DATABASE_PASSWORD = 'iexyjtso'        # Not used with sqlite3.
 DATABASE_HOST = 'localhost'
 DATABASE_PORT = ''
 
-#DATABASES = {
-#    'default': {
-#        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-#        'NAME': 'openmanage',
-#        'USER': 'admin_console',
-#        'PASSWORD': 'iexyjtso',
-#        'HOST': 'localhost',
-#    }
-#}
-
-ACCOUNT_API_URL = "https://spideroak.com/apis/accounts/v1/"
+ACCOUNT_API_URL = config['api_root']
 
 EMAIL_HOST = 'localhost'
 EMAIL_PORT = 25
