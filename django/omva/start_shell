@@ -1,0 +1,24 @@
+#!/bin/bash 
+
+export PANDORA_DATABASE_HOST=localhost
+export SPIDEROAK_NODE_NAME=localhost
+export SPIDEROAK_DATA_CENTER_NAME=local
+export SPIDEROAK_CLUSTER_NAME=localcluster
+export PANDORA_REPOSITORY_PATH=/var/pandora/storage
+export PANDORA_SERVER_CACHE_PATH=/var/pandora/cache
+export NUS_SINGLE_SERVER=1
+export SPIDEROAK_SHARE_OBJECT_SERVER_HOST=127.0.0.1
+export SPIDEROAK_SHARE_OBJECT_SERVER_PORT=4888
+export CC_BILLING_BIN=`pwd`/billing_system
+#export DISABLE_FILEDUMP_ACCEL=1
+
+. /opt/so/bin/env.sh
+~/Work/bin/start_postgresql
+
+function finish {
+    ../bin/stop_postgresql
+}
+
+trap "finish" INT
+
+PYTHONPATH=.:..:../.. python manage.py runserver 8081

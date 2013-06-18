@@ -1,0 +1,14 @@
+#!/bin/bash
+
+. /etc/default/openmanage
+
+NETKES_APP=netkes_agent.app_factory:app_factory
+PID=/var/run/gunicorn.pid
+
+CONF=$OPENMANAGE_ROOT/netkes/netkes_agent/gunicorn.conf.py
+SOCK=unix:$OPENMANAGE_DATA/net_kes.sock
+
+if [ -f $PID ]; then rm $PID; fi
+
+cd $OPENMANAGE_ROOT
+exec gunicorn -c $CONF -b $SOCK --pid=$PID $NETKES_APP 2>&1

@@ -1,0 +1,7 @@
+openmanage /opt
+server.crt /var/lib/openmanage/server.crt
+server.csr /var/lib/openmanage/server.csr
+server.key /var/lib/openmanage/server.key
+server.key.secure /var/lib/openmanage/server.key.secure
+motd.tail /etc/motd.tail
+nginx-default /etc/nginx/sites-available/default

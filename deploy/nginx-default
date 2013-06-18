@@ -1,0 +1,51 @@
+# You may add here your
+# server {
+#	...
+# }
+# statements for each of your virtual hosts
+
+upstream c_netkes_agent {
+    server unix:/var/lib/openmanage/net_kes.sock;
+}
+
+upstream c_admin_console {
+    server unix:/var/lib/openmanage/admin_console.sock;
+}
+
+# HTTPS server
+#
+server {
+    listen   443;
+
+    ssl  on;
+    ssl_certificate  /var/lib/openmanage/server.crt;
+    ssl_certificate_key  /var/lib/openmanage/server.key;
+    
+    ssl_session_timeout  5m;
+    
+    ssl_protocols  TLSv1;
+    ssl_ciphers  RC4-SHA:HIGH:!ADH:!MD5;
+    ssl_prefer_server_ciphers   on;
+    
+    location / {
+        try_files $uri $uri/ @console;
+    }
+
+    # Configuration to take us to the netkes_agent.
+    location ~ ^(\/auth|\/layers|\/data) {
+        proxy_pass http://c_netkes_agent;
+        proxy_read_timeout 900;
+        proxy_intercept_errors off;
+    }
+
+    # Configuration to hit the management console.
+    location /static {
+        root /opt/openmanage/django;
+    }
+
+    location @console {
+        proxy_pass http://c_admin_console;
+        proxy_read_timeout 900;
+        proxy_intercept_errors off;
+    }
+}

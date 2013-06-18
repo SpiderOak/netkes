@@ -1,0 +1,11 @@
+.ropeproject
+*~
+semantic.cache
+*.pyc
+*.pyo
+deploy/openmanage*
+docs/_build*
+*.key*
+*.crt*
+*.csr*
+*.tar.bz2

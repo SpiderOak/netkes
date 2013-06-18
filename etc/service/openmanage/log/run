@@ -1,0 +1,9 @@
+#!/bin/bash
+
+. /etc/default/openmanage
+
+LOGDIR=$OPENMANAGE_LOGS/netkes
+
+[ -d $LOGDIR ] || mkdir -p $LOGDIR
+
+exec svlogd -ttt $LOGDIR
