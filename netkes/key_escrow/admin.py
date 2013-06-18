@@ -9,7 +9,6 @@ import time
 import shutil
 
 from key_escrow.gen import make_keypair
-from key_escrow.write import escrow_binary
 
 from Pandora.serial import load, dump, register_all
 
@@ -110,57 +109,9 @@ def setup_brand(brand_identifier):
 
     return brand_id, brand_identifier, layers
 
-def test_base():
-    "test creating and reading base cfg and key"
-    create_base()
-    base_id, keypair = get_base()
-    assert keypair.__class__.__name__ == "RSAobj"
-    print "test base ok"
-    return True
-
-def test_setup_brand():
-    from key_escrow.server import read_escrow_data
-    brand_identifier = 'my_test_brand'
-    brand_id, _brand_keypair, layers = setup_brand(brand_identifier)
-
-    assert brand_id == layers[0][0]
-
-    _user_key_id, user_keypair = make_keypair()
-    test_data = "0123456789"
-    escrowed_data = escrow_binary(layers, test_data, user_keypair)
-    plain_escrowed_data = read_escrow_data(brand_identifier, escrowed_data, 
-        sign_key=user_keypair.publickey())
-    assert plain_escrowed_data == test_data
-
-    print "setup brand test ok"
-    return True
-
-def test_all():
-    "run all tests"
-    global _ESCROW_KEYS_PATH 
-    global _ESCROW_LAYERS_PATH
-    test_dir = "/tmp/key_escrow_admin_test.%s" % ( time.time(), )
-    try:
-        _ESCROW_KEYS_PATH = os.path.join(test_dir, "keys")
-        _ESCROW_LAYERS_PATH = os.path.join(test_dir, "layers")
-        os.environ["SPIDEROAK_ESCROW_LAYERS_PATH"] = _ESCROW_LAYERS_PATH
-        os.environ["SPIDEROAK_ESCROW_KEYS_PATH"] = _ESCROW_KEYS_PATH
-        os.makedirs(_ESCROW_KEYS_PATH)
-        os.makedirs(_ESCROW_LAYERS_PATH)
-        test_results = []
-        test_results.append(test_base())
-        test_results.append(test_setup_brand())
-        assert all(test_results)
-    finally:
-        shutil.rmtree(test_dir)
-
 def run_as_utility():
     register_all()
     import sys
-    if "testall" in sys.argv:
-        test_all()
-        return
-
     if "create_base" in sys.argv:
         create_base()
     elif "setup_brand" in sys.argv:
@@ -173,32 +124,3 @@ def run_as_utility():
 
 if __name__ == "__main__":
     run_as_utility()
-
-#def setup_escrow_agent(agent_name):
-#    """
-#    """
-#    pass
-#
-#
-#def setup_brand(brand_identifier, agent_name=None):
-#    """
-#    """
-#    pass
-#
-#
-#def get_agent(agent_name):
-#    "return (ID, keypair,) for specified agent layer escrow"
-#
-#    agent_cfg = "agent.%s.cfg" % (agent_name, )
-#    agent_key_id = read_config(agent_cfg)
-#    keypair = load_key(agent_key_id)
-#
-#    return agent_key_id, keypair
-#    
-#
-#
-#
-#
-#
-#
-#

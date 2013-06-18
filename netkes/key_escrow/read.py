@@ -64,8 +64,7 @@ def read_escrow_layer(escrow_keys, layer_data, sign_key=None):
 
 
     if not len(aes_key) == AES_KEY_SIZE:
-        raise ValueError("aes_key wrongsized %d" %
-            (len(aes_key), ))
+        aes_key = sha256(aes_key).digest()
     if not len(payload_data['aes_iv']) == AES_NONCE_SIZE:
         raise ValueError("aes_iv wrongsized")
 
