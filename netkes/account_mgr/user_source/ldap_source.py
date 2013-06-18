@@ -52,6 +52,37 @@ class OMLDAPConnection(object):
         self.base_dn = base_dn
 
 
+def get_auth_username(config, username):
+    """
+    Returns the appropriate username to authenticate against.
+
+    Will return either the `username` argument or a username gotten from the LDAP. 
+    """
+    # If we have no configuration telling us to lookup a different username, 
+    # just return here.
+    log = logging.getLogger("get_auth_username")
+    if config.get('dir_auth_username', None) is None:
+        log.info("Not configured for dynamic username lookup")
+        return username
+
+    my_ldap = OMLDAPConnection(config['dir_uri'], config['dir_base_dn'],
+                               config['dir_user'], config['dir_password'])
+    results = my_ldap.conn.search_s(my_ldap.base_dn,
+                                    filterstr = '(%s=%s)' % \
+                                         (config['dir_username_source'], username,),
+                                    scope = ldap.SCOPE_SUBTREE,
+                                    attrlist = [config['dir_auth_username'],])
+
+    if len(results) < 1:
+        raise Exception("No LDAP user found for username %s" % (username,))
+
+    # Multiple entries (all blank) are common coming from MSAD.
+    for dn, result_dict in results:
+        if dn is None:
+            continue
+        return result_dict[config['dir_auth_username']][0]
+
+
 def can_auth(config, username, password):
     '''
     Checks the ability of the given username and password to connect to the AD.
@@ -64,7 +95,8 @@ def can_auth(config, username, password):
 
     conn = ldap.initialize(config['dir_uri'])
     try:
-        conn.simple_bind_s(username, password)
+        auth_user = get_auth_username(config, username)
+        conn.simple_bind_s(auth_user, password)
     # ANY failure here results in a failure to auth.  No exceptions!
     except Exception:
         log.exception("Failed on LDAP bind")
