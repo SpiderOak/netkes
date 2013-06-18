@@ -156,16 +156,50 @@ def _PagedAsyncSearch(ldap_conn, query, sizelimit, attrlist=None):
     return users
 
 
+def _create_attrlist(config):
+    """
+    Creates an LDAP search attribute list based on our configuration.
+    """
+
+    attrlist = [config['dir_guid_source'].encode('utf-8'),
+                config['dir_username_source'].encode('utf-8'),
+                config['dir_fname_source'].encode('utf-8'),
+                config['dir_lname_source'].encode('utf-8'),
+                ]
+
+    if 'dir_email_source' in config:
+        attrlist.append(config['dir_email_source'].encode('utf-8'))
+
+    return attrlist
+
+def _build_user_dict(config, guid, result_dict, group_id):
+    """
+    Creates a dictionary to append to the user results list, with arrangement based on
+    configuration.
+    """
+
+    user = {
+        'uniqueid'  : guid,
+        'firstname' : result_dict[config['dir_fname_source']][0],
+        'lastname'  : result_dict[config['dir_lname_source']][0],
+        'group_id'  : group_id,
+    }
+
+    if 'dir_email_source' in config:
+        user['email'] = result_dict[config['dir_email_source']][0]
+        user['username'] = result_dict[config['dir_username_source']][0]
+    else:
+        user['email'] = result_dict[config['dir_username_source']][0]
+
+    return user
+
 def _get_group_ad(ldap_conn, config, group, dn):
     log = logging.getLogger('_get_group_ad %s' % (dn,))
     user_list = []
     for dn, result_dict in _PagedAsyncSearch(ldap_conn,
                                              query="(memberOf=%s)" % group['ldap_id'].encode('utf-8'),
                                              sizelimit=200000,
-                                             attrlist=[config['dir_guid_source'].encode('utf-8'),
-                                                       config['dir_username_source'].encode('utf-8'),
-                                                       config['dir_fname_source'].encode('utf-8'),
-                                                       config['dir_lname_source'].encode('utf-8')]):
+                                             attrlist=_create_attrlist(config)):
         if dn is None:
             continue
         log.debug("Appending user %s", result_dict[config['dir_username_source']][0])
@@ -179,13 +213,9 @@ def _get_group_ad(ldap_conn, config, group, dn):
         else:
             guid = result_dict[config['dir_guid_source']][0]
 
-        user_list.append({
-            'uniqueid'  : guid,
-            'email'     : result_dict[config['dir_username_source']][0],
-            'firstname' : result_dict[config['dir_fname_source']][0],
-            'lastname'  : result_dict[config['dir_lname_source']][0],
-            'group_id'  : group['group_id'],
-        })
+        user = _build_user_dict(config, guid, result_dict, group['group_id'])
+        user_list.append(user)
+
     return user_list
 
 
@@ -212,21 +242,18 @@ def _get_group_posix(ldap_conn, config, group, dn):
             for dn, user_dict in ldap_conn.conn.search_s(
                 ldap_conn.base_dn,
                 ldap.SCOPE_SUBTREE, uid,
-                [config['dir_guid_source'],
-                 config['dir_fname_source'],
-                 config['dir_lname_source'],
-                 config['dir_username_source']]
+                _create_attrlist(config)
             ):
                 if dn is None:
                     continue
                 log.debug("Appending user %s", user)
-                user_list.append({
-                    'uniqueid'  : user_dict[config['dir_guid_source']][0],
-                    'email'     : user_dict[config['dir_username_source']][0],
-                    'firstname' : user_dict[config['dir_fname_source']][0],
-                    'lastname'  : user_dict[config['dir_lname_source']][0],
-                    'group_id'  : group['group_id'],
-                })
+
+                user = _build_user_dict(
+                    config,
+                    user_dict[config['dir_guid_source']][0],
+                    user_dict,
+                    group['group_id'])
+                user_list.append(user)
 
     return user_list
 
