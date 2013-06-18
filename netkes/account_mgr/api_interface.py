@@ -77,6 +77,27 @@ def _run_api_call(action, data=None):
     return retr_data
 
 
+def _make_new_user_data(user):
+    '''
+    Creates the new user data dict used in create_user().
+    Understands the difference between having a username field versus not.
+    '''
+    user_data = {
+        "action"    : "create_user",
+        "firstname" : user['firstname'],
+        "lastname"  : user['lastname'],
+        "group_id"  : user['group_id'],
+        "email"     : user['email'],
+        }
+
+    if 'username' in user:
+        user_data['username'] = user['username']
+    else:
+        user_data['auto_username_seq'] = True
+
+    return user_data
+
+
 def create_user(user, promo_code=None):
     '''
     Uses the SpiderOak new user API to create a new user. 
@@ -84,13 +105,8 @@ def create_user(user, promo_code=None):
     Raises ManipulateUserFailed on failure.
     '''
     
-    new_user_data = {"action": "create_user",
-                     "auto_username_seq": True,
-                     "firstname": user['firstname'],
-                     "lastname": user['lastname'],
-                     "email": user['email'],
-                     "group_id": user['group_id'],
-                     }
+    new_user_data = _make_new_user_data(user)
+
     if promo_code is not None:
         new_user_data["promo"] = promo_code
 
