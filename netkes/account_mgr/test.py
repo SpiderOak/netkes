@@ -16,3 +16,5 @@ api = Api.create(
     'remote_test_admin',
     'w0mbat',
 )
+from accounts_api import Api
+api = Api.create('https://spideroak.com/apis/accounts/v1/', username, password,)
