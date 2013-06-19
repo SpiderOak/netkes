@@ -6,6 +6,7 @@ Init and common functions for the OpenManage user management system.
 (c) 2011 SpiderOak, Inc.
 '''
 
+import os
 import logging
 import psycopg2
 from accounts_api import Api
@@ -40,7 +41,7 @@ def get_cursor(config):
         conn.commit()
 
 def get_api(config):
-    return Api.create('https://spideroak.com/apis/accounts/v1/', 
+    return Api.create(os.getenv('ACCOUNT_API_URL', 'https://spideroak.com/apis/accounts/v1/'), 
                       config['api_user'], 
                       config['api_password'],)
 
