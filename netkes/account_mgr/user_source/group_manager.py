@@ -163,10 +163,7 @@ def run_db_repair(config, db_conn):
     
     # Collect the users from the SpiderOak Accounts API, and insert into
     # a temporary table.
-<<<<<<< HEAD
     log.info("Collecting SpiderOak user details")
-    spider_users = api_interface.fetch_users()
-=======
 
     api = account_mgr.get_api(config)
 
@@ -179,7 +176,6 @@ def run_db_repair(config, db_conn):
         spider_user['firstname'] = first_name
         spider_user['lastname'] = last_name
 
->>>>>>> master
     cur = db_conn.cursor()
     cur.execute("CREATE TEMPORARY TABLE spider_users (LIKE users) ON COMMIT DROP;")
     cur.execute("ALTER TABLE spider_users DROP COLUMN uniqueid;")
