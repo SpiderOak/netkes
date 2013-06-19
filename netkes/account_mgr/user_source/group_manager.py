@@ -11,9 +11,10 @@ SpiderOak fit the LDAP groups.
 import logging
 import psycopg2
 
-from account_mgr import api_interface
+import account_mgr
 from account_mgr.user_source import ldap_source
 from account_mgr import account_runner
+from common import get_config
 
 _USERS_TO_CREATE_QUERY = '''
 SELECT
@@ -25,7 +26,7 @@ WHERE u.uniqueid IS NULL;
 
 _USERS_TO_ENABLE_QUERY = '''
 SELECT
-l.uniqueid, u.avatar_id
+l.uniqueid, u.avatar_id, l.email
 FROM ldap_users l
 LEFT OUTER JOIN users u ON l.uniqueid = u.uniqueid
 WHERE u.enabled IS FALSE;
@@ -33,7 +34,7 @@ WHERE u.enabled IS FALSE;
 
 _USERS_TO_DISABLE_QUERY = '''
 SELECT
-u.uniqueid, u.avatar_id
+u.uniqueid, u.avatar_id, l.email
 FROM users u
 LEFT OUTER JOIN ldap_users l ON u.uniqueid = l.uniqueid
 WHERE l.uniqueid IS NULL AND u.enabled IS TRUE;
@@ -41,7 +42,7 @@ WHERE l.uniqueid IS NULL AND u.enabled IS TRUE;
 
 _USERS_TO_PLANCHANGE_QUERY = '''
 SELECT
-l.uniqueid, u.avatar_id, l.group_id
+l.uniqueid, u.avatar_id, l.email, l.group_id
 FROM ldap_users l
 LEFT OUTER JOIN users u ON l.uniqueid = u.uniqueid
 WHERE l.group_id != u.group_id;
@@ -49,7 +50,7 @@ WHERE l.group_id != u.group_id;
 
 _USERS_TO_EMAILCHANGE_QUERY = '''
 SELECT
-l.uniqueid, u.avatar_id, l.email
+l.uniqueid, u.avatar_id, l.email, u.email
 FROM ldap_users l
 LEFT OUTER JOIN users u ON l.uniqueid = u.uniqueid
 WHERE l.email != u.email;
@@ -106,16 +107,16 @@ def _calculate_changes_against_db(db_conn, users):
                                             'lastname', 'group_id'])
     log.debug('Enabling users:')
     api_actions['enable'] = _process_query(db_conn, _USERS_TO_ENABLE_QUERY,
-                                           ['avatar_id'])
+                                           ['avatar_id', 'email'])
     log.debug('Disabling users:')
     api_actions['disable'] = _process_query(db_conn, _USERS_TO_DISABLE_QUERY,
-                                            ['avatar_id'])
+                                            ['avatar_id', 'email'])
     log.debug('Group change:')
     api_actions['group'] = _process_query(db_conn, _USERS_TO_PLANCHANGE_QUERY,
-                                         ['avatar_id', 'group_id'])
+                                         ['avatar_id', 'email', 'group_id'])
     log.debug('Email change:')
     api_actions['email'] = _process_query(db_conn, _USERS_TO_EMAILCHANGE_QUERY,
-                                          ['avatar_id', 'email'])
+                                          ['avatar_id', 'email', 'orig_email'])
 
     return api_actions
 
@@ -160,10 +161,25 @@ def run_db_repair(config, db_conn):
     cur.executemany("INSERT INTO ldap_users (uniqueid, email, givenname, surname, group_id) VALUES (%(uniqueid)s, %(email)s, %(firstname)s, %(lastname)s, %(group_id)s);",
                     ldap_users)
     
-    # Collect the users from the SpiderOak BillingAPI, and insert into
+    # Collect the users from the SpiderOak Accounts API, and insert into
     # a temporary table.
+<<<<<<< HEAD
     log.info("Collecting SpiderOak user details")
     spider_users = api_interface.fetch_users()
+=======
+
+    api = account_mgr.get_api(config)
+
+    spider_users = api.list_users()
+    
+    for spider_user in spider_users:
+        first_name, sep, last_name = spider_user['name'].strip().partition(' ')
+        if not last_name: 
+            last_name = ' '
+        spider_user['firstname'] = first_name
+        spider_user['lastname'] = last_name
+
+>>>>>>> master
     cur = db_conn.cursor()
     cur.execute("CREATE TEMPORARY TABLE spider_users (LIKE users) ON COMMIT DROP;")
     cur.execute("ALTER TABLE spider_users DROP COLUMN uniqueid;")

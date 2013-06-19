@@ -180,6 +180,7 @@ class Api(object):
                 if 'email' in data['conflicts']:
                     raise self.DuplicateEmail()
                 elif 'plan_id' in data['conflicts']:
+                    print 'data', data
                     raise self.BadPlan()
                 elif 'group_id' in data['conflicts']:
                     raise self.BadGroup()

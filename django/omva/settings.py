@@ -6,12 +6,10 @@ PROJECT_DIR = os.path.abspath(os.path.dirname(__file__))
 sys.path += [os.path.join(PROJECT_DIR, '../apps')]
 sys.path += ['/opt/openmanage/django/apps']
 
-DEBUG = True
-LOCAL_DEV = os.name == 'nt'
+DEBUG = False
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = ()
-    # ('Your Name', 'your_email@domain.com'),
 
 MANAGERS = ADMINS
 
@@ -21,6 +19,16 @@ DATABASE_USER = 'admin_console'             # Not used with sqlite3.
 DATABASE_PASSWORD = 'iexyjtso'        # Not used with sqlite3.
 DATABASE_HOST = 'localhost'
 DATABASE_PORT = ''
+
+#DATABASES = {
+#    'default': {
+#        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+#        'NAME': 'openmanage',
+#        'USER': 'admin_console',
+#        'PASSWORD': 'iexyjtso',
+#        'HOST': 'localhost',
+#    }
+#}
 
 ACCOUNT_API_URL = "https://spideroak.com/apis/accounts/v1/"
 
@@ -87,7 +95,7 @@ TEMPLATE_DIRS = (
 )
 
 TEMPLATE_CONTEXT_PROCESSORS = (
-    'django.core.context_processors.auth',
+    'django.contrib.auth.context_processors.auth',
     'django.core.context_processors.debug',
     'django.core.context_processors.i18n',
     'django.core.context_processors.media',
@@ -105,5 +113,59 @@ INSTALLED_APPS = (
 )
 
 AUTHENTICATION_BACKENDS = (
-    'spideroak.auth.backend.PartnerTokenBackend',
+    'blue_mgnt.views.views.LdapBackend',
 )
+
+LOG_DIR = '/var/log/admin_console/'
+ADMIN_ACTIONS_LOG_FILENAME = os.getenv('ADMIN_ACTIONS_LOG_FILE', 'admin_actions.log')
+
+if not os.path.exists(LOG_DIR):
+    os.makedirs(LOG_DIR)
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': True,
+    'formatters': {
+        'verbose': {
+            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
+        },
+        'simple': {
+            'format': '%(levelname)s %(message)s'
+        },
+        'admin_actions': {
+            'format': '%(asctime)s-%(levelname)s-%(message)s'
+        },
+    },
+    'handlers': {
+        'console':{
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple'
+        },
+        'files':{
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'simple',
+            'filename': os.path.join(LOG_DIR, 'admin_console.log')
+        },
+        'admin_actions_files':{
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'admin_actions',
+            'filename': os.path.join(LOG_DIR, ADMIN_ACTIONS_LOG_FILENAME)
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'files'],
+            'propagate': True,
+            'level': 'INFO',
+        },
+        'admin_actions': {
+            'handlers': ['console', 'admin_actions_files'],
+            'propagate': True,
+            'level': 'DEBUG',
+        },
+    }
+}
+
