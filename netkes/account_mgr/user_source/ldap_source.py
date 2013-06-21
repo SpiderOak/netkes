@@ -111,12 +111,13 @@ def group_by_guid(conn, guid):
     return results
 
 
-def _PagedAsyncSearch(ldap_conn, query, sizelimit, attrlist=None):
+def _PagedAsyncSearch(ldap_conn, sizelimit, base_dn, scope, filterstr='(objectClass=*)', attrlist=None):
     """ Helper function that implements a paged LDAP search for
     the Search method below.
     Args:
-    query: LDAP filter to apply to the search
+    ldap_conn: our OMLdapConnection object
     sizelimit: max # of users to return.
+    filterstr: LDAP filter to apply to the search
     attrlist: list of attributes to return.  If null, all attributes
         are returned
     Returns:
@@ -125,7 +126,7 @@ def _PagedAsyncSearch(ldap_conn, query, sizelimit, attrlist=None):
 
     paged_results_control = SimplePagedResultsControl(
         ldap.LDAP_CONTROL_PAGE_OID, True, (_PAGE_SIZE, ''))
-    logging.debug('Paged search on %s for %s', ldap_conn.base_dn, query)
+    logging.debug('Paged search on %s for %s', base_dn, filterstr)
     users = []
     ix = 0
     while True: 
@@ -133,8 +134,8 @@ def _PagedAsyncSearch(ldap_conn, query, sizelimit, attrlist=None):
             serverctrls = []
         else:
             serverctrls = [paged_results_control]
-        msgid = ldap_conn.conn.search_ext(ldap_conn.base_dn, ldap.SCOPE_SUBTREE, 
-                                     query, attrlist=attrlist, serverctrls=serverctrls)
+        msgid = ldap_conn.conn.search_ext(base_dn, scope, 
+                                     filterstr, attrlist=attrlist, serverctrls=serverctrls)
         res = ldap_conn.conn.result3(msgid=msgid)
         unused_code, results, unused_msgid, serverctrls = res
         for result in results:
@@ -155,11 +156,43 @@ def _PagedAsyncSearch(ldap_conn, query, sizelimit, attrlist=None):
             break
     return users
 
+def _build_user_details(ldap_conn, config, group, uid):
+    log = logging.getLogger('_build_user_details')
+    user = ldap_conn.conn.search_s(
+            uid,
+            ldap.SCOPE_BASE,
+            attrlist = [config['dir_guid_source'],
+                        config['dir_fname_source'],
+                        config['dir_lname_source'],
+                        config['dir_username_source']])
 
-def _get_group_ad(ldap_conn, config, group, dn):
+    dn, user_dict = user[0]
+
+    if dn is None:
+        return None
+    log.debug("Appending user %s", user)
+
+    # Detect if we're using objectGUIDs, and use the uuid module to auto-translate
+    # into a string.
+    if config['dir_guid_source'] == 'objectGUID':
+        guid = str(
+            uuid.UUID(bytes_le=user_dict['objectGUID'][0])
+        )
+    else:
+        guid = user_dict[config['dir_guid_source']][0]
+
+    return {
+        'uniqueid'  : guid,
+        'email'     : user_dict[config['dir_username_source']][0],
+        'firstname' : user_dict[config['dir_fname_source']][0],
+        'lastname'  : user_dict[config['dir_lname_source']][0],
+        'group_id'  : group['group_id'],
+    }
+
+def _get_group_ou(ldap_conn, config, group, dn):
     log = logging.getLogger('_get_group_ad %s' % (dn,))
     user_list = []
-    for dn, result_dict in _PagedAsyncSearch(ldap_conn,
+    for dn, result_dict in _PagedAsyncSearch(ldap_conn, 
                                              query="(memberOf=%s)" % group['ldap_id'].encode('utf-8'),
                                              sizelimit=200000,
                                              attrlist=[config['dir_guid_source'].encode('utf-8'),
@@ -193,10 +226,10 @@ def _get_group_group(ldap_conn, config, group):
     log = logging.getLogger('_get_group_group %s' % (group['ldap_id'],))
     user_list = []
     for dn, result_dict in _PagedAsyncSearch(ldap_conn,
-                                             query=group['ldap_id'],
                                              sizelimit=200000,
-                                             attrlist=[config['dir_guid_source'],
-                                                       config['dir_member_source']]):
+                                             base_dn=group['ldap_id'],
+                                             scope=ldap.SCOPE_BASE,
+                                             attrlist=[config['dir_member_source']]):
         print dn, result_dict
         if dn is None:
             continue
@@ -204,29 +237,18 @@ def _get_group_group(ldap_conn, config, group):
         for user in result_dict[config['dir_member_source']]:
             log.debug("Found user %s", user)
             
-            # Split apart the uid from the rest of the member_source 
-            regex_result = re.search(r'^(uid=\w+),', user)
-            uid = regex_result.group(1)
+            if config['dir_type'] == 'posix':
+                # Split apart the uid from the rest of the member_source 
+                regex_result = re.search(r'^(uid=\w+),', user)
+                uid = regex_result.group(1)
+            else:
+                uid = uid
+
+            user_details = _build_user_details(ldap_conn, config, group, uid)
 
             # Add each user that matches
-            for dn, user_dict in ldap_conn.conn.search_s(
-                ldap_conn.base_dn,
-                ldap.SCOPE_SUBTREE, uid,
-                [config['dir_guid_source'],
-                 config['dir_fname_source'],
-                 config['dir_lname_source'],
-                 config['dir_username_source']]
-            ):
-                if dn is None:
-                    continue
-                log.debug("Appending user %s", user)
-                user_list.append({
-                    'uniqueid'  : user_dict[config['dir_guid_source']][0],
-                    'email'     : user_dict[config['dir_username_source']][0],
-                    'firstname' : user_dict[config['dir_fname_source']][0],
-                    'lastname'  : user_dict[config['dir_lname_source']][0],
-                    'group_id'  : group['group_id'],
-                })
+            if user_details is not None:
+                user_list.append(user_details)
 
     return user_list
 
