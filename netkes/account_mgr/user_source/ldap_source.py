@@ -8,22 +8,17 @@ Function _PagedAsyncSearch() contains code as part of the
 google-apps-for-your-domain-ldap-sync project
 (https://code.google.com/p/google-apps-for-your-domain-ldap-sync/).
 That code (c) 2006 Google, Inc.
-
-For hacks to make this compatible with both python-ldap < 2.4 and >= 2.4,
-please see our inspiration here:
-http://planet.ergo-project.org/blog/jmeeuwen/2011/04/11/python-ldap-module-24-changes
 '''
 
 import ldap
 import logging
 import re
 import uuid
-from distutils import version
 
-if version.StrictVersion('2.4.0') <= version.StrictVersion(ldap.__version__):
-    LDAP_CONTROL_PAGED_RESULTS = ldap.CONTROL_PAGEDRESULTS
-else:
-    LDAP_CONTROL_PAGED_RESULTS = ldap.LDAP_CONTROL_PAGE_OID
+try:
+    from ldap.controls import SimplePagedResultsControl
+except ImportError:
+    print "Client LDAP does not support paged results"
 
 # MS ActiveDirectory does not properly give redirections; it passes
 # redirects to the LDAP library, which dutifully follows them, but
@@ -78,41 +73,6 @@ def can_auth(config, username, password):
     return True
 
 
-class SimplePagedResultsControl(ldap.controls.SimplePagedResultsControl):
-    """
-
-        Python LDAP 2.4 and later breaks the API. This is an abstraction class
-        so that we can handle either.
-    """
-
-    def __init__(self, page_size=0, cookie=''):
-        if version.StrictVersion('2.4.0') <= version.StrictVersion(ldap.__version__):
-            ldap.controls.SimplePagedResultsControl.__init__(
-                    self,
-                    size=page_size,
-                    cookie=cookie
-                )
-        else:
-            ldap.controls.SimplePagedResultsControl.__init__(
-                    self,
-                    LDAP_CONTROL_PAGED_RESULTS,
-                    True,
-                    (page_size, '')
-                )
-
-    def cookie(self):
-        if version.StrictVersion('2.4.0') <= version.StrictVersion(ldap.__version__):
-            return self.cookie
-        else:
-            return self.controlValue[1]
-
-    def size(self):
-        if version.StrictVersion('2.4.0') <= version.StrictVersion(ldap.__version__):
-            return self.size
-        else:
-            return self.controlValue[0]
-
-
 def ldap_connect(uri, base_dn, username, password):
     ''' 
     Returns a tuple of (bound LDAP connection object, base DN).
@@ -151,14 +111,11 @@ def group_by_guid(conn, guid):
     return results
 
 
-def _PagedAsyncSearch(ldap_conn, base_dn, scope, filterstr='(objectClass=*)', sizelimit=0, attrlist=None):
+def _PagedAsyncSearch(ldap_conn, query, sizelimit, attrlist=None):
     """ Helper function that implements a paged LDAP search for
     the Search method below.
     Args:
-    ldap_conn: our LDAP connection.
-    base_dn: the base DN to start searching at.
-    scope: LDAP scope to limit scope to.
-    filterstr: LDAP filter to apply to the search
+    query: LDAP filter to apply to the search
     sizelimit: max # of users to return.
     attrlist: list of attributes to return.  If null, all attributes
         are returned
@@ -166,8 +123,9 @@ def _PagedAsyncSearch(ldap_conn, base_dn, scope, filterstr='(objectClass=*)', si
       A list of users as returned by the LDAP search
     """
 
-    paged_results_control = SimplePagedResultsControl(page_size=_PAGE_SIZE)
-    logging.debug('Paged search on %s for %s', base_dn, filterstr)
+    paged_results_control = SimplePagedResultsControl(
+        ldap.LDAP_CONTROL_PAGE_OID, True, (_PAGE_SIZE, ''))
+    logging.debug('Paged search on %s for %s', ldap_conn.base_dn, query)
     users = []
     ix = 0
     while True: 
@@ -175,8 +133,8 @@ def _PagedAsyncSearch(ldap_conn, base_dn, scope, filterstr='(objectClass=*)', si
             serverctrls = []
         else:
             serverctrls = [paged_results_control]
-        msgid = ldap_conn.conn.search_ext(base_dn, scope, 
-                                     filterstr, attrlist=attrlist, serverctrls=serverctrls)
+        msgid = ldap_conn.conn.search_ext(ldap_conn.base_dn, ldap.SCOPE_SUBTREE, 
+                                     query, attrlist=attrlist, serverctrls=serverctrls)
         res = ldap_conn.conn.result3(msgid=msgid)
         unused_code, results, unused_msgid, serverctrls = res
         for result in results:
@@ -188,9 +146,8 @@ def _PagedAsyncSearch(ldap_conn, base_dn, scope, filterstr='(objectClass=*)', si
             break
         cookie = None 
         for serverctrl in serverctrls:
-            if serverctrl.controlType == LDAP_CONTROL_PAGED_RESULTS:
-                import pdb; pdb.set_trace()
-                cookie = serverctrl.cookie()
+            if serverctrl.controlType == ldap.LDAP_CONTROL_PAGE_OID:
+                unused_est, cookie = serverctrl.controlValue
                 if cookie:
                     paged_results_control.controlValue = (_PAGE_SIZE, cookie)
                 break
@@ -199,11 +156,11 @@ def _PagedAsyncSearch(ldap_conn, base_dn, scope, filterstr='(objectClass=*)', si
     return users
 
 
-def _get_group_ou(ldap_conn, config, group, dn):
+def _get_group_ad(ldap_conn, config, group, dn):
     log = logging.getLogger('_get_group_ad %s' % (dn,))
     user_list = []
-    for dn, result_dict in _PagedAsyncSearch(ldap_conn, ldap_conn.base_dn, ldap.SCOPE_SUBTREE,
-                                             filterstr="(memberOf=%s)" % group['ldap_id'].encode('utf-8'),
+    for dn, result_dict in _PagedAsyncSearch(ldap_conn,
+                                             query="(memberOf=%s)" % group['ldap_id'].encode('utf-8'),
                                              sizelimit=200000,
                                              attrlist=[config['dir_guid_source'].encode('utf-8'),
                                                        config['dir_username_source'].encode('utf-8'),
@@ -235,9 +192,11 @@ def _get_group_ou(ldap_conn, config, group, dn):
 def _get_group_group(ldap_conn, config, group):
     log = logging.getLogger('_get_group_group %s' % (group['ldap_id'],))
     user_list = []
-    for dn, result_dict in _PagedAsyncSearch(ldap_conn, group['ldap_id'], ldap.SCOPE_BASE,
+    for dn, result_dict in _PagedAsyncSearch(ldap_conn,
+                                             query=group['ldap_id'],
                                              sizelimit=200000,
-                                             attrlist=[config['dir_member_source'],]):
+                                             attrlist=[config['dir_guid_source'],
+                                                       config['dir_member_source']]):
         print dn, result_dict
         if dn is None:
             continue
@@ -245,10 +204,9 @@ def _get_group_group(ldap_conn, config, group):
         for user in result_dict[config['dir_member_source']]:
             log.debug("Found user %s", user)
             
-            if config['dir_type'] == 'posix':
-                # Split apart the uid from the rest of the member_source 
-                regex_result = re.search(r'^(uid=\w+),', user)
-                uid = regex_result.group(1)
+            # Split apart the uid from the rest of the member_source 
+            regex_result = re.search(r'^(uid=\w+),', user)
+            uid = regex_result.group(1)
 
             # Add each user that matches
             for dn, user_dict in ldap_conn.conn.search_s(
@@ -262,15 +220,8 @@ def _get_group_group(ldap_conn, config, group):
                 if dn is None:
                     continue
                 log.debug("Appending user %s", user)
-                if config['dir_guid_source'] == 'objectGUID':
-                    guid = str(
-                        uuid.UUID(bytes_le=result_dict['objectGUID'][0])
-                    )
-                else:
-                    guid = result_dict[config['dir_guid_source']][0]
-
                 user_list.append({
-                    'uniqueid'  : guid,
+                    'uniqueid'  : user_dict[config['dir_guid_source']][0],
                     'email'     : user_dict[config['dir_username_source']][0],
                     'firstname' : user_dict[config['dir_fname_source']][0],
                     'lastname'  : user_dict[config['dir_lname_source']][0],
