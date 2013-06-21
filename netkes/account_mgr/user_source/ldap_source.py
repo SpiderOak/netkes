@@ -189,8 +189,8 @@ def _get_group_ad(ldap_conn, config, group, dn):
     return user_list
 
 
-def _get_group_posix(ldap_conn, config, group, dn):
-    log = logging.getLogger('_get_group_posix %s' % (dn,))
+def _get_group_group(ldap_conn, config, group):
+    log = logging.getLogger('_get_group_group %s' % (group['ldap_id'],))
     user_list = []
     for dn, result_dict in _PagedAsyncSearch(ldap_conn,
                                              query=group['ldap_id'],
@@ -231,11 +231,30 @@ def _get_group_posix(ldap_conn, config, group, dn):
     return user_list
 
 _GROUP_GETTERS = {
-    'ad': _get_group_ad,
-    'posix': _get_group_posix,
+    'group': _get_group_group,
+    'ou': _get_group_ou,
 }
 
+def _determine_group_type(ldap_conn, group):
+    '''
+    Determines if the group we're dealing with is either an OU or an LDAP group.
+    '''
 
+    objClass = ldap_conn.conn.search_s(
+        group['ldap_id'],
+        ldap.SCOPE_BASE,
+        attrlist=['objectClass'])
+
+    print objClass
+
+    # The following are objectTypes for OUs.
+    if 'container' in objClass[0][1]['objectClass'] or \
+       'organizationalUnit' in objClass[0][1]['objectClass']:
+        return 'ou'
+    else:
+        return 'group'
+
+            
 def get_group(ldap_conn, config, group):
     '''
     Returns a list of user dicts for the specified group.
@@ -245,18 +264,11 @@ def get_group(ldap_conn, config, group):
     # TODO: figure out how to smoothly handle using GUIDs in configuration.
     #       AD stores GUIDs as a very unfriendly 16-byte value.
     log = logging.getLogger("get_group %d" % (group['group_id'],))
-    if group['type'].lower() != "dn":
-        raise InvalidGroupConfiguration("passed a group value != 'dn'")
-    dn = group['ldap_id']
 
-    try:
-        group_getter = _GROUP_GETTERS[config.get('dir_type', 'ad').lower()]
-    except KeyError:
-        raise InvalidGroupConfiguration(
-            "unknown dir_type %r" % (config['dir_type'],))
-
-    log.debug("Group DN: %s", dn)
-    user_list = group_getter(ldap_conn, config, group, dn)
+    group_getter = _GROUP_GETTERS[_determine_group_type(ldap_conn, group)]
+    
+    log.debug("Group DN: %s", group['ldap_id'])
+    user_list = group_getter(ldap_conn, config, group)
     log.info("Found %d users", len(user_list))
 
     return user_list
