@@ -73,17 +73,6 @@ def can_auth(config, username, password):
     return True
 
 
-def ldap_connect(uri, base_dn, username, password):
-    ''' 
-    Returns a tuple of (bound LDAP connection object, base DN).
-    Accepts a directory containing our connection settings.
-    '''
-    log = logging.getLogger('ldap_connect')
-    conn = ldap.initialize(uri)
-    conn.simple_bind_s(username, password)
-    log.debug("Bound to %s as %s" % (uri, username,))
-    return (conn, base_dn, )
-
 def collect_groups(conn, config):
     '''
     Returns a list of lists of users per user group.
@@ -97,18 +86,6 @@ def collect_groups(conn, config):
 
     return result_groups
 
-
-def group_by_guid(conn, guid):
-    '''
-    Returns the DN of a group given the GUID.
-    Active Directory-only.
-    '''
-    results = conn.conn.search_s(conn.base_dn,
-                               ldap.SCOPE_SUBTREE,
-                               "(objectGUID=%s)" % (guid,),
-                               ["dn"],
-                               )
-    return results
 
 
 def _PagedAsyncSearch(ldap_conn, sizelimit, base_dn, scope, filterstr='(objectClass=*)', attrlist=None):
@@ -169,8 +146,8 @@ def _fix_guid(config, guid):
         return guid
 
 
-def _get_group_ou(ldap_conn, config, group, dn):
-    log = logging.getLogger('_get_group_ad %s' % (dn,))
+def _get_group_ou(ldap_conn, config, group):
+    log = logging.getLogger('_get_group_ad %s' % (group['ldap_id'],))
     user_list = []
     for dn, result_dict in _PagedAsyncSearch(ldap_conn, 
                                              sizelimit=200000,
@@ -183,6 +160,10 @@ def _get_group_ou(ldap_conn, config, group, dn):
                                                        config['dir_lname_source'].encode('utf-8')]):
         if dn is None:
             continue
+        if config['dir_username_source'] not in result_dict:
+            log.info("User %s lacks %s, skipping", dn, config['dir_username_source'])
+            continue
+
         log.debug("Appending user %s", result_dict[config['dir_username_source']][0])
 
         user_list.append({
@@ -235,14 +216,7 @@ def _get_group_group(ldap_conn, config, group):
         for user in result_dict[config['dir_member_source']]:
             log.debug("Found user %s", user)
             
-            if config['dir_type'] == 'posix':
-                # Split apart the uid from the rest of the member_source 
-                regex_result = re.search(r'^(uid=\w+),', user)
-                uid = regex_result.group(1)
-            else:
-                uid = user
-
-            user_details = _build_user_details(ldap_conn, config, group, uid)
+            user_details = _build_user_details(ldap_conn, config, group, user)
 
             # Add each user that matches
             if user_details is not None:
@@ -264,8 +238,6 @@ def _determine_group_type(ldap_conn, group):
         group['ldap_id'],
         ldap.SCOPE_BASE,
         attrlist=['objectClass'])
-
-    print objClass
 
     # The following are objectTypes for OUs.
     if 'container' in objClass[0][1]['objectClass'] or \
