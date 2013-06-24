@@ -12,7 +12,6 @@ import inspect
 import logging
 
 import account_mgr
-import api_interface
 
 
 class BailApiCall(Exception):
