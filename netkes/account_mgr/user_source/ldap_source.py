@@ -61,8 +61,8 @@ def get_auth_username(config, username):
     # If we have no configuration telling us to lookup a different username, 
     # just return here.
     log = logging.getLogger("get_auth_username")
+
     if config.get('dir_auth_username', None) is None:
-        log.info("Not configured for dynamic username lookup")
         return username
 
     my_ldap = OMLDAPConnection(config['dir_uri'], config['dir_base_dn'],
@@ -76,11 +76,15 @@ def get_auth_username(config, username):
     if len(results) < 1:
         raise Exception("No LDAP user found for username %s" % (username,))
 
-    # Multiple entries (all blank) are common coming from MSAD.
-    for dn, result_dict in results:
-        if dn is None:
-            continue
-        return result_dict[config['dir_auth_username']][0]
+    # Filter out all returned entries where the DN doesn't exist.
+    result_list = [result for dn, result in results if dn is not None]
+
+    # Having dupes is not good.
+    if len(result_list) > 1:
+        raise Exception("Too many LDAP users found via field %s for username %s" % 
+                        (config['dir_username_source'], username,))
+
+    return result_list[0][config['dir_auth_username']][0]
 
 
 def can_auth(config, username, password):
