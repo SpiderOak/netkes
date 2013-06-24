@@ -189,7 +189,7 @@ def _get_group_ou(ldap_conn, config, group):
                                              sizelimit=200000,
                                              base_dn = group['ldap_id'],
                                              scope=ldap.SCOPE_SUBTREE,
-                                             filterstr = "(objectClass=person)",
+                                             filterstr = "(|(objectClass=person)(objectClass=user)(objectClass=organizationalUser))",
                                              attrlist=[config['dir_guid_source'].encode('utf-8'),
                                                        config['dir_username_source'].encode('utf-8'),
                                                        config['dir_fname_source'].encode('utf-8'),
