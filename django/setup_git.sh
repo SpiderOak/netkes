@@ -2,7 +2,7 @@
 
 pushd /opt/openmanage/django
 
-git clone https://github.com/adamcik/django-postgresql-netfields.git
+git clone https://github.com/jimfunk/django-postgresql-netfields.git
 
 mkdir apps
 pushd apps

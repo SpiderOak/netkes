@@ -1,11 +1,10 @@
+import os
 import time
 import random
 import hmac
 from hashlib import sha256
 
 from Crypto.PublicKey import RSA
-
-from key_escrow.write import random_string
 
 GEN_COUNTER = 1
 
@@ -21,7 +20,7 @@ def new_key_id():
     return key_id + key_hmac_digest
     
 
-def make_keypair(size=2048):
+def make_keypair(size=3072):
     "return Key ID string, keypair obj"
-    rsakey = RSA.generate(size, random_string)
+    rsakey = RSA.generate(size, os.urandom)
     return new_key_id(), rsakey
