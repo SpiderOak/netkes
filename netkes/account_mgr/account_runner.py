@@ -11,6 +11,7 @@ import inspect
 
 import logging
 
+import account_mgr
 import api_interface
 
 
@@ -31,6 +32,7 @@ class AccountRunner(object):
         self._log = logging.getLogger("AccountRunner")
         self._promo_code = config.get("promo_code", None)
         self._db_conn = db_conn
+        self._api = account_mgr.get_api(config)
 
     def runall(self, changes_dict):
         """
@@ -54,19 +56,26 @@ class AccountRunner(object):
         :param users: List of users to create
         :returns tuple(list, list): (created users, failed users).
         """
+        groups = self._api.list_groups()
+        def find_group(group_id):
+            for group in groups:
+                if group['group_id'] == group_id:
+                    return group
 
-        try:
-            created_users = self._api_create_users(users)
-        except BailApiCall as e:
-            (created_users, ) = e.args
+        for user in users:
+            tmp_user = dict(
+                name=user['firstname'] + ' ' + user['lastname'],
+                email=user['email'],
+                group_id=user['group_id'],
+                plan_id=find_group(user['group_id'])['plan_id'],
+            )
+            self._api.create_user(tmp_user)
+            result = self._api.get_user(user['email'])
+            user['avatar_id'] = result['avatar_id']
+            cur = self._db_conn.cursor()
+            cur.execute(self._ADD_USERS_STATEMENT, user)
 
-        cur = self._db_conn.cursor()
-        cur.executemany(self._ADD_USERS_STATEMENT, created_users)
-
-        return (
-            created_users,
-            [user for user in users if user not in created_users],
-        )
+        return (users, [],)
 
 
     def enable(self, users):
@@ -76,8 +85,12 @@ class AccountRunner(object):
         :param users: List of users to enable.
         :returns tuple(list, list): (created users, failed users).
         """
-        return self._run_generic(api_interface.activate_user, users,
-                                 "UPDATE users SET enabled=true WHERE avatar_id=%(avatar_id)s")
+        for user in users:
+            result = self._api.edit_user(user['email'], dict(enabled=True))
+            cur = self._db_conn.cursor()
+            cur.execute("UPDATE users SET enabled=true WHERE avatar_id=%(avatar_id)s", user)
+
+        return (users, [],)
 
     def disable(self, users):
         """Disables users in SpiderOak's user DB.
@@ -85,9 +98,12 @@ class AccountRunner(object):
         :param users: list of users to disable
         :returns tuple(list, list): (success users, failed users)
         """
+        for user in users:
+            result = self._api.edit_user(user['email'], dict(enabled=False))
+            cur = self._db_conn.cursor()
+            cur.execute("UPDATE users SET enabled=false WHERE avatar_id=%(avatar_id)s", user)
 
-        return self._run_generic(api_interface.deactivate_user, users,
-                                 "UPDATE users SET enabled=false WHERE avatar_id=%(avatar_id)s")
+        return (users, [],)
 
     def group(self, users):
         """Assigns users to plans in the SO user DB.
@@ -95,9 +111,12 @@ class AccountRunner(object):
         :param users: list of users to set the plan for.
         :returns tuple(list, list): (success users, failed users)
         """
+        for user in users:
+            result = self._api.edit_user(user['email'], dict(group_id=user['group_id']))
+            cur = self._db_conn.cursor()
+            cur.execute("UPDATE users SET group_id=%(group_id)s WHERE avatar_id=%(avatar_id)s", user)
 
-        return self._run_generic(api_interface.set_user_group, users,
-                                 "UPDATE users SET group_id=%(group_id)s WHERE avatar_id=%(avatar_id)s")
+        return (users, [],)
 
     def email(self, users):
         """Changes user email addresses.
@@ -105,68 +124,10 @@ class AccountRunner(object):
         :param users: list of users to set email addresses for.
         :returns tuple(list, list): (success users, failed users)
         """
+        for user in users:
+            result = self._api.edit_user(user['orig_email'], dict(email=user['email']))
+            cur = self._db_conn.cursor()
+            cur.execute("UPDATE users SET email=%(email)s WHERE avatar_id=%(avatar_id)s", user)
 
-        return self._run_generic(api_interface.change_email, users,
-                                 "UPDATE users SET email=%(email)s WHERE avatar_id=%(avatar_id)s")
+        return (users, [],)
     
-    def _run_generic(self, fun, users, sql_statement):
-        """Internal function to run generic actions with both the API and DB."""
-        try:
-            complete_users = self._api_run_generic(fun, users)
-        except BailApiCall as e:
-            (complete_users, ) = e.args
-
-        cur = self._db_conn.cursor()
-        cur.executemany(sql_statement, complete_users)
-
-        return (
-            complete_users,
-            [user for user in users if user not in complete_users],
-        )
-
-    def _api_create_users(self, users):
-        """Internal function to create users via the billing API."""
-        results = list()
-        for user in users:
-            try:
-                result = api_interface.create_user(user, self._promo_code)
-            except api_interface.ApiActionFailedError as e:
-                import traceback
-                traceback.print_exc()
-                self._log.error('Got ApiActionFailedError: %s' % e)
-                raise BailApiCall(results)
-            else:
-                user['avatar_id'] = result['avatar_id']
-                results.append(user)
-
-            self._log.info("created user %s" % (user['email'],))
-
-        return results
-
-    def _api_run_generic(self, fun, users):
-        """Internal function to run API calls given the specific API function."""
-
-        results = []
-        # Start building the arguments dictionary.
-        argdict = {}
-        args = inspect.getargspec(fun)
-        if 'promo_code' in args.args:
-            argdict['promo_code'] = self._promo_code
-
-        # In the event of getting an API exception, we still need to
-        # update the DB with what we've done to keep things consistent, so
-        # we catch the error and bail with the current state of the
-        # results array.
-        for user in users:
-            argdict['user'] = user
-            try:
-                result = fun(**argdict)
-            except api_interface.ApiActionFailedError as e:
-                import traceback
-                traceback.print_exc()
-                self._log.error('Function %s got ApiActionFailedError: %s' % (fun, e,))
-                raise BailApiCall(results)
-            else:
-                results.append(user)
-
-        return results

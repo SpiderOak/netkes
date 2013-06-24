@@ -7,7 +7,7 @@ import csv
 import json
 import logging
 
-import api_interface
+import account_mgr
 from account_mgr.local_source import set_user_password, set_multi_passwords
 
 
@@ -50,6 +50,7 @@ def run_csv_file(db_conn, filename, optdict):
     :returns int: number of successful user actions.
     """
 
+    api = account_mgr.get_api(config)
     log = logging.getLogger("run_csv_file")
     dict_reader = csv.DictReader(filename)
     
@@ -67,47 +68,34 @@ def run_csv_file(db_conn, filename, optdict):
         # Runs the creation routine for each user.
         user_dicts = assure_keys(dict_reader, CREATE_REQUIRED_KEYS)
         for user in user_dicts:
-            result = api_interface.create_user(
-                {'firstname': user['given_name'],
-                 'lastname': user['surname'],
-                 'email': user['email_addr'],})
-            
-            result['group_id'] = user['group_id']
-            try:
-                result2 = api_interface.set_user_group(result)
-            except api_interface.ApiActionFailedError as e:
-                log.error("User created with no group assignment: %s" % 
-                          (user['email_addr'],))
-                raise e
+            api.create_user(
+                {'name': user['given_name'] + ' ' + user['surname'],
+                 'email': user['email_addr'],
+                 'group_id': user['group_id'],
+                })
             success_count += 1
 
     elif 'set_email' in optdict:
         # Sets emails for each user.
         user_dicts = assure_keys(dict_reader, SET_EMAIL_REQUIRED_KEYS)
         for user in user_dicts:
-            result = api_interface.change_email(
-                {'email': user['new_email'],
-                 'old_email': user['email_addr'],})
+            api.edit_user(user['email_addr'], dict(email=user['new_email']))
             success_count += 1
     elif 'set_group' in optdict:
         # Sets groups for each user.
         user_dicts = assure_keys(dict_reader, SET_GROUP_REQUIRED_KEYS)
         for user in user_dicts:
-            result = api_interface.set_user_group(
-                {'email': user['email_addr'],
-                 'group_id': user['group_id'],})
+            api.edit_user(user['email_addr'], dict(group_id=user['group_id']))
             success_count += 1
     elif 'disable' in optdict:
         user_dicts = assure_keys(dict_reader, frozenset(['email_addr']))
         for user in user_dicts:
-            result = api_interface.deactivate_user(
-                {'email': user['email_addr'],})
+            api.edit_user(user['email_addr'], dict(enabled=False))
             success_count += 1
     elif 'enable' in optdict:
         user_dicts = assure_keys(dict_reader, frozenset(['email_addr']))
         for user in user_dicts:
-            result = api_interface.activate_user(
-                {'email': user['email_addr'],})
+            api.edit_user(user['email_addr'], dict(enabled=True))
             success_count += 1
     else:
         raise UsersActionError("Got an action that's not accounted for!")
@@ -116,37 +104,32 @@ def run_csv_file(db_conn, filename, optdict):
 
 def run_single_command(db_conn, email_address, optdict):
     log = logging.getLogger("run_single_command")
+    api = account_mgr.get_api(config)
 
     if optdict['setpw']:
         set_user_password(db_conn, email_address, optdict['password'])
 
     elif optdict['create']:
-        result = api_interface.create_user(
-            {'firstname': optdict['given_name'],
-             'lastname': optdict['surname'],
-             'email': email_address,
-             'group_id': optdict['group_id']})
-
+        api.create_user(
+            {'name': optdict['given_name'] + ' ' + optdict['surname'],
+             'email': optdict['email_addr'],
+             'group_id': optdict['group_id'],
+            })
     elif optdict['set_email']:
-        result = api_interface.change_email(
-            {'email': optdict['new-email'],
-             'old_email': email_address,})
+        api.edit_user(optdict['email_addr'], dict(email=optdict['new-email']))
     elif optdict['set_group']:
-        result = api_interface.set_user_group(
-            {'email': email_address,
-             'group_id': optdict['group_id'],})
+        api.edit_user(optdict['email_addr'], dict(group_id=optdict['group_id']))
     elif optdict['disable']:
-        result = api_interface.deactivate_user(
-            {'email': email_address,})
+        api.edit_user(optdict['email_addr'], dict(enabled=False))
     elif optdict['enable']:
-        result = api_interface.activate_user(
-            {'email': email_address,})
+        api.edit_user(optdict['email_addr'], dict(enabled=True))
     else:
         raise UsersActionError("Got an action that's not accounted for!")
 
 def get_user_list():
     """Fetches the list of users from SpiderOak, returns it as JSON."""
-    return api_interface.fetch_users()
+    api = account_mgr.get_api(config)
+    return api.list_users()
 
 def csvify_userlist(csvfile, users):
     """Takes a JSON-ified list of users, and returns it as a CSV file."""
