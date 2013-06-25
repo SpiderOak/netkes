@@ -52,6 +52,41 @@ class OMLDAPConnection(object):
         self.base_dn = base_dn
 
 
+def get_auth_username(config, username):
+    """
+    Returns the appropriate username to authenticate against.
+
+    Will return either the `username` argument or a username gotten from the LDAP. 
+    """
+    # If we have no configuration telling us to lookup a different username, 
+    # just return here.
+    log = logging.getLogger("get_auth_username")
+
+    if config.get('dir_auth_username', None) is None:
+        return username
+
+    my_ldap = OMLDAPConnection(config['dir_uri'], config['dir_base_dn'],
+                               config['dir_user'], config['dir_password'])
+    results = my_ldap.conn.search_s(my_ldap.base_dn,
+                                    filterstr = '(%s=%s)' % \
+                                         (config['dir_username_source'], username,),
+                                    scope = ldap.SCOPE_SUBTREE,
+                                    attrlist = [config['dir_auth_username'],])
+
+    if len(results) < 1:
+        raise Exception("No LDAP user found for username %s" % (username,))
+
+    # Filter out all returned entries where the DN doesn't exist.
+    result_list = [result for dn, result in results if dn is not None]
+
+    # Having dupes is not good.
+    if len(result_list) > 1:
+        raise Exception("Too many LDAP users found via field %s for username %s" % 
+                        (config['dir_username_source'], username,))
+
+    return result_list[0][config['dir_auth_username']][0]
+
+
 def can_auth(config, username, password):
     '''
     Checks the ability of the given username and password to connect to the AD.
@@ -64,7 +99,8 @@ def can_auth(config, username, password):
 
     conn = ldap.initialize(config['dir_uri'])
     try:
-        conn.simple_bind_s(username, password)
+        auth_user = get_auth_username(config, username)
+        conn.simple_bind_s(auth_user, password)
     # ANY failure here results in a failure to auth.  No exceptions!
     except Exception:
         log.exception("Failed on LDAP bind")
@@ -153,7 +189,7 @@ def _get_group_ou(ldap_conn, config, group):
                                              sizelimit=200000,
                                              base_dn = group['ldap_id'],
                                              scope=ldap.SCOPE_SUBTREE,
-                                             filterstr = "(objectClass=person)",
+                                             filterstr = "(|(objectClass=person)(objectClass=user)(objectClass=organizationalUser))",
                                              attrlist=[config['dir_guid_source'].encode('utf-8'),
                                                        config['dir_username_source'].encode('utf-8'),
                                                        config['dir_fname_source'].encode('utf-8'),
