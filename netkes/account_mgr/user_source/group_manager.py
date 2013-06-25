@@ -37,7 +37,7 @@ SELECT
 u.uniqueid, u.avatar_id, l.email
 FROM users u
 LEFT OUTER JOIN ldap_users l ON u.uniqueid = l.uniqueid
-WHERE l.uniqueid IS NULL;
+WHERE l.uniqueid IS NULL AND u.enabled IS TRUE;
 '''
 
 _USERS_TO_PLANCHANGE_QUERY = '''
@@ -93,6 +93,11 @@ def _calculate_changes_against_db(db_conn, users):
     cur.execute("ALTER TABLE ldap_users DROP COLUMN enabled;")
     cur.executemany("INSERT INTO ldap_users (uniqueid, email, givenname, surname, group_id) VALUES (%(uniqueid)s, %(email)s, %(firstname)s, %(lastname)s, %(group_id)s);",
                     users)
+
+    cur.execute("SELECT email, count(email) as occurences from ldap_users group by email having ( count(email) > 1 )")
+    for row in cur.fetchall():
+        log.error("---> Duplicate user %s found %d times in LDAP query!", row[0], row[1])
+
     cur.close()
 
     # Users to create.
@@ -140,13 +145,14 @@ def run_group_management(config, db_conn):
 def run_db_repair(config, db_conn):
     """Repairs the current user DB and billing API versus LDAP."""
     # TODO: figure out what to do when email addresses *don't* match.
-
+    log = logging.getLogger("run_db_repair")
     # Collect the users from LDAP, and insert into a temporary table.
     ldap_conn = ldap_source.OMLDAPConnection(config["dir_uri"],
                                              config["dir_base_dn"],
                                              config["dir_user"],
                                              config["dir_password"])
 
+    log.info("Collecting LDAP groups")
     ldap_users = ldap_source.collect_groups(ldap_conn, config)
     cur = db_conn.cursor()
     cur.execute("CREATE TEMPORARY TABLE ldap_users (LIKE users) ON COMMIT DROP;")
@@ -157,6 +163,7 @@ def run_db_repair(config, db_conn):
     
     # Collect the users from the SpiderOak Accounts API, and insert into
     # a temporary table.
+    log.info("Collecting SpiderOak user details")
 
     api = account_mgr.get_api(config)
 
@@ -178,9 +185,14 @@ def run_db_repair(config, db_conn):
                     "%(group_id)s, %(enabled)s);",
                     spider_users)    
 
+    cur.execute("SELECT email, count(email) as occurences from ldap_users group by email having ( count(email) > 1 )")
+    for row in cur.fetchall():
+        log.error("---> Duplicate user %s found %d times in LDAP query!", row[0], row[1])
+
     # Clear out the current database.
     cur.execute("DELETE FROM users;")
 
+    log.info("Inserting joined fields into the database")
     # Insert rows into users where email addresses match.
     cur.execute("INSERT INTO users "
                 "SELECT l.uniqueid, s.email, s.avatar_id, s.givenname, "
