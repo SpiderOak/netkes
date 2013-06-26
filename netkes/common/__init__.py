@@ -53,7 +53,7 @@ def make_defaults():
     default_config = {'db_user': 'directory_agent',
                       'db_host': 'localhost',
                       'db_db': 'openmanage',
-                      'api_root': 'https://spideroak.com/apis/partners/billing',
+                      'api_root': 'https://spideroak.com/apis/accounts/v1/',
                       }
 
     return default_config

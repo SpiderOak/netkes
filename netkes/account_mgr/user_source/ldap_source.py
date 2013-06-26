@@ -229,7 +229,7 @@ def _get_group_ou(ldap_conn, config, group):
                                              sizelimit=200000,
                                              base_dn = group['ldap_id'],
                                              scope=ldap.SCOPE_SUBTREE,
-                                             filterstr = "(objectClass=person)",
+                                             filterstr = "(|(objectClass=person)(objectClass=user)(objectClass=organizationalUser))",
                                              attrlist=_create_attrlist(config)):
 
         if dn is None:
