@@ -28,6 +28,10 @@ mkdir $buildit_dir
 #     cp $source_dir/$package/*.sh $buildit_dir/$package/ 2> /dev/null
 # done
 
+mkdir $buildit_dir/git
+cp -r $source_dir $buildit_dir/git
+
+: <<'END'
 # Setup the base.
 mkdir $buildit_dir/bin
 cp $source_dir/bin/*.{sh,py} $buildit_dir/bin 2> /dev/null
@@ -58,6 +62,7 @@ mkdir $buildit_dir/etc
 for file in $included_management; do
     cp $source_dir/etc/$file $buildit_dir/etc
 done
+END
 
 # Set the brand in the configuration
 echo "OPENMANAGE_BRAND=$3" > $buildit_dir/etc/brand
