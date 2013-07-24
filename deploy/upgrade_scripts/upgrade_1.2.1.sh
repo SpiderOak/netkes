@@ -10,7 +10,7 @@ git clone http://github.com/SpiderOak/netkes.git --branch master
 ln -s /home/openmanage/git/netkes/netkes/ /opt/openmanage/netkes
 ln -s /home/openmanage/git/netkes/django/omva /opt/openmanage/django/omva
 
-sudo echo "export DJANGO_SECRET_KEY=\"$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c${1:-64};echo;)\"" >> /etc/default/openmanage
+sudo bash -c 'echo "export DJANGO_SECRET_KEY=\"$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c${1:-64};echo;)\"" >> /etc/default/openmanage'
 
 # edit agent_config.json from memberUid to member
 sed -i 's/memberUid/member/' /opt/openmanage/etc/agent_config.json
