@@ -15,8 +15,8 @@ fi
 
 deploy_dir=$source_dir/deploy
 buildit_dir=$deploy_dir/openmanage
-rm $deploy_dir/openmanage.tar.bz2
-rm -r $buildit_dir
+rm -f $deploy_dir/openmanage.tar.bz2
+rm -rf $buildit_dir
 mkdir $buildit_dir
 
 # Setup the python packages in the tarball.
