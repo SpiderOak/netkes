@@ -91,7 +91,11 @@ def _calculate_changes_against_db(db_conn, users):
     cur.execute("CREATE TEMPORARY TABLE ldap_users (LIKE users) ON COMMIT DROP;")
     cur.execute("ALTER TABLE ldap_users DROP COLUMN avatar_id;")
     cur.execute("ALTER TABLE ldap_users DROP COLUMN enabled;")
-    cur.executemany("INSERT INTO ldap_users (uniqueid, email, givenname, surname, group_id) VALUES (%(uniqueid)s, %(email)s, %(firstname)s, %(lastname)s, %(group_id)s);",
+    if 'dir_email_source' in get_config():
+        cur.executemany("INSERT INTO ldap_users (uniqueid, username, email, givenname, surname, group_id) VALUES (%(uniqueid)s, %(username)s, %(email)s, %(firstname)s, %(lastname)s, %(group_id)s);",
+                    users)
+    else:
+        cur.executemany("INSERT INTO ldap_users (uniqueid, email, givenname, surname, group_id) VALUES (%(uniqueid)s, %(email)s, %(firstname)s, %(lastname)s, %(group_id)s);",
                     users)
 
     cur.execute("SELECT email, count(email) as occurences from ldap_users group by email having ( count(email) > 1 )")
@@ -102,6 +106,11 @@ def _calculate_changes_against_db(db_conn, users):
 
     # Users to create.
     log.debug('Creating users:')
+    if 'dir_email_source' in get_config():
+        create_attrs = ['username', 'email', 'firstname', 'lastname', 'group_id']
+    else:
+        create_attrs = ['email', 'firstname', 'lastname', 'group_id']
+    
     api_actions['create'] = _process_query(db_conn, _USERS_TO_CREATE_QUERY,
                                            ['email', 'firstname', 
                                             'lastname', 'group_id'])

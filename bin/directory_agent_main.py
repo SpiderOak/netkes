@@ -15,7 +15,7 @@ import os
 import psycopg2
 import sys
 
-from common import DATA_DIR, read_config_file, merge_config, set_config
+from common import DATA_DIR, read_config_file, merge_config, set_config, validate_config, NetKesConfigError
 from account_mgr.user_source import group_manager
 
 class StartupException(Exception):
@@ -74,6 +74,11 @@ def process_config():
     config = read_config_file(cmdline_opts.get('config_file', None))
     config = merge_config(config, cmdline_opts)
     
+    try:
+        validate_config(config)
+    except NetKesConfigError, e:
+        raise e
+
     if 'groups' not in config:
         raise StartupException("Lacking an LDAP mapping group in the config file.  Check your docs!")
 
@@ -105,7 +110,7 @@ otherwise, it should be at:
 /home/openmanage/openmanage/conf/agent_config.json
 
 Run %s -h for help.''' % (sys.argv[0],)
-    except StartupException as e:
+    except (StartupException, NetKesConfigError,) as e:
         return str(e)
 
     set_config(config)
