@@ -142,6 +142,25 @@ def run_group_management(config, db_conn):
     db_conn.commit()
 
 
+def _run_disabled_users_for_repair(ldap_conn, config, desc, resultslist):
+    """
+    Creates a list of users who are disabled and still existing in the LDAP.
+    """
+    log = logging.getLogger("_run_disabled_users_for_repair")
+
+    userlist = list()
+    for result in resultslist:
+        log.debug("Results for %s", result)
+        user = {}
+        for i in range(0,len(result)):
+            user[desc[i][0]] = result[i]
+            
+        print user
+        userlist.append(user)
+
+    return list(ldap_source.get_user_guids(ldap_conn, config, userlist))
+    
+
 def run_db_repair(config, db_conn):
     """Repairs the current user DB and billing API versus LDAP."""
     # TODO: figure out what to do when email addresses *don't* match.
@@ -198,5 +217,19 @@ def run_db_repair(config, db_conn):
                 "SELECT l.uniqueid, s.email, s.avatar_id, s.givenname, "
                 "s.surname, s.group_id, s.enabled "
                 "FROM ldap_users l JOIN spider_users AS s ON l.email = s.email ")
+
+    # Collect the list of users who are NOT in the LDAP
+    cur.execute("SELECT s.email, s.avatar_id, s.givenname, s.surname, s.group_id, s.enabled "
+                "FROM spider_users s "
+                "LEFT OUTER JOIN ldap_users l USING (email) "
+                "WHERE l.email IS NULL")
+    orphans = cur.fetchall()
+    found_orphans = _run_disabled_users_for_repair(ldap_conn, config, cur.description, orphans)
+    
+    cur.executemany("INSERT INTO users "
+                    "(avatar_id, email, givenname, surname, group_id, enabled, uniqueid) "
+                    "VALUES (%(avatar_id)s, %(email)s, %(givenname)s, %(surname)s, "
+                    "        %(group_id)s, %(enabled)s, %(uniqueid)s);",
+                    found_orphans)
 
     db_conn.commit()
