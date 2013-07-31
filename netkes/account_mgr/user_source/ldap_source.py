@@ -182,6 +182,41 @@ def _fix_guid(config, guid):
         return guid
 
 
+def get_user_guids(ldap_conn, config, userlist):
+    """Returns a generator of users combined with their UDIDs from the LDAP.
+
+    Required to properly enumerate users who exist in the SpiderOak
+    user directory and not in the customer LDAP.
+    """
+    log = logging.getLogger('get_disabled_users')
+
+    if 'dir_email_source' in config:
+        email_attribute_field = 'dir_email_source'
+    else:
+        email_attribute_field = 'dir_username_source'
+
+    for user in userlist:
+        filterstr = "(%s=%s)" % (config[email_attribute_field], user['email'],)
+        user_result_list = ldap_conn.conn.search_s(
+            base=ldap_conn.base_dn,
+            scope=ldap.SCOPE_SUBTREE,
+            filterstr=filterstr,
+            attrlist=[config['dir_guid_source'],])
+
+        user_results = [(dn, results,) for dn, results in user_result_list if dn is not None]
+        if len(user_results) != 1:
+            log.warn("No LDAP results found for %s, USER IS ORPHANED", user['email'])
+            continue
+
+        # make sure we don't muck with the array variables by making a copy.
+        newuser = dict(user)
+
+        # Note to self: whoever thought wrapping everything in arrays
+        # of tuples of dictionaries of arrays DESERVES SCORN.
+        newuser['uniqueid'] = _fix_guid(config, user_results[0][1][config['dir_guid_source']][0])
+        yield newuser
+
+
 def _get_group_ou(ldap_conn, config, group):
     log = logging.getLogger('_get_group_ad %s' % (group['ldap_id'],))
     user_list = []
