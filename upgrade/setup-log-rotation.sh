@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test -f /etc/logrotated/openmanage && exit
+test -f /etc/logrotate.d/openmanage && exit
 
 echo "Setting up log rotation for directory_agent..."
 cat >> /tmp/rotate.om <<__EOF__
@@ -13,5 +13,5 @@ cat >> /tmp/rotate.om <<__EOF__
 } 
 __EOF__
 
-install /tmp/rotate.om /etc/logrotated/openmanage
+install /tmp/rotate.om /etc/logrotate.d/openmanage
 rm /tmp/rotate.om
