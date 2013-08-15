@@ -11,7 +11,7 @@ do
 
 if [ ! -d /var/log/omva/$SERVICE ]; then mkdir /var/log/omva/$SERVICE; fi
 
-exec svlogd -ttt /var/log/omva/$SERVICE
+exec svlogd /var/log/omva/$SERVICE
 __EOF__
 	# This next step a) creates the service directory, b) creates a valid log
 	# directory, and c) installs the log/run file all in one fell swoop.  This
@@ -22,3 +22,4 @@ __EOF__
 	ln -s /opt/openmanage/etc/service/$SERVICE/run
 done
 sv start admin_console openmanage
+rm /tmp/logrun.*
