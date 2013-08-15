@@ -2,6 +2,8 @@
 
 set -e #-x
 
+grep /var/log /etc/fstab  > /dev/null && echo /var/log is already on its own volume && exit
+
 echo
 echo Before running this, the new volume should me made and
 echo mounted in /mnt.  If not, stop now and set that up.
