@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Usage information:
+# make_tarball.sh <netkes repo root> <version number> <brand_id> ldap
 set -e
 set -x
 set -o pipefail
