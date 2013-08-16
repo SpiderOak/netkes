@@ -28,6 +28,9 @@ cd /var/log
 mv * /mnt
 cd
 echo Remounting new volume...
+cat >> /etc/fstab <<__EOF__
+/dev/sdb1	/var/log	ext4	defaults	0	0
+__EOF__
 umount /mnt
 fsck /var/log
 mount /var/log
