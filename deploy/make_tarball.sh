@@ -32,6 +32,9 @@ mkdir $buildit_dir
 
 # Setup the base.
 mkdir $buildit_dir/bin
+
+# XXX: Why not just rm *.pyc?
+# XXX: Alan notes to use find
 cp $source_dir/bin/*.{sh,py} $buildit_dir/bin
 
 # Copy libraries
@@ -72,8 +75,8 @@ echo "Branch `git branch | grep '*' | sed 's/* //'`" >> $buildit_dir/etc/OpenMan
 echo "Commit `git log -n 1 --pretty=format:%H`" >> $buildit_dir/etc/OpenManage_version.txt
 
 # Zip it
-pushd $deploy_dir > /dev/null
+pushd $deploy_dir
 tar cjf openmanage.tar.bz2 openmanage
-popd > /dev/null
+popd
 
 cat $buildit_dir/etc/OpenManage_version.txt
