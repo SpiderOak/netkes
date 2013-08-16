@@ -19,26 +19,23 @@ fi
 
 deploy_dir=$source_dir/deploy
 buildit_dir=$deploy_dir/openmanage
-rm $deploy_dir/openmanage.tar.bz2
-rm -r $buildit_dir
+
+if [ -f $deploy_dir/openmanage.tar.bz2 ]; then
+    rm $deploy_dir/openmanage.tar.bz2
+fi
+
+if [ -e $buildit_dir ]; then
+    rm -rf $buildit_dir
+fi
+
 mkdir $buildit_dir
 
 # Setup the base.
 mkdir $buildit_dir/bin
-cp $source_dir/bin/*.{sh,py} $buildit_dir/bin 2> /dev/null
+cp $source_dir/bin/*.{sh,py} $buildit_dir/bin
 
 # Copy libraries
-mkdir $buildit_dir/netkes
-for package in `ls $source_dir/netkes`; do
-    mkdir -p $buildit_dir/netkes/$package
-    cp $source_dir/netkes/$package/*.py $buildit_dir/netkes/$package 2> /dev/null
-done
-
-# Copy LDAP over if necessary.
-if [ $4 == "ldap" ]; then    
-    mkdir $buildit_dir/netkes/account_mgr/user_source
-    cp $source_dir/netkes/account_mgr/user_source/*.py $buildit_dir/netkes/account_mgr/user_source
-fi
+cp -r $source_dir/netkes $buildit_dir
 
 # Copy over the django project
 cp -r $source_dir/django $buildit_dir

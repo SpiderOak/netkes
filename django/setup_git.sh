@@ -1,6 +1,12 @@
 #!/bin/bash
 
-pushd django
+set -e
+set -x
+set -o pipefail
+
+MYDIR=$1
+
+pushd $MYDIR/django
 
 git clone https://github.com/jimfunk/django-postgresql-netfields.git
 
@@ -22,8 +28,15 @@ popd #apps
 # Setup the static content
 mkdir static
 
-ln -s apps/so_common/static /opt/openmanage/django/static/blue_common
-ln -s apps/so_common/templates/base /opt/openmanage/django/apps/blue_management/blue_mgnt/templates/base
+if [ -e static/blue_common ]; then
+    rm static/blue_common
+fi
+ln -s apps/so_common/static static/blue_common
+
+if [ -e apps/blue_management/blue_mgnt/templates/base ]; then
+    rm apps/blue_management/blue_mgnt/templates/base
+fi
+ln -s apps/so_common/templates/base apps/blue_management/blue_mgnt/templates/base
 
 popd # django
 
