@@ -1,5 +1,9 @@
 #!/bin/bash
 
+set -e
+set -x
+set -o pipefail
+
 pushd $1 > /dev/null
 source_dir=`pwd`
 popd > /dev/null
@@ -18,15 +22,6 @@ buildit_dir=$deploy_dir/openmanage
 rm $deploy_dir/openmanage.tar.bz2
 rm -r $buildit_dir
 mkdir $buildit_dir
-
-# Setup the python packages in the tarball.
-# included_packages="bin etc lib sql"
-
-# for package in $included_packages; do
-#     mkdir $buildit_dir/$package
-#     cp $source_dir/$package/*.py $buildit_dir/$package/ 2> /dev/null
-#     cp $source_dir/$package/*.sh $buildit_dir/$package/ 2> /dev/null
-# done
 
 # Setup the base.
 mkdir $buildit_dir/bin
@@ -47,6 +42,11 @@ fi
 
 # Copy over the django project
 cp -r $source_dir/django $buildit_dir
+
+# Setup destination git packages.
+pushd $buildit_dir/django > /dev/null
+./setup_git.sh
+popd > /dev/null #$buildit_dir/django
 
 # Setup the SQL package
 mkdir $buildit_dir/sql
