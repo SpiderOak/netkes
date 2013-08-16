@@ -27,6 +27,9 @@ sudo sv stop admin_console
 
 # Push the binary updates.
 pushd /opt
+# Create a backup tarball of the existing openmanage installation
+now=$(date +%s)
+tar cjfv ~/openmanage-$now-last.tar.bz2 openmanage
 cp openmanage/etc/agent_config.json $HOME
 sudo tar xjf $upgrade
 sudo cp $HOME/agent_config.json /opt/openmanage/etc
