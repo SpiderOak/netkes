@@ -59,11 +59,16 @@ def _check_networking(uri):
     """
 
     log = logging.getLogger("Network Connectivity")
+
+    # Validate DNS lookups
     try:
         addr = socket.gethostbyname(uri)
     except socket.gaierror as e:
         log.error("DNS lookup failture for %s: %s" % (uri, e.strerror))
-        log.info("Please check DNS configuration.")
+        log.error("Please check DNS configuration.")
+        return
+    except Exception as e:
+        log.error("Nonsensical error in DNS lookup for %s" % (uri,))
         return
     else:
         log.info("DNS lookup for %s is %s. OK!" % (uri, addr,))
