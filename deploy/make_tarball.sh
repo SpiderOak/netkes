@@ -45,7 +45,7 @@ cp -r $source_dir/django $buildit_dir
 
 # Setup destination git packages.
 pushd $buildit_dir/django > /dev/null
-./setup_git.sh
+./setup_git.sh $buildit_dir
 popd > /dev/null #$buildit_dir/django
 
 # Setup the SQL package
