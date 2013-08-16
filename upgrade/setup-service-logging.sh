@@ -21,5 +21,6 @@ __EOF__
 	cd /etc/service/$SERVICE
 	ln -s /opt/openmanage/etc/service/$SERVICE/run
 done
+sleep 2	# Give runsvdir a chance to find and setup these service directories, otherwise it errors
 sv start admin_console openmanage
 rm /tmp/logrun.*
