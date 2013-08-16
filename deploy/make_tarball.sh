@@ -68,6 +68,8 @@ cp $source_dir/etc/service/admin_console/run $buildit_dir/etc/service/admin_cons
 # Tag it
 echo "SpiderOak OpenManage $version" > $buildit_dir/etc/OpenManage_version.txt
 echo "Built `date`" >> $buildit_dir/etc/OpenManage_version.txt
+echo "Branch `git branch | grep '*' | sed 's/* //'`" >> $buildit_dir/etc/OpenManage_version.txt
+echo "Commit `git log -n 1 --pretty=format:%H`" >> $buildit_dir/etc/OpenManage_version.txt
 
 # Zip it
 pushd $deploy_dir > /dev/null
