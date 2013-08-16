@@ -20,7 +20,7 @@ pushd blue_management
 git submodule init
 git submodule update
 
-ln -s templates/base ../so_common/templates/base
+#cp -r blue_mgnt/templates/base ../so_common/templates
 
 popd # blue_management
 popd #apps
@@ -31,12 +31,12 @@ mkdir static
 if [ -e static/blue_common ]; then
     rm static/blue_common
 fi
-ln -s apps/so_common/static static/blue_common
+cp -r apps/so_common/static static/blue_common
 
 if [ -e apps/blue_management/blue_mgnt/templates/base ]; then
     rm apps/blue_management/blue_mgnt/templates/base
 fi
-ln -s apps/so_common/templates/base apps/blue_management/blue_mgnt/templates/base
+cp -r apps/so_common/templates/base apps/blue_management/blue_mgnt/templates
 
 popd # django
 
