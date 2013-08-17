@@ -12,7 +12,7 @@ if [ ! -d django-postgresql-netfields ]; then
 git clone https://github.com/jimfunk/django-postgresql-netfields.git
 fi
 
-mkdir apps
+mkdir -p apps
 pushd apps
 
 if [ ! -d blue_management ]; then
@@ -34,7 +34,7 @@ popd # blue_management
 popd #apps
 
 # Setup the static content
-mkdir static
+mkdir -p static
 
 if [ -e static/blue_common ]; then
     rm static/blue_common
