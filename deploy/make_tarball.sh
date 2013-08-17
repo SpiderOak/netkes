@@ -65,10 +65,12 @@ done
 echo "OPENMANAGE_BRAND=$3" > $buildit_dir/etc/brand
 
 # Configure the runsv service.
-mkdir -p $buildit_dir/etc/service/openmanage
-mkdir -p $buildit_dir/etc/service/admin_console
+mkdir -p $buildit_dir/etc/service/openmanage/log
+mkdir -p $buildit_dir/etc/service/admin_console/log
 cp $source_dir/etc/service/openmanage/run $buildit_dir/etc/service/openmanage
+cp $source_dir/etc/service/openmanage/log/run $buildit_dir/etc/service/openmanage/log
 cp $source_dir/etc/service/admin_console/run $buildit_dir/etc/service/admin_console
+cp $source_dir/etc/service/admin_console/log/run $buildit_dir/etc/service/admin_console/log
 
 # Tag it
 echo "SpiderOak OpenManage $version" > $buildit_dir/etc/OpenManage_version.txt
