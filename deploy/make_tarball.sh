@@ -65,6 +65,8 @@ done
 echo "OPENMANAGE_BRAND=$3" > $buildit_dir/etc/brand
 
 # Configure the runsv service.
+mkdir -p $buildit_dir/etc/service/openmanage
+mkdir -p $buildit_dir/etc/service/admin_console
 cp $source_dir/etc/service/openmanage/run $buildit_dir/etc/service/openmanage
 cp $source_dir/etc/service/admin_console/run $buildit_dir/etc/service/admin_console
 
