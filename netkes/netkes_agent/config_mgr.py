@@ -47,7 +47,7 @@ class ConfigManager(object):
         to apply the new configuration.
         """
         with open(self._config_file, 'w') as cf:
-            json.dump(self.config, cf)
+            json.dump(self.config, cf, sort_keys=True, indent=4)
 
         self._kick_services()
 
