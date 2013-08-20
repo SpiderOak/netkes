@@ -102,6 +102,7 @@ def main():
     try:
         config = process_config()
     except (IOError, ValueError,):
+        log.error("Broken / missing agent_config,json file. Aborting!")
         return '''Cannot find, open, or understand your config file.  Lacking options 
 otherwise, it should be at:
 
