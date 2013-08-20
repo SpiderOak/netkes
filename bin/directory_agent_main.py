@@ -22,8 +22,11 @@ class StartupException(Exception):
     pass
 
 def _initialize_logging():
-    handler = logging.FileHandler("%s/directory_agent" %
-                                  (os.environ['OPENMANAGE_LOGS'],))
+    handler = logging.FileHandler(os.path.join(
+        os.environ['OPENMANAGE_LOGS'],
+        'directory_agent',
+        'directory_agent'))
+
     formatter = logging.Formatter(
         '%(asctime)s %(levelname)-8s %(name)-20s: %(message)s')
     handler.setFormatter(formatter)
