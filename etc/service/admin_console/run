@@ -9,4 +9,4 @@ SOCK=unix:$OPENMANAGE_DATA/admin_console.sock
 if [ -f $PID ]; then rm $PID; fi
 
 cd $OPENMANAGE_DJANGO_ROOT/omva
-exec gunicorn_django -b $SOCK --pid=$PID
+exec gunicorn_django -b $SOCK --pid=$PID 2>&1
