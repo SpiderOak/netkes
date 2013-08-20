@@ -109,6 +109,7 @@ otherwise, it should be at:
 
 Run %s -h for help.''' % (sys.argv[0],)
     except StartupException as e:
+        log.error(str(e))
         return str(e)
 
     set_config(config)
