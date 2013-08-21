@@ -27,7 +27,7 @@ pwd
 # Setup the static content
 mkdir static
 
-ln -s /opt/openmanage/django/apps/so_common/static django/static/blue_common
+ln -s /opt/openmanage/django/apps/so_common/static static/blue_common
 
 popd
 
