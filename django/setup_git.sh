@@ -4,7 +4,7 @@ set -e
 set -x
 set -o pipefail
 
-pushd ${1:?}
+pushd ${1:?}/django
 
 git clone https://github.com/jimfunk/django-postgresql-netfields.git
 
@@ -23,6 +23,7 @@ ln -s templates/base ../so_common/templates/base
 popd # blue_management
 popd #apps
 
+pwd
 # Setup the static content
 mkdir static
 
