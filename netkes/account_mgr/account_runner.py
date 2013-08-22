@@ -48,7 +48,9 @@ class AccountRunner(object):
             fun = getattr(self, action)
             ok_users, fail_users = fun(changes_dict[action])
             if len(fail_users):
-                self._log.error("Got error during runall, aborted on action: %s" % (action,))
+                msg = "Got error during runall, aborted on action: %s" % (action,)
+                print msg
+                self._log.error(msg)
                 break
 
     def create(self, users):
@@ -75,7 +77,10 @@ class AccountRunner(object):
             try:
                 self._api.create_user(tmp_user)
                 result = self._api.get_user(user['email'])
-            except self._api.Error:
+            except self._api.Error, e:
+                msg = 'Unable to create %s. %s' % (tmp_user, e)
+                print msg
+                self._log.error(msg)
                 break
             user['avatar_id'] = result['avatar_id']
             cur = self._db_conn.cursor()

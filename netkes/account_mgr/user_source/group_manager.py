@@ -155,7 +155,6 @@ def _run_disabled_users_for_repair(ldap_conn, config, desc, resultslist):
         for i in range(0,len(result)):
             user[desc[i][0]] = result[i]
             
-        print user
         userlist.append(user)
 
     return list(ldap_source.get_user_guids(ldap_conn, config, userlist))
