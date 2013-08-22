@@ -1,6 +1,4 @@
 #!/bin/bash
-# Openmanage run script for cron.
-# openmanage cron hourly
 
 . /etc/default/openmanage
 
