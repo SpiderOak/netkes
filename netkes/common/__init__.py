@@ -67,7 +67,7 @@ def read_config_file(cmdline_option=None):
     if not os.path.exists(config_file):
         log = logging.getLogger("read_config_file")
         log.warn("Missing config file at %s" % (config_file,))
-        return dict()
+        return merge_config(make_defaults(), {})
 
     with open(config_file) as json_fobj:
         fileconfig = json.load(json_fobj)

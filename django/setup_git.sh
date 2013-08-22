@@ -1,6 +1,10 @@
 #!/bin/bash
 
-pushd /opt/openmanage/django
+set -e
+set -x
+set -o pipefail
+
+pushd ${1:?}/django
 
 git clone https://github.com/jimfunk/django-postgresql-netfields.git
 
@@ -19,11 +23,11 @@ ln -s templates/base ../so_common/templates/base
 popd # blue_management
 popd #apps
 
+pwd
 # Setup the static content
 mkdir static
 
-ln -s /opt/openmanage/django/apps/so_common/static /opt/openmanage/django/static/blue_common
-ln -s /opt/openmanage/django/apps/so_common/templates/base /opt/openmanage/django/apps/blue_management/blue_mgnt/templates/base
+ln -s /opt/openmanage/django/apps/so_common/static static/blue_common
 
-popd # /opt/openmanage/django
+popd
 
