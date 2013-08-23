@@ -19,6 +19,9 @@ DEFAULT_RC = "agent_config.json"
 
 _CONFIG = None
 
+class NetKesConfigError(Exception):
+    pass
+
 def set_config(config):
     global _CONFIG
     _CONFIG = config
@@ -82,7 +85,17 @@ def read_config_file(cmdline_option=None):
 
 def merge_config(config, cmdline_opts):
     '''Merges the command-line options with the configuration file.'''
+
     for key, value in cmdline_opts.iteritems():
         config[key] = value
 
     return config
+
+def validate_config(config):
+    '''Applies sanity checking to the configuration to enforce various config rules.'''
+    
+    # Following implements https://github.com/SpiderOak/netkes/issues/2 check that we
+    # don't set dir_email_source without a non-SpiderOak api_root variable.
+    if 'dir_email_source' in config and \
+       config['api_root'].startswith("https://spideroak.com"):
+        raise NetKesConfigError("Defined dir_email_source without redefining api_root!")

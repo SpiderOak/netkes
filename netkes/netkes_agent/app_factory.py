@@ -7,7 +7,7 @@ from wsgi_util.router import router
 from wsgi_util.http import BadRequest, SuperSimple, NotFound, Forbidden, ServerError
 from wsgi_util.post_util import read_postdata, read_querydata
 
-from common import get_config, read_config_file, set_config
+from common import get_config, read_config_file, set_config, validate_config, NetKesConfigError
 from account_mgr import authenticator
 from key_escrow import server
 from Pandora import serial
@@ -31,7 +31,9 @@ def setup_application():
     if config is not None:
         return
     config = read_config_file()
+    validate_config(config)
     set_config(config)
+
 
 setup_logging()
 setup_application()
