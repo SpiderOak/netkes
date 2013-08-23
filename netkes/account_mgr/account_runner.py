@@ -17,6 +17,9 @@ import account_mgr
 class BailApiCall(Exception):
     pass
 
+def created_and_failed_users(created_users, users):
+    return created_users, [user for user in users if user not in created_users]
+
 class AccountRunner(object):
     """
     Manages running account manipulation operations between our local DB and
@@ -45,7 +48,9 @@ class AccountRunner(object):
             fun = getattr(self, action)
             ok_users, fail_users = fun(changes_dict[action])
             if len(fail_users):
-                self._log.error("Got error during runall, aborted on action: %s" % (action,))
+                msg = "Got error during runall, aborted on action: %s" % (action,)
+                print msg
+                self._log.error(msg)
                 break
 
     def create(self, users):
@@ -61,6 +66,7 @@ class AccountRunner(object):
                 if group['group_id'] == group_id:
                     return group
 
+        created_users = []
         for user in users:
             tmp_user = dict(
                 name=user['firstname'] + ' ' + user['lastname'],
@@ -68,17 +74,20 @@ class AccountRunner(object):
                 group_id=user['group_id'],
                 plan_id=find_group(user['group_id'])['plan_id'],
             )
-            
-            if 'username' in user:
-                tmp_user['username'] = user['username']
-
-            self._api.create_user(tmp_user)
-            result = self._api.get_user(user['email'])
+            try:
+                self._api.create_user(tmp_user)
+                result = self._api.get_user(user['email'])
+            except self._api.Error, e:
+                msg = 'Unable to create %s. %s' % (tmp_user, e)
+                print msg
+                self._log.error(msg)
+                break
             user['avatar_id'] = result['avatar_id']
             cur = self._db_conn.cursor()
             cur.execute(self._ADD_USERS_STATEMENT, user)
+            created_users.append(user)
 
-        return (users, [],)
+        return created_and_failed_users(created_users, users)
 
 
     def enable(self, users):
@@ -88,12 +97,17 @@ class AccountRunner(object):
         :param users: List of users to enable.
         :returns tuple(list, list): (created users, failed users).
         """
+        created_users = []
         for user in users:
-            result = self._api.edit_user(user['email'], dict(enabled=True))
+            try:
+                result = self._api.edit_user(user['email'], dict(enabled=True))
+            except self._api.Error:
+                break
             cur = self._db_conn.cursor()
             cur.execute("UPDATE users SET enabled=true WHERE avatar_id=%(avatar_id)s", user)
+            created_users.append(user)
 
-        return (users, [],)
+        return created_and_failed_users(created_users, users)
 
     def disable(self, users):
         """Disables users in SpiderOak's user DB.
@@ -101,12 +115,17 @@ class AccountRunner(object):
         :param users: list of users to disable
         :returns tuple(list, list): (success users, failed users)
         """
+        created_users = []
         for user in users:
-            result = self._api.edit_user(user['email'], dict(enabled=False))
+            try:
+                result = self._api.edit_user(user['email'], dict(enabled=False))
+            except self._api.Error:
+                break
             cur = self._db_conn.cursor()
             cur.execute("UPDATE users SET enabled=false WHERE avatar_id=%(avatar_id)s", user)
+            created_users.append(user)
 
-        return (users, [],)
+        return created_and_failed_users(created_users, users)
 
     def group(self, users):
         """Assigns users to plans in the SO user DB.
@@ -114,12 +133,17 @@ class AccountRunner(object):
         :param users: list of users to set the plan for.
         :returns tuple(list, list): (success users, failed users)
         """
+        created_users = []
         for user in users:
-            result = self._api.edit_user(user['email'], dict(group_id=user['group_id']))
+            try:
+                result = self._api.edit_user(user['email'], dict(group_id=user['group_id']))
+            except self._api.Error:
+                break
             cur = self._db_conn.cursor()
             cur.execute("UPDATE users SET group_id=%(group_id)s WHERE avatar_id=%(avatar_id)s", user)
+            created_users.append(user)
 
-        return (users, [],)
+        return created_and_failed_users(created_users, users)
 
     def email(self, users):
         """Changes user email addresses.
@@ -127,10 +151,15 @@ class AccountRunner(object):
         :param users: list of users to set email addresses for.
         :returns tuple(list, list): (success users, failed users)
         """
+        created_users = []
         for user in users:
-            result = self._api.edit_user(user['orig_email'], dict(email=user['email']))
+            try:
+                result = self._api.edit_user(user['orig_email'], dict(email=user['email']))
+            except self._api.Error:
+                break
             cur = self._db_conn.cursor()
             cur.execute("UPDATE users SET email=%(email)s WHERE avatar_id=%(avatar_id)s", user)
+            created_users.append(user)
 
-        return (users, [],)
+        return created_and_failed_users(created_users, users)
     

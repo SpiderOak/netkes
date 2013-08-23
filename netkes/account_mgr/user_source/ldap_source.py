@@ -243,8 +243,8 @@ def _build_user_dict(config, result_dict, group_id):
     user = {
         'uniqueid'  : _fix_guid(config,
                                 result_dict[config['dir_guid_source']][0]),
-        'firstname' : result_dict[config['dir_fname_source']][0],
-        'lastname'  : result_dict[config['dir_lname_source']][0],
+        'firstname' : result_dict.get(config['dir_fname_source'], [' '])[0],
+        'lastname'  : result_dict.get(config['dir_lname_source'], [' '])[0],
         'group_id'  : group_id,
     }
 
@@ -307,7 +307,6 @@ def _get_group_group(ldap_conn, config, group):
                                              base_dn=group['ldap_id'],
                                              scope=ldap.SCOPE_BASE,
                                              attrlist=[config['dir_member_source']]):
-
         if dn is None:
             continue
         # Search LDAP to get User entries that match group
@@ -317,7 +316,11 @@ def _get_group_group(ldap_conn, config, group):
             user_details = _build_user_details(ldap_conn, config, group, user)
 
             # Add each user that matches
-            if user_details is not None:
+            if not user_details['firstname'] and not user_details['lastname']:
+                msg = 'Unable to process user %s. The user had no first name or last name.' % user_details
+                print msg
+                log.error(msg)
+            elif user_details is not None:
                 user_list.append(user_details)
 
     return user_list
