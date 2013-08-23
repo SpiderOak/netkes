@@ -170,6 +170,23 @@ def _PagedAsyncSearch(ldap_conn, sizelimit, base_dn, scope, filterstr='(objectCl
     return users
 
 
+def _create_attrlist(config):
+    """
+    Creates an LDAP search attribute list based on our configuration.
+    """
+
+    attrlist = [config['dir_guid_source'].encode('utf-8'),
+                config['dir_username_source'].encode('utf-8'),
+                config['dir_fname_source'].encode('utf-8'),
+                config['dir_lname_source'].encode('utf-8'),
+                ]
+
+    if 'dir_email_source' in config:
+        attrlist.append(config['dir_email_source'].encode('utf-8'))
+
+    return attrlist
+
+
 def _fix_guid(config, guid):
     """
     Ensures GUIDs are properly encoded if they're from MSAD
@@ -217,18 +234,39 @@ def get_user_guids(ldap_conn, config, userlist):
         yield newuser
 
 
+def _build_user_dict(config, result_dict, group_id):
+    """
+    Creates a dictionary to append to the user results list, with arrangement based on
+    configuration.
+    """
+
+    user = {
+        'uniqueid'  : _fix_guid(config,
+                                result_dict[config['dir_guid_source']][0]),
+        'firstname' : result_dict.get(config['dir_fname_source'], [' '])[0],
+        'lastname'  : result_dict.get(config['dir_lname_source'], [' '])[0],
+        'group_id'  : group_id,
+    }
+
+    if 'dir_email_source' in config:
+        user['email'] = result_dict[config['dir_email_source']][0]
+        user['username'] = result_dict[config['dir_username_source']][0]
+    else:
+        user['email'] = result_dict[config['dir_username_source']][0]
+
+    return user
+
+
+
 def _get_group_ou(ldap_conn, config, group):
-    log = logging.getLogger('_get_group_ad %s' % (group['ldap_id'],))
+    log = logging.getLogger('_get_group_ou %s' % (group['ldap_id'],))
     user_list = []
     for dn, result_dict in _PagedAsyncSearch(ldap_conn, 
                                              sizelimit=200000,
                                              base_dn = group['ldap_id'],
                                              scope=ldap.SCOPE_SUBTREE,
                                              filterstr = "(|(objectClass=person)(objectClass=user)(objectClass=organizationalUser))",
-                                             attrlist=[config['dir_guid_source'].encode('utf-8'),
-                                                       config['dir_username_source'].encode('utf-8'),
-                                                       config['dir_fname_source'].encode('utf-8'),
-                                                       config['dir_lname_source'].encode('utf-8')]):
+                                             attrlist=_create_attrlist(config)):
 
         if dn is None:
             continue
@@ -238,13 +276,10 @@ def _get_group_ou(ldap_conn, config, group):
 
         log.debug("Appending user %s", result_dict[config['dir_username_source']][0])
 
-        user_list.append({
-            'uniqueid'  : _fix_guid(config, result_dict[config['dir_guid_source']][0]),
-            'email'     : result_dict[config['dir_username_source']][0],
-            'firstname' : result_dict[config['dir_fname_source']][0],
-            'lastname'  : result_dict[config['dir_lname_source']][0],
-            'group_id'  : group['group_id'],
-        })
+        user = _build_user_dict(config, result_dict, group['group_id'])
+        user_list.append(user)
+
+
     return user_list
 
 
@@ -253,10 +288,7 @@ def _build_user_details(ldap_conn, config, group, uid):
     user = ldap_conn.conn.search_s(
             uid,
             ldap.SCOPE_BASE,
-            attrlist = [config['dir_guid_source'],
-                        config['dir_fname_source'],
-                        config['dir_lname_source'],
-                        config['dir_username_source']])
+            attrlist = _create_attrlist(config))
 
     dn, user_dict = user[0]
 
@@ -264,13 +296,7 @@ def _build_user_details(ldap_conn, config, group, uid):
         return None
     log.debug("Appending user %s", user)
 
-    return {
-        'uniqueid'  : _fix_guid(config, user_dict[config['dir_guid_source']][0]),
-        'email'     : user_dict[config['dir_username_source']][0],
-        'firstname' : user_dict.get(config['dir_fname_source'], [''])[0],
-        'lastname'  : user_dict.get(config['dir_lname_source'], [''])[0],
-        'group_id'  : group['group_id'],
-    }
+    return _build_user_dict(user_dict, config, group['group_id'])
 
 
 def _get_group_group(ldap_conn, config, group):
@@ -298,6 +324,7 @@ def _get_group_group(ldap_conn, config, group):
                 user_list.append(user_details)
 
     return user_list
+
 
 _GROUP_GETTERS = {
     'group': _get_group_group,

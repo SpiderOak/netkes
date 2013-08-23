@@ -15,15 +15,18 @@ import os
 import psycopg2
 import sys
 
-from common import DATA_DIR, read_config_file, merge_config, set_config
+from common import DATA_DIR, read_config_file, merge_config, set_config, validate_config, NetKesConfigError
 from account_mgr.user_source import group_manager
 
 class StartupException(Exception):
     pass
 
 def _initialize_logging():
-    handler = logging.FileHandler("%s/directory_agent" %
-                                  (os.environ['OPENMANAGE_LOGS'],))
+    handler = logging.FileHandler(os.path.join(
+        os.environ['OPENMANAGE_LOGS'],
+        'directory_agent',
+        'directory_agent'))
+
     formatter = logging.Formatter(
         '%(asctime)s %(levelname)-8s %(name)-20s: %(message)s')
     handler.setFormatter(formatter)
@@ -74,6 +77,11 @@ def process_config():
     config = read_config_file(cmdline_opts.get('config_file', None))
     config = merge_config(config, cmdline_opts)
     
+    try:
+        validate_config(config)
+    except NetKesConfigError, e:
+        raise e
+
     if 'groups' not in config:
         raise StartupException("Lacking an LDAP mapping group in the config file.  Check your docs!")
 
@@ -99,13 +107,16 @@ def main():
     try:
         config = process_config()
     except (IOError, ValueError,):
+        log.error("Broken / missing agent_config,json file. Aborting!")
         return '''Cannot find, open, or understand your config file.  Lacking options 
 otherwise, it should be at:
 
 /home/openmanage/openmanage/conf/agent_config.json
 
 Run %s -h for help.''' % (sys.argv[0],)
-    except StartupException as e:
+
+    except (StartupException, NetKesConfigError,) as e:
+        log.error(str(e))
         return str(e)
 
     set_config(config)

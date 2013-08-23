@@ -8,6 +8,17 @@ fi
 
 sudo dpkg-reconfigure tzdata
 
+# Setup the NetKES escrow keys.
+if [ ! -f /var/lib/openmanage/keys/base.cfg ]; then
+$OPENMANAGE_ROOT/bin/make_keys.sh $OPENMANAGE_BRAND
+fi
+
+# Setup django
+pushd $OPENMANAGE_DJANGO_ROOT/omva
+python manage.py syncdb --noinput
+python manage.py createsuperuser --noinput --username="console_admin" --email="invalid@email.act"
+popd
+
 touch ~/.ran_firstlogin
 
 echo "PATH=$OPENMANAGE_ROOT/bin:\$PATH" >> ~/.bashrc

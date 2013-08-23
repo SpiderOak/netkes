@@ -11,4 +11,4 @@ SOCK=unix:$OPENMANAGE_DATA/net_kes.sock
 if [ -f $PID ]; then rm $PID; fi
 
 cd $OPENMANAGE_ROOT
-exec gunicorn -c $CONF -b $SOCK --pid=$PID $NETKES_APP 2>&1
+exec gunicorn --log-level=DEBUG -c $CONF -b $SOCK --pid=$PID $NETKES_APP 2>&1
