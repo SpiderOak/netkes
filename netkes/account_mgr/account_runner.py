@@ -74,6 +74,9 @@ class AccountRunner(object):
                 group_id=user['group_id'],
                 plan_id=find_group(user['group_id'])['plan_id'],
             )
+            if 'username' in user:
+                tmp_user['username'] = user['username']
+
             try:
                 self._api.create_user(tmp_user)
                 result = self._api.get_user(user['email'])
