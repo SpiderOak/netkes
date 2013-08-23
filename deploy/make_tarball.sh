@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# Usage information:
+# make_tarball.sh <netkes repo root> <version number> <brand_id> ldap
+set -e
+set -x
+set -o pipefail
+
 pushd $1 > /dev/null
 source_dir=`pwd`
 popd > /dev/null
@@ -15,38 +21,34 @@ fi
 
 deploy_dir=$source_dir/deploy
 buildit_dir=$deploy_dir/openmanage
-rm $deploy_dir/openmanage.tar.bz2
-rm -r $buildit_dir
+
+if [ -f $deploy_dir/openmanage.tar.bz2 ]; then
+    rm $deploy_dir/openmanage.tar.bz2
+fi
+
+if [ -e $buildit_dir ]; then
+    rm -rf $buildit_dir
+fi
+
 mkdir $buildit_dir
-
-# Setup the python packages in the tarball.
-# included_packages="bin etc lib sql"
-
-# for package in $included_packages; do
-#     mkdir $buildit_dir/$package
-#     cp $source_dir/$package/*.py $buildit_dir/$package/ 2> /dev/null
-#     cp $source_dir/$package/*.sh $buildit_dir/$package/ 2> /dev/null
-# done
 
 # Setup the base.
 mkdir $buildit_dir/bin
-cp $source_dir/bin/*.{sh,py} $buildit_dir/bin 2> /dev/null
+
+# XXX: Why not just rm *.pyc?
+# XXX: Alan notes to use find
+cp $source_dir/bin/*.{sh,py} $buildit_dir/bin
 
 # Copy libraries
-mkdir $buildit_dir/netkes
-for package in `ls $source_dir/netkes`; do
-    mkdir -p $buildit_dir/netkes/$package
-    cp $source_dir/netkes/$package/*.py $buildit_dir/netkes/$package 2> /dev/null
-done
-
-# Copy LDAP over if necessary.
-if [ $4 == "ldap" ]; then    
-    mkdir $buildit_dir/netkes/account_mgr/user_source
-    cp $source_dir/netkes/account_mgr/user_source/*.py $buildit_dir/netkes/account_mgr/user_source
-fi
+cp -r $source_dir/netkes $buildit_dir
 
 # Copy over the django project
 cp -r $source_dir/django $buildit_dir
+
+# Setup destination git packages.
+pushd $buildit_dir/django > /dev/null
+./setup_git.sh $buildit_dir
+popd > /dev/null #$buildit_dir/django
 
 # Setup the SQL package
 mkdir $buildit_dir/sql
@@ -71,10 +73,12 @@ cp $source_dir/etc/service/admin_console/run $buildit_dir/etc/service/admin_cons
 # Tag it
 echo "SpiderOak OpenManage $version" > $buildit_dir/etc/OpenManage_version.txt
 echo "Built `date`" >> $buildit_dir/etc/OpenManage_version.txt
+echo "Branch `git branch | grep '*' | sed 's/* //'`" >> $buildit_dir/etc/OpenManage_version.txt
+echo "Commit `git log -n 1 --pretty=format:%H`" >> $buildit_dir/etc/OpenManage_version.txt
 
 # Zip it
-pushd $deploy_dir > /dev/null
+pushd $deploy_dir
 tar cjf openmanage.tar.bz2 openmanage
-popd > /dev/null
+popd
 
 cat $buildit_dir/etc/OpenManage_version.txt
