@@ -124,10 +124,7 @@ LOGGING = {
             'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
         },
         'simple': {
-            'format': '%(levelname)s %(message)s'
-        },
-        'admin_actions': {
-            'format': '%(asctime)s-%(levelname)s-%(message)s'
+            'format': '%(levelname)s %(asctime)s %(message)s'
         },
     },
     'handlers': {
@@ -145,7 +142,7 @@ LOGGING = {
         'admin_actions_files':{
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
-            'formatter': 'admin_actions',
+            'formatter': 'simple',
             'filename': os.path.join(LOG_DIR, ADMIN_ACTIONS_LOG_FILENAME)
         },
     },
