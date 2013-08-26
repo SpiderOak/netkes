@@ -48,8 +48,38 @@ class OMLDAPConnection(object):
         self.conn.simple_bind_s(username, password)
         log.debug("Bound to %s as %s" % (uri, username,))
         self.conn.protocol_version = 3
-
         self.base_dn = base_dn
+
+        self.ldap_type = self._get_ldap_type()
+
+    def _get_ldap_type(self):
+        """
+        Auto-determine the type of LDAP we're using.
+
+        See http://ldapwiki.willeke.com/wiki/Determine%20LDAP%20Server%20Vendor
+        for more information.
+        """
+        result = self.conn.search_s(
+            base      = "",
+            scope     = ldap.SCOPE_BASE,
+            filterstr = "(objectclass=*)",
+            attrlist  = ['vendorversion', 'objectClass', 'isGlobalCatalogReady', 'vendorname'],
+            )
+
+        # FIXME: This is a bit of a cop-out for now.
+        if len(result) < 1:
+            return "generic"
+
+        result = result[0]
+
+        # MSAD
+        if result[0] == '' and \
+           result[1]['isGlobalCatalogReady'] == ['TRUE']:
+            return "msad"
+
+        # Add additional if statements as additional types matter.
+        else:
+            return "generic"
 
 
 def get_auth_username(config, username):
