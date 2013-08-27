@@ -6,7 +6,7 @@ from netkes.account_mgr import get_cursor
 
 def apply_scripts():
     common.set_config(common.read_config_file())
-    files = glob.glob('/home/openmanage/netkes/upgrade/scripts/*.sh') 
+    files = glob.glob('/opt/openmanage/upgrade/scripts/*.sh') 
     files = sorted(files)
 
     for file_ in files:
