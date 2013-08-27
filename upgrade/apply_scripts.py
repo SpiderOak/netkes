@@ -14,8 +14,9 @@ def apply_scripts():
             cur.execute('select * from updates where name=%s', (file_, ))
             if cur.rowcount == 0:
                 print "Applying", file_
-                call([file_])
-                cur.execute('insert into updates (name) values (%s)', (file_, ))
+                retcode = call([file_], shell=True)
+                if retcode == 0:
+		    cur.execute('insert into updates (name) values (%s)', (file_, ))
 
 if __name__ == '__main__':
     apply_scripts()
