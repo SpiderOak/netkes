@@ -39,8 +39,8 @@ grep 'DJANGO_SECRET_KEY' /opt/openmanage.$CURRENT_DATE/etc/openmanage_defaults >
 # Set the brand in the configuration
 echo "OPENMANAGE_BRAND=$BRAND" > /opt/openmanage/etc/brand
 
-PYTHONPATH=/opt/openmanage python /home/openmanage/openmanage/upgrade/apply_sql.py
-PYTHONPATH=/opt/openmanage python /home/openmanage/openmanage/upgrade/apply_scripts.py
+PYTHONPATH=/opt/openmanage python /opt/openmanage/upgrade/apply_sql.py
+sudo bash -c "PYTHONPATH=/opt/openmanage python /opt/openmanage/upgrade/apply_scripts.py"
 
 # Restart services
 for SERVICE in openmanage admin_console; do
