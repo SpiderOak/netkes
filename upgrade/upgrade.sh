@@ -12,16 +12,13 @@ set -x
 set -e
 set -o pipefail
 
+. /etc/default/openmanage
 
 UPDATE_TARBALL=${1:? "Update tarball is undefined"}
 BRAND=${2:?    "Brand is underfined!"}
 
 CURRENT_DATE=$(date "+%y-%m-%d")
 
-# Set the brand in the configuration
-echo "OPENMANAGE_BRAND=$BRAND" > /opt/openmanage/etc/brand
-
-. /etc/default/openmanage
 
 # Stop services.
 for SERVICE in admin_console openmanage; do
@@ -37,10 +34,15 @@ popd #/opt
 
 # Bring over configuration into the new stuff.
 cp /opt/openmanage.$CURRENT_DATE/etc/agent_config.json /opt/openmanage/etc
-grep 'DJANGO_SECRET_KEY' /opt/openmanage.$CURRENT_DATE/etc/openmanage_defaults >> /opt/openmanage/etc/openmanage_defaults
+grep 'DJANGO_SECRET_KEY' /opt/openmanage.$CURRENT_DATE/etc/openmanage_defaults >> /opt/openmanage/etc/openmanage_defaults 
 
-PYTHONPATH=/opt/openmanage python $HOME/netkes/upgrade/apply_sql.py
-PYTHONPATH=/opt/openmanage python $HOME/netkes/upgrade/apply_scripts.py
+# Set the brand in the configuration
+echo "OPENMANAGE_BRAND=$BRAND" > /opt/openmanage/etc/brand
+
+echo "about to apply"
+PYTHONPATH=/opt/openmanage python /home/openmanage/openmanage/upgrade/apply_sql.py
+PYTHONPATH=/opt/openmanage python /home/openmanage/openmanage/upgrade/apply_scripts.py
+echo "applied"
 
 # Restart services
 for SERVICE in openmanage admin_console; do
