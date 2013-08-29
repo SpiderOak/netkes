@@ -13,7 +13,7 @@ sudo mkdir -p /etc/service/openmanage/supervise
 sudo ln -s $OPENMANAGE_ROOT/etc/service/openmanage/run /etc/service/openmanage/run
 sudo sv start openmanage
 
-sudo python $HOME/netkes/upgrade/apply_sql.py
+python $HOME/netkes/upgrade/apply_sql.py
 
 if [ -e $OPENMANAGE_ROOT/netkes/account_mgr/user_source/ldap_source.py ]; then
     echo "Now we're going to start the initial LDAP->SpiderOak account sync.
