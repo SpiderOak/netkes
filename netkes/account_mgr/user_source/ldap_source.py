@@ -268,7 +268,7 @@ def _get_group_ou(ldap_conn, config, group):
                                              filterstr = "(|(objectClass=person)(objectClass=user)(objectClass=organizationalUser))",
                                              attrlist=_create_attrlist(config)):
 
-        if dn is None:
+        if dn is None or not result_dict:
             continue
         if config['dir_username_source'] not in result_dict:
             log.info("User %s lacks %s, skipping", dn, config['dir_username_source'])
@@ -296,7 +296,7 @@ def _build_user_details(ldap_conn, config, group, uid):
         return None
     log.debug("Appending user %s", user)
 
-    return _build_user_dict(user_dict, config, group['group_id'])
+    return _build_user_dict(config, user_dict, group['group_id'])
 
 
 def _get_group_group(ldap_conn, config, group):
@@ -307,7 +307,7 @@ def _get_group_group(ldap_conn, config, group):
                                              base_dn=group['ldap_id'],
                                              scope=ldap.SCOPE_BASE,
                                              attrlist=[config['dir_member_source']]):
-        if dn is None:
+        if dn is None or not result_dict:
             continue
         # Search LDAP to get User entries that match group
         for user in result_dict[config['dir_member_source']]:
