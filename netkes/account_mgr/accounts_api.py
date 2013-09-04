@@ -1,13 +1,39 @@
 import json
 import urllib
 import urllib2
+import types
+import logging
 
 from api_client import ApiClient
 
 
+class Error(Exception):
+    pass
+
+
+class ApiMeta(type):
+    def __new__(cls, name, bases, attrs):
+        for attr_name, attr_value in attrs.iteritems():
+            if isinstance(attr_value, types.FunctionType):
+                attrs[attr_name] = cls.log_exceptions(attr_value)
+
+        return super(ApiMeta, cls).__new__(cls, name, bases, attrs)
+
+    @classmethod
+    def log_exceptions(cls, func):
+        def wrapper(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except Error:
+                log = logging.getLogger('accounts_api')
+                log.error('%s - %s - %s' % (func.__name__, args, kwargs))
+                raise
+        return wrapper
+        
+
 class Api(object):
-    class Error(Exception):
-        pass
+    __metaclass__ = ApiMeta
+
     class BadParams(Error):
         pass
     class NotFound(Error):
@@ -34,6 +60,7 @@ class Api(object):
         return cls(client)
 
     def __init__(self, client):
+        self.Error = Error
         self.client = client
 
     def ping(self):
