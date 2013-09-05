@@ -50,6 +50,9 @@ pushd $buildit_dir/django > /dev/null
 ./setup_git.sh $buildit_dir
 popd > /dev/null #$buildit_dir/django
 
+# Copy over the upgrades
+cp -r $source_dir/upgrade $buildit_dir
+
 # Setup the SQL package
 mkdir $buildit_dir/sql
 cp $source_dir/sql/*.sql $buildit_dir/sql
