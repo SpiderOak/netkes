@@ -35,9 +35,9 @@ sudo tar xjf $upgrade
 sudo cp $HOME/agent_config.json /opt/openmanage/etc
 
 # Apply SQL updates
-pushd upgrades
+pushd upgrade
 python apply_sql.py
-popd #upgrades
+popd #upgrade
 popd #/opt
     
 sudo sv start openmanage
