@@ -34,7 +34,7 @@ WHERE u.enabled IS FALSE;
 
 _USERS_TO_DISABLE_QUERY = '''
 SELECT
-u.uniqueid, u.avatar_id, l.email
+u.uniqueid, u.avatar_id, u.email
 FROM users u
 LEFT OUTER JOIN ldap_users l ON u.uniqueid = l.uniqueid
 WHERE l.uniqueid IS NULL AND u.enabled IS TRUE;
