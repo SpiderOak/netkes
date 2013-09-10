@@ -1,14 +1,25 @@
 # The OpenManage Virtual Appliance
 
-The OpenManage Virtual Appliance (OMVA) provides automatically managed configuration for SpiderOak Blue&trade; services.  It provides two major services: authentication and user management, and local encryption key escrow.
+The OpenManage Virtual Appliance (OMVA) provides automatically managed
+configuration for SpiderOak Blue&trade; services.  It provides three
+major services: LDAP-driven automatic user provisioning, user
+authentication to either LDAP or RADIUS servers, and encryption key
+escrow management for the enterprise.
 
-The OMVA is a virtual appliance running Linux to provide services from within your organization to SpiderOak.  By using the OMVA, SpiderOak retains our innovative zero-knowledge (Ø-K) security model concerning your organization's data while allowing you full control over both data and user account management.
+The net_kes project provides all these services for the OMVA.
 
-Services on the OMVA:
-* Communicate out to the SpiderOak Accounts API to configure and manage user accounts,
-* Listen to SpiderOak for queries for key escrow use,
-* Listen to SpiderOak for queries concerning user authentication.
+## Building
 
-You will be using the OMVA in one of two configurations: Blue Private Cloud, or Blue Hosted Storage. The OMVA operates largely the same between the two configurations, however the connection information will change if you are connecting to SpiderOak hosted storage or your own Private Cloud install.
+The (currently clunky) way to create a deployment tarball is:
 
-See the [docs](https://github.com/SpiderOak/netkes/tree/master/docs) subdirectory for details.
+`$ ./make_tarball.sh <source_directory> <version> <brand_id> ldap`.
+
+Where:
+
+* `source_directory`: where to find the deployment source.
+* `version`: Human-readable version number.
+* `brand_id`: Enterprise brand id to build for
+* `ldap`: Leave as `ldap`. Will be removed in future versions.
+
+This will create a file called `openmanage.tar.bz2`, ready for
+deployment on an OMVA.
