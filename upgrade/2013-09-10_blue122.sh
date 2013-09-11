@@ -29,7 +29,7 @@ bash ./2013-09-10_update_logging.sh
 
 # Determine if we need to update the database with new schema.
 if [ ! $(su postgres -c 'psql -c "\d sql_updates" openmanage') ]; then
-    su postgres -f $OPENMANAGE_ROOT/sql/2013-04-02_manage_sql_updates.sql
+    su postgres -c "psql -f $OPENMANAGE_ROOT/sql/2013-04-02_manage_sql_updates.sql openmanage"
 fi
 
 # Bring over configuration into the new stuff.
