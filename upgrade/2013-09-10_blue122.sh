@@ -25,7 +25,7 @@ tar xjfv $UPDATE_TARBALL
 popd #/opt/openmanage
 
 # Update logging configuration
-./2013-09-10_update_logging.sh
+bash ./2013-09-10_update_logging.sh
 
 # Determine if we need to update the database with new schema.
 if [ ! $(su postgres -c 'psql -c "\d sql_updates" openmanage') ]; then
