@@ -20,9 +20,9 @@ done
 # Move out old openmanage
 mv /opt/openmanage /opt/openmanage.122old
 
-pushd /opt/openmanage
+pushd /opt
 tar xjfv $UPDATE_TARBALL
-popd #/opt/openmanage
+popd #/opt
 
 # Update logging configuration
 bash ./2013-09-10_update_logging.sh
