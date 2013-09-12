@@ -52,12 +52,17 @@ class OMLDAPConnection(object):
         self.base_dn = base_dn
 
 class LdapGroup(object):
+    _ou_object_classes = set(['container', 'organizationalUnit'])
+
     def __init__(self, ldap_conn, config, ldap_id, group_id):
         log = logging.getLogger('LdapGroup __init__')
         self.ldap_conn = ldap_conn
         self.ldap_id = ldap_id
         self.group_id = group_id
         self.config = config
+        
+        # Locally cached list of users.
+        self._users = None
 
     @classmethod
     def get_group(cls, ldap_conn, config, ldap_id, group_id):
@@ -82,8 +87,7 @@ class LdapGroup(object):
             attrlist=['objectClass'])
 
         # The following are objectTypes for OUs.
-        if 'container' in objClass[0][1]['objectClass'] or \
-           'organizationalUnit' in objClass[0][1]['objectClass']:
+        if objClass[0][1]['objectClass'] in cls._ou_object_classes:
             return 'ou'
         else:
             return 'group'
@@ -142,11 +146,18 @@ class LdapGroup(object):
 
         return self._build_user_dict(user_dict)
 
-    def userlist(self):
+
+    def __iter__(self):
         """
-        Empty, to be defined otherwise.
+        Provides an iterable over the user list.
         """
-        pass
+        if self._users is None:
+            # userlist() is a virtual method for this base class, so we
+            # disable pylint complaints on userlist not existing.
+            self._users = self.userlist() #pylint: disable=E1101
+
+        for user in self._users:
+            yield user
 
 class LdapOuGroup(LdapGroup):
     def __init__(self, ldap_conn, config, ldap_id, group_id):
@@ -173,9 +184,9 @@ class LdapOuGroup(LdapGroup):
             user = self._build_user_dict(result_dict)
             user_list.append(user)
 
-
         return user_list
     
+
 class LdapGroupGroup(LdapGroup):
     def __init__(self, ldap_conn, config, ldap_id, group_id):
         super(LdapGroupGroup, self).__init__(ldap_conn, config, ldap_id, group_id)
@@ -190,6 +201,7 @@ class LdapGroupGroup(LdapGroup):
                                                  attrlist=[self.config['dir_member_source']]):
             if dn is None or not result_dict:
                 continue
+
             # Search LDAP to get User entries that match group
             for user in result_dict[self.config['dir_member_source']]:
                 log.debug("Found user %s", user)
@@ -273,7 +285,10 @@ def collect_groups(conn, config):
     result_groups = []
 
     for group in config['groups']:
-        result_groups.extend(get_group(conn, config, group))
+        ldap_group = LdapGroup.get_group(conn, config,
+                                         group['ldap_id'],
+                                         group['group_id'])
+        result_groups.extend(ldap_group)
 
     return result_groups
 
@@ -370,32 +385,4 @@ def _PagedAsyncSearch(ldap_conn, sizelimit, base_dn, scope, filterstr='(objectCl
         if not cookie:
             break
     return users
-
-
-
-# _GROUP_GETTERS = {
-#     'group': _get_group_group,
-#     'ou': _get_group_ou,
-# }
-
-
-
-            
-def get_group(ldap_conn, config, group):
-    '''
-    Returns a list of user dicts for the specified group.
-
-    user dict keys: uniqueid, email, firstname, lastname, group_id
-    '''
-    # TODO: figure out how to smoothly handle using GUIDs in configuration.
-    #       AD stores GUIDs as a very unfriendly 16-byte value.
-    log = logging.getLogger("get_group %d" % (group['group_id'],))
-
-    group_getter = _GROUP_GETTERS[_determine_group_type(ldap_conn, group)]
-    
-    log.debug("Group DN: %s", group['ldap_id'])
-    user_list = group_getter(ldap_conn, config, group)
-    log.info("Found %d users", len(user_list))
-
-    return user_list
 
