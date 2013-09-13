@@ -242,7 +242,7 @@ class LdapGroupGroup(LdapGroup):
         if end_range is None:
             return users
            
-        users.extend(self._pas_ranged_results_wrapper(end_range))
+        users.extend(self._pas_ranged_results_wrapper(end_range + 1))
         return users
 
 
