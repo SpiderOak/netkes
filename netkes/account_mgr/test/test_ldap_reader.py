@@ -297,6 +297,7 @@ class TestLdapGroupGroup(unittest.TestCase):
             [(Mock(), {
                 config['dir_member_source']: [],
                 "%s;range=2-3" % (config['dir_member_source'],): [sentinel.testuser3, sentinel.testuser4,] })],
+            [],
         ]
 
         def PAS_side_effects(*args, **kwargs):

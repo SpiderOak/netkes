@@ -191,30 +191,76 @@ class LdapGroupGroup(LdapGroup):
     def __init__(self, ldap_conn, config, ldap_id, group_id):
         super(LdapGroupGroup, self).__init__(ldap_conn, config, ldap_id, group_id)
 
+    def _check_result_keys_for_range(self, keys):
+        # Check for a ranged result key. Scan the list of result keys
+        # and match against a regex.
+        r = re.compile(r"^([^;]+);range=(\d+)-(\d+|\*)$")
+        result_key = self.config['dir_member_source']
+        end_range = None
+        for key in keys:
+            match = r.match(key)
+            if match is not None:
+                result_key = key
+                end_range = int(match.group(3))
+                break
+        
+        return (result_key, end_range,)
+
+
+    def _pas_ranged_results_wrapper(self, startrange = None):
+        '''
+        Wraps PagedAsyncSearch for ranged results from our friends, Microsoft.
+
+        See https://github.com/SpiderOak/netkes/issues/32.
+
+        NOTE! This function is recursive!
+        '''
+        if startrange is None:
+            attrstring = self.config['dir_member_source']
+        else:
+            attrstring = "%s;range=%d-*" % \
+                         (self.config['dir_member_source'], startrange,)
+
+        # We expect one and only one result here.
+        results = _PagedAsyncSearch(self.ldap_conn,
+                                    sizelimit=200000,
+                                    base_dn=self.ldap_id,
+                                    scope=ldap.SCOPE_BASE,
+                                    attrlist=[attrstring])
+
+        if len(results) < 1:
+            return []
+        elif len(results) > 1:
+            raise Exception("Multiple results for a single unique DN?")
+
+        dn, result_dict = results[0]
+        if dn is None or not result_dict:
+            return []
+
+        result_key, end_range = self._check_result_keys_for_range(result_dict.keys())
+        users = result_dict[result_key]
+        if end_range is None:
+            return users
+           
+        users.extend(self._pas_ranged_results_wrapper(end_range))
+        return users
+
+
     def userlist(self):
         log = logging.getLogger('_get_group_group %s' % (self.ldap_id,))
         user_list = []
-        for dn, result_dict in _PagedAsyncSearch(self.ldap_conn,
-                                                 sizelimit=200000,
-                                                 base_dn=self.ldap_id,
-                                                 scope=ldap.SCOPE_BASE,
-                                                 attrlist=[self.config['dir_member_source']]):
-            if dn is None or not result_dict:
-                continue
+        for user in self._pas_ranged_results_wrapper():
+            log.debug("Found user %s", user)
 
-            # Search LDAP to get User entries that match group
-            for user in result_dict[self.config['dir_member_source']]:
-                log.debug("Found user %s", user)
+            user_details = self._build_user_details(user)
 
-                user_details = self._build_user_details(user)
-
-                # Add each user that matches
-                if not user_details['firstname'] and not user_details['lastname']:
-                    msg = 'Unable to process user %s. The user had no first name or last name.' % user_details
-                    print msg
-                    log.error(msg)
-                elif user_details is not None:
-                    user_list.append(user_details)
+            # Add each user that matches
+            if not user_details['firstname'] and not user_details['lastname']:
+                msg = 'Unable to process user %s. The user had no first name or last name.' % user_details
+                print msg
+                log.error(msg)
+            elif user_details is not None:
+                user_list.append(user_details)
 
         return user_list
 
