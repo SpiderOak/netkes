@@ -217,7 +217,7 @@ class TestLdapGroupGroup(unittest.TestCase):
         self.assertEqual(len(group.userlist()), 0)
                                                                         
     @patch('account_mgr.user_source.ldap_source._PagedAsyncSearch')
-    def test_returns_group_users(self, _PagedAsyncSearch):
+    def test_returns_nonranged_group_users(self, _PagedAsyncSearch):
         config = {
             'dir_guid_source': 'user_guid_source',
             'dir_username_source': 'user_source',
@@ -226,10 +226,12 @@ class TestLdapGroupGroup(unittest.TestCase):
             'dir_member_source': 'member_source'
             }
 
+        # Represents looking up the dir_member_source list from LDAP.
         PAS_results = [(Mock(), { config['dir_member_source']: [sentinel.testuser1, sentinel.testuser2,] })]
 
         _PagedAsyncSearch.return_value = PAS_results
 
+        # A list of individual users searched from the LDAP.
         individual_lookup_results = [
             [(Mock(), 
              {config['dir_guid_source']    : [sentinel.guid1],
@@ -275,6 +277,100 @@ class TestLdapGroupGroup(unittest.TestCase):
                            }
                           ])
 
+    @patch('account_mgr.user_source.ldap_source._PagedAsyncSearch')
+    def test_returns_ranged_group_users(self, _PagedAsyncSearch):
+        config = {
+            'dir_guid_source': 'user_guid_source',
+            'dir_username_source': 'user_source',
+            'dir_fname_source': 'fname_source',
+            'dir_lname_source': 'lname_source',
+            'dir_member_source': 'member_source'
+            }
+
+        # Represents looking up the dir_member_source list from LDAP.
+        PAS_results = [
+            [(Mock(),
+              {
+                config['dir_member_source']: [],
+                "%s;range=0-1" % (config['dir_member_source'],): [sentinel.testuser1, sentinel.testuser2,] 
+              })],
+            [(Mock(), {
+                config['dir_member_source']: [],
+                "%s;range=2-3" % (config['dir_member_source'],): [sentinel.testuser3, sentinel.testuser4,] })],
+        ]
+
+        def PAS_side_effects(*args, **kwargs):
+            return PAS_results.pop(0)
+
+        _PagedAsyncSearch.side_effect = PAS_side_effects
+
+        # A list of individual users searched from the LDAP.
+        individual_lookup_results = [
+            [(Mock(), 
+             {config['dir_guid_source']    : [sentinel.guid1],
+              config['dir_username_source']: [sentinel.testuser1],
+              config['dir_fname_source']   : [sentinel.testfname1],
+              config['dir_lname_source']   : [sentinel.testlname1],} )],
+            [(Mock(), 
+             {config['dir_guid_source']    : [sentinel.guid2],
+              config['dir_username_source']: [sentinel.testuser2],
+              config['dir_fname_source']   : [sentinel.testfname2],
+              config['dir_lname_source']   : [sentinel.testlname2],} )],
+            [(Mock(), 
+             {config['dir_guid_source']    : [sentinel.guid3],
+              config['dir_username_source']: [sentinel.testuser3],
+              config['dir_fname_source']   : [sentinel.testfname3],
+              config['dir_lname_source']   : [sentinel.testlname3],} )],
+            [(Mock(), 
+             {config['dir_guid_source']    : [sentinel.guid4],
+              config['dir_username_source']: [sentinel.testuser4],
+              config['dir_fname_source']   : [sentinel.testfname4],
+              config['dir_lname_source']   : [sentinel.testlname4],} )],
+        ]
+
+        
+        lconn = MagicMock()
+
+        def search_side_effect(*args, **kwargs):
+            user = individual_lookup_results.pop(0)
+            return user
+
+        lconn.conn.search_s.side_effect = search_side_effect
+
+
+        test_group = {'type':"dn",
+                      'ldap_id': "cn=test,dn=testdomain,dn=com",
+                      'group_id': sentinel.group_id}
+
+        group = ldap_source.LdapGroupGroup(
+            lconn, config, Mock(), sentinel.group_id)
+
+        self.assertEqual(group.userlist(),
+                         [{'email'     : sentinel.testuser1,
+                           'firstname' : sentinel.testfname1,
+                           'lastname'  : sentinel.testlname1,
+                           'uniqueid'  : sentinel.guid1,
+                           'group_id'  : sentinel.group_id,
+                           },
+                          {'email'     : sentinel.testuser2,
+                           'firstname' : sentinel.testfname2,
+                           'lastname'  : sentinel.testlname2,
+                           'uniqueid'  : sentinel.guid2,
+                           'group_id'  : sentinel.group_id,
+                           },
+                          {'email'     : sentinel.testuser3,
+                           'firstname' : sentinel.testfname3,
+                           'lastname'  : sentinel.testlname3,
+                           'uniqueid'  : sentinel.guid3,
+                           'group_id'  : sentinel.group_id,
+                           },
+                          {'email'     : sentinel.testuser4,
+                           'firstname' : sentinel.testfname4,
+                           'lastname'  : sentinel.testlname4,
+                           'uniqueid'  : sentinel.guid4,
+                           'group_id'  : sentinel.group_id,
+                           },
+                          ])
 
 if __name__ == '__main__':
     unittest.main()
