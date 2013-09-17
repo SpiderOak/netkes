@@ -30,9 +30,11 @@ pushd /opt
 # Create a backup tarball of the existing openmanage installation
 now=$(date +%s)
 tar cjfv ~/openmanage-$now-last.tar.bz2 openmanage
-cp openmanage/etc/agent_config.json $HOME
+mv openmanage openmanage.back
 sudo tar xjf $upgrade
-sudo cp $HOME/agent_config.json /opt/openmanage/etc
+sudo cp openmanage.back/etc/agent_config.json openmanage/etc/agent_config.json
+sudo grep 'DJANGO_SECRET_KEY' openmanage.back/etc/openmanage_defaults >> openmanage/etc/openmanage_defaults
+rm -r openmanage.back
 
 # Apply SQL updates
 pushd upgrade
