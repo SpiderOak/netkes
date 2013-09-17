@@ -101,7 +101,13 @@ class TestLdapGroup(unittest.TestCase):
         conn = MagicMock()
 
         for object_class in ldap_source.LdapGroup._ou_object_classes:
-            conn.conn.search_s.return_value = [ [ None, {'objectClass': object_class},]]
+            print object_class
+            conn.conn.search_s.return_value = [ 
+                [ 
+                    None, 
+                    {'objectClass': [object_class]},
+                ] 
+            ]
 
             group = ldap_source.LdapGroup.get_group(
                 conn,
@@ -296,7 +302,7 @@ class TestLdapGroupGroup(unittest.TestCase):
               })],
             [(Mock(), {
                 config['dir_member_source']: [],
-                "%s;range=2-3" % (config['dir_member_source'],): [sentinel.testuser3, sentinel.testuser4,] })],
+                "%s;range=2-*" % (config['dir_member_source'],): [sentinel.testuser3, sentinel.testuser4,] })],
             [],
         ]
 

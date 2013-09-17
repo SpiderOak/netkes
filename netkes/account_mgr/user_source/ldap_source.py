@@ -81,14 +81,17 @@ class LdapGroup(object):
         Determines if the group we're dealing with is either an OU or an LDAP group.
         '''
 
-        objClass = ldap_conn.conn.search_s(
+        results = ldap_conn.conn.search_s(
             ldap_id,
             ldap.SCOPE_BASE,
             attrlist=['objectClass'])
-
+        
         # The following are objectTypes for OUs.
-        if objClass[0][1]['objectClass'] in cls._ou_object_classes:
-            return 'ou'
+        # Possibly multiple entries come back for objectClass:
+        for objClass in results[0][1]['objectClass']:
+            if objClass in cls._ou_object_classes:
+                return 'ou'
+
         else:
             return 'group'
 
@@ -201,7 +204,10 @@ class LdapGroupGroup(LdapGroup):
             match = r.match(key)
             if match is not None:
                 result_key = key
-                end_range = int(match.group(3))
+                if match.group(3) != '*':
+                    end_range = int(match.group(3))
+                else:
+                    end_range = None
                 break
         
         return (result_key, end_range,)
