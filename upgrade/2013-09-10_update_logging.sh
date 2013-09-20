@@ -46,5 +46,7 @@ EOF
     fi
 done
 
+sv e openmanage admin_console
+
 # Archive the old logging data.
 tar cjfv /home/openmanage/oldlogs.tar.bz2 /var/lib/openmanage/log
