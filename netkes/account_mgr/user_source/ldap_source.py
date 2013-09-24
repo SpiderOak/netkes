@@ -295,8 +295,8 @@ class LdapGroupGroup(LdapGroup):
         except NotEnoughLdapResults:
             return []
 
-        dn, result_dict = result
-        if dn is None or not result_dict:
+        result_dict = result
+        if not result_dict:
             return []
 
         result_key, end_range = self._check_result_keys_for_range(result_dict.keys())
@@ -315,7 +315,7 @@ class LdapGroupGroup(LdapGroup):
             log.debug("Found user %s", user)
 
             user_details = self._build_user_details(user,
-                                                    self.config['dir_member_source'])
+                                                    self.config.get('dir_uid_source', None))
 
             if user_details is None:
                 continue
