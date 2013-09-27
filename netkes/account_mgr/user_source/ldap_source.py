@@ -156,7 +156,7 @@ class LdapGroup(object):
             attrlist  = self._create_attrlist())
 
         try:
-            result = _filter_ldap_results(results)
+            dn, result = _filter_ldap_results(results)
         except NotEnoughLdapResults:
             log.warn("No results for uid %s" % (uid,))
             return None
@@ -289,7 +289,7 @@ class LdapGroupGroup(LdapGroup):
                                     attrlist=[attrstring])
 
         try:
-            result = _filter_ldap_results(results)
+            dn, result = _filter_ldap_results(results)
         except TooManyLdapResults:
             raise Exception("Multiple results for a single unique DN?")
         except NotEnoughLdapResults:
@@ -339,7 +339,7 @@ def _filter_ldap_results(results):
     if len(results) < 1:
         raise NotEnoughLdapResults()
 
-    result_list = [ result for dn, result in results if dn is not None ]
+    result_list = [(dn, result) for dn, result in results if dn is not None ]
 
     # Having more than one result for this is not good.
     if len(result_list) > 1:
@@ -357,26 +357,38 @@ def get_auth_username(config, username):
     # just return here.
     log = logging.getLogger("get_auth_username")
 
-    if config.get('dir_auth_username', None) is None:
+    if (config.get('dir_auth_username') is None and 
+        config.get('dir_auth_source') is None):
         return username
 
     my_ldap = OMLDAPConnection(config['dir_uri'], config['dir_base_dn'],
                                config['dir_user'], config['dir_password'])
-    results = my_ldap.conn.search_s(my_ldap.base_dn,
-                                    filterstr = '(%s=%s)' % \
-                                         (config['dir_username_source'], username,),
-                                    scope = ldap.SCOPE_SUBTREE,
-                                    attrlist = [config['dir_auth_username'],])
+
+    if config.get('dir_auth_source') == 'dn':
+        results = my_ldap.conn.search_s(my_ldap.base_dn,
+                                        filterstr = '(%s=%s)' % \
+                                            (config['dir_username_source'], username,),
+                                        scope = ldap.SCOPE_SUBTREE,)
+    else:
+        results = my_ldap.conn.search_s(my_ldap.base_dn,
+                                        filterstr = '(%s=%s)' % \
+                                            (config['dir_username_source'], username,),
+                                        scope = ldap.SCOPE_SUBTREE,
+                                        attrlist = [config['dir_auth_username'],])
 
     try:
-        result = _filter_ldap_results(results)
+        dn, result = _filter_ldap_results(results)
     except NotEnoughLdapResults:
         raise Exception("No LDAP user found for username %s" % (username,))
     except TooManyLdapResults:
         raise Exception("Too many LDAP users found via field %s for username %s" % 
                         (config['dir_username_source'], username,))
 
-    return result[config['dir_auth_username']][0]
+    if config.get('dir_auth_source') == 'dn':
+        return dn
+    else:
+        return result[config['dir_auth_username']][0]
+
 
 
 def can_auth(config, username, password):
