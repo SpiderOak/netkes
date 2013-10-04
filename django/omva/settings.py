@@ -1,6 +1,7 @@
 import os
 import sys
 from netkes import common
+import logging
 
 PROJECT_DIR = os.path.abspath(os.path.dirname(__file__))
 
@@ -16,6 +17,16 @@ MANAGERS = ADMINS
 
 common.set_config(common.read_config_file())
 config = common.get_config()
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'openmanage',
+        'USER': 'admin_console',
+        'PASSWORD': 'iexyjtso',
+        'HOST': 'localhost',
+    }
+}
 
 DATABASE_ENGINE = 'postgresql_psycopg2'           # 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
 DATABASE_NAME = 'openmanage'             # Or path to database file if using sqlite3.
@@ -57,6 +68,8 @@ MEDIA_ROOT = ''
 # Examples: "http://media.lawrence.com", "http://example.com/media/"
 MEDIA_URL = ''
 
+ALLOWED_HOSTS = ['*']
+
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
 # Examples: "http://foo.com/media/", "/media/".
@@ -67,9 +80,8 @@ SECRET_KEY = os.environ['DJANGO_SECRET_KEY']
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.load_template_source',
-    'django.template.loaders.app_directories.load_template_source',
-#     'django.template.loaders.eggs.load_template_source',
+    'django.template.loaders.filesystem.Loader',
+    'django.template.loaders.app_directories.Loader'
 )
 
 MIDDLEWARE_CLASSES = (
@@ -124,10 +136,7 @@ LOGGING = {
             'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
         },
         'simple': {
-            'format': '%(levelname)s %(message)s'
-        },
-        'admin_actions': {
-            'format': '%(asctime)s-%(levelname)s-%(message)s'
+            'format': '%(levelname)s %(asctime)s %(message)s'
         },
     },
     'handlers': {
@@ -145,7 +154,7 @@ LOGGING = {
         'admin_actions_files':{
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
-            'formatter': 'admin_actions',
+            'formatter': 'simple',
             'filename': os.path.join(LOG_DIR, ADMIN_ACTIONS_LOG_FILENAME)
         },
     },
@@ -160,6 +169,8 @@ LOGGING = {
             'propagate': True,
             'level': 'DEBUG',
         },
+    },
+    'root': {
+        'handlers': ['console']
     }
 }
-
