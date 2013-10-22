@@ -98,8 +98,19 @@ def _calculate_changes_against_db(db_conn, users):
         cur.executemany("INSERT INTO ldap_users (uniqueid, email, givenname, surname, group_id) VALUES (%(uniqueid)s, %(email)s, %(firstname)s, %(lastname)s, %(group_id)s);",
                     users)
 
+    group_order = [59, 38]
+    query = '''
+    delete from ldap_users lu1 
+    using ldap_users lu2
+    where lu1.email = lu2.email and lu1.group_id != %s
+    '''
+    for group_id in group_order:
+        cur.execute(query, [group_id])
+
     cur.execute("SELECT email, count(email) as occurences from ldap_users group by email having ( count(email) > 1 )")
+
     for row in cur.fetchall():
+        print row
         log.error("---> Duplicate user %s found %d times in LDAP query!", row[0], row[1])
 
     cur.close()
