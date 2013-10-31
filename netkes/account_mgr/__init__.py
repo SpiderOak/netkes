@@ -41,7 +41,7 @@ def get_cursor(config):
         conn.commit()
 
 def get_api(config):
-    return Api.create(os.getenv('ACCOUNT_API_URL', 'https://spideroak.com/apis/accounts/v1/'), 
+    return Api.create(config['api_root'], 
                       config['api_user'], 
                       config['api_password'],)
 
