@@ -1,0 +1,202 @@
+<%inherit file="main.html" />
+
+<%def name="title()">Groups - ${parent.title()}</%def>
+
+<%def name="head()">
+<style>
+    textarea {
+        width: 300px;
+    }
+</style>
+</%def>
+
+<%def name="top_of_head()">
+</%def>
+
+<%def name="scripts()">
+<script src="/static/blue_common/scripts/jquery.form.js"></script>
+<script type="text/javascript"> 
+</script>
+</%def>
+
+<%def name="body_classes()">groups ${parent.body_classes()}</%def>
+<%def name="container()">
+<h1 class="header">Enterprise Partner: <span>${username}</span></h1>
+<div class="recenter">
+<div class="division">
+${parent.progressbar()}
+</div>
+
+% if saved and not search_back:
+<p id="saved" class="bigger" style="display:none">Changes saved successfully!</p>
+% endif
+</div>
+% if user.has_perm('blue_mgnt.can_manage_groups'):
+<div id="" class="section">
+    <h2>Create New Group</h2>
+<form action="${reverse('blue_mgnt:groups')}" enctype="multipart/form-data" method="post">
+    <table class="table" style="max-width:100%">
+        <tr>
+        %for field in new_group.visible_fields():
+            <td>
+                ${field.label_tag()}
+                ${field}
+            %if field.errors:
+                <br />
+                %for error in field.errors:
+                    <span class="errors">
+                            ${error}
+                    </span>
+                %endfor
+            %endif
+            </td>
+
+        %endfor
+            <td style="padding-top:30px">
+            <input type='submit' value="+ New Group" class="btn btn-primary">
+            </td>
+        </tr>
+    </table>
+    <input type='hidden' value='new_group' name='form'>
+    %for hidden in new_group.hidden_fields():
+        ${hidden}
+    %endfor
+</form>
+</div>
+ <!-- Disable the delete groups and CSV upload in the event of LDAP use. -->
+%if 1 or not features['ldap']:
+<div id="" class="section">
+<h2>Delete Group</h2>
+<form action="${reverse('blue_mgnt:groups')}" enctype="multipart/form-data" method="post">
+    <table class="table" style="max-width:100%">
+        % if delete_group.non_field_errors():
+        <tr><td style="color:#FF0000; font-size:1.3em">${delete_group.non_field_errors()}</td></tr>
+        % endif
+
+        <tr>
+        %for field in delete_group.visible_fields():
+            <td>
+                ${field.label_tag()}
+                ${field}
+            </td>
+        %endfor
+            <td style="padding-top:30px">
+            <input type='submit' value="Delete Group" class="btn btn-primary">
+            </td>
+        </tr>
+    </table>
+    <input type='hidden' value='delete_group' name='form'>
+    %for hidden in new_group.hidden_fields():
+        ${hidden}
+    %endfor
+</form>
+</div>
+<!--
+<div class="section">
+<h2>Upload CSV</h2>
+<form action="${reverse('blue_mgnt:groups')}" enctype="multipart/form-data" method="post">
+    <fieldset>
+        %for field in group_csv:
+        <table class="table" style="max-width:100%">
+            <tr><td>
+            ${field.label_tag()}
+                ${field}
+                %if field.errors:
+                <br />
+                    %for error in field.errors:
+                <span class="errors">
+                        ${error}
+                </span></td>
+                    %endfor
+                %else:
+                    <label for="id_${field.name}">
+                    </label>
+                    </td>
+                %endif
+        %endfor
+        <td style="padding-top:32px">
+    <input type='submit' value="Upload CSV" class="btn btn-primary">
+    </td></tr>
+    </fieldset>
+    <input type='hidden' value='csv' name='form'>
+        </table>
+</form>
+</div>
+-->
+ <!-- not features['ldap'] -->
+%endif
+%endif
+<div class="section" style="clear:both">
+    <h2 style="float:left">Groups</h2>
+    <div id="search" class="">
+        <form method="get" action="${reverse('blue_mgnt:groups')}">
+            <input id="input_search" name="search" type="text" value="${search}" style="width:260px; margin-right:12px" placeholder="Group Name" />
+            <input type='submit' value="Find Group" class="btn btn-primary">
+            % if search:
+            <!--
+                <input name="search_back" type="hidden" value="1">
+                <input type="submit" value="Reset" class="btn btn" />
+                -->
+            % endif
+        </form>
+    </div>
+<form action="${reverse('blue_mgnt:groups')}" method="post" action="" style="clear:both">
+${groups.management_form}
+<table id="groups" class="table" style="max-width:100%">
+    <thead>
+        <tr class="bigger">
+            <th>Group Name</th>
+            <th>Plan</th>
+            <th>Allow WebAPI</th>
+            % if features['ldap']:
+                <th style="max-width:160px">Require Domain for Windows Install</th>
+                <th>LDAP DN</th>
+            % endif
+            <th>Priority</th>
+        </tr>
+    </thead>
+    <tbody>
+        % if groups.non_form_errors():
+        <tr><td colspan="5" style="color:#FF0000; font-size:1.3em">${groups.non_form_errors()}</td> </tr>
+        % endif
+        % for form in groups.forms:
+        <tr>
+            % for x, field in enumerate(form.visible_fields()):
+            <td>
+                % if not x:
+                    % for hidden in form.hidden_fields():
+                    ${hidden}
+                    % endfor
+                % endif
+                % if field.name == 'DELETE':
+                    <span class="del_box">${field}</span>
+                % else:
+                    ${field}
+                    %if field.errors:
+                        <br />
+                        %for error in field.errors:
+                            <span class="table_errors">
+                                ${error}
+                            </span>
+                        %endfor
+                    %endif
+                % endif
+            </td>
+            % endfor
+        </tr>
+        % endfor
+    </tbody>
+</table>
+<div style="text-align:center">
+    % if user.has_perm('blue_mgnt.can_manage_groups'):
+    <input type='submit' value="Save Changes" class="btn btn-primary">
+    % if show_force:
+    <input type='submit' value="Force Plan Change" class="btn btn-warning" name="force_plan_change">
+    % endif
+    <input type='hidden' value='management' name='form'>
+    <input type='hidden' value='${search}' name='search'>
+    % endif
+</div>
+</form>
+</div>
+</%def>

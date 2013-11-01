@@ -1,0 +1,220 @@
+<%inherit file="main.html" />
+
+<%def name="title()">Users - ${parent.title()}</%def>
+
+<%def name="head()">
+<style type="text/css">
+#container {
+    width:1070px;
+}
+</style>
+</%def>
+
+
+<%def name="top_of_head()">
+</%def>
+
+<%def name="scripts()">
+<script src="/static/blue_common/scripts/jquery.form.js"></script>
+<script type="text/javascript">
+% if features['ldap']:
+    $(function(){
+        $('#users input').click(function(){
+            $(this).blur();
+        });
+        
+        $('#users select').click(function(){
+            $(this).blur();
+        });
+    });
+% endif
+</script>
+</%def>
+
+<%def name="body_classes()">users ${parent.body_classes()}</%def>
+<%def name="container()">
+<h1 class="header">Enterprise Partner: <span>${username} </span></h1>
+<div class="recenter">
+<div class="division">
+${parent.progressbar()}
+</div>
+% if saved and not search_back:
+<p id="saved" class="bigger" style="display:none">Changes saved successfully!</p>
+% endif
+
+% if not features['ldap']:
+<div id="mk_new_usr" class="section">
+<h2>Create New User</h2>
+<form action="${reverse('blue_mgnt:users')}" enctype="multipart/form-data" method="post">
+    <table class="table" style="max-width:100%">
+        <tr>
+        %for field in new_user.visible_fields():
+            <td>
+                ${field.label_tag()}
+                ${field}
+            
+            %if field.errors:
+                <br />
+                <span class="errors">
+                %for error in field.errors:
+                    ${error}
+                %endfor
+                </span>
+            </td>
+            %else:
+            </td>
+            %endif
+
+        %endfor
+            <td style="padding-top:30px">
+            <input type='submit' value="+ New User" class="btn btn-primary">
+            </td>
+        </tr>
+    </table>
+    <input type='hidden' value='new_user' name='form'>
+    %for hidden in new_user.hidden_fields():
+        ${hidden}
+    %endfor
+</form>
+</div>
+<div class="section">
+<h2>Upload CSV</h2>
+<form action="${reverse('blue_mgnt:users')}" enctype="multipart/form-data" method="post">
+    <fieldset>
+        %for field in user_csv:
+        <table class="table" style="max-width:100%">
+            <tr><td>
+            ${field.label_tag()}
+                ${field}
+                %if field.errors:
+                <br />
+                <span class="errors">
+                    %for error in field.errors:
+                        ${error}
+                    %endfor
+                </span>
+                </td>
+                %else:
+                    <label for="id_${field.name}">
+                    </label>
+                    </td>
+                %endif
+                
+        %endfor
+<td style="padding-top:32px">
+    <input type='submit' value="Upload CSV" class="btn btn-primary">
+    </td></tr>
+    </fieldset>
+    <input type='hidden' value='csv' name='form'>
+        </table>
+</form>
+</div>
+% endif
+</div>
+<div class="section">
+<a name="user_table" style="display:hidden"></a>
+    <h2 style="float:left">Users</h2>
+<div id="search" class="">
+    <form action="${reverse('blue_mgnt:users')}" method="get">
+        <input name="show_disabled" type="hidden" value="${show_disabled}">
+        <input id="input_search" name="search" type="text" value="${search}" style="width:260px; margin-right:12px" placeholder="Name or Email" />
+        <input type='submit' value="Find Users" class="btn btn-primary">
+    </form>
+    % if search:
+    <!--
+    <form method="get">
+        <input type="submit" value="Reset" class="btn btn" />
+    </form>
+    -->
+    % endif
+</div>
+    <a href="${reverse('blue_mgnt:users_csv_download')}" class="btn btn-primary" style="display:inline; float:right; padding:0 10px">
+        <i class="icon-chevron-down icon-white"></i>
+        Download CSV</a>
+    <a href="${reverse('blue_mgnt:users')}?show_disabled=${0 if show_disabled else 1}&search=${search}#user_table" class="btn btn-primary" style="display:inline; float:right; padding:0 10px; margin-right:12px">
+        <i class="${'icon-eye-close' if show_disabled else 'icon-eye-open'} icon-white" style="margin-top:3px"></i>
+        ${'Hide Disabled' if show_disabled else 'Show Disabled'}</a>
+        <div style="height:60px"></div>
+<form action="${reverse('blue_mgnt:users')}" method="post" action="">
+    ${users.management_form}
+    <table id="users" class="table" style="max-width:100%; clear:both">
+        <thead>
+            <tr class="bigger">
+                % if not features['email_as_username']:
+                <th>Username</th>
+                % endif
+                <th>Full Name</th>
+                <th>Email</th>
+                <th>Group</th>
+                <th>GBs Stored</th>
+                <th>Creation Time</th>
+                <th>Last Login</th>
+                % if features['ldap'] and user.has_perm('blue_mgnt.can_view_user_data'):
+                    <th>Storage Login</th>
+                % endif
+                <th>User Detail</th>
+                <th>Enabled</th>
+                % if user.has_perm('blue_mgnt.can_manage_users'):
+                <th id="del">Delete User<br />
+                    <input id="sel_all" type="checkbox">
+                </th>
+                % endif
+            </tr>
+        </thead>
+        <tbody>
+            % for form in users.forms:
+            <tr>
+                % for x, field in enumerate(form.visible_fields()):
+                <td class="bigger" style="padding:8px; max-width:160px; overflow:hidden; text-overflow:ellipsis">
+                    % if not x:
+                        % for hidden in form.hidden_fields():
+                        ${hidden}
+                        % endfor
+                    % endif
+                    % if field.name == 'DELETE' and (not features['ldap'] or not form.initial.get('enabled', 1)) and user.has_perm('blue_mgnt.can_manage_users'):
+                        <span class="del_box">${field}</span>
+                    % elif field.name != 'DELETE':
+                        ${field}
+                    % endif 
+                    % if field.errors:
+                        <br />
+                        <span class="table_errors">
+                        % for error in field.errors:
+                            ${error}
+                        % endfor
+                        </span>
+                        </td>
+                    %else:
+                        </td>
+                    % endif
+                % endfor
+                % if not features['ldap']:
+                <td style="width:160px; display:none">
+                    <a href="" class="btn btn-danger pie">
+                        <i class="icon-remove icon-white icon_adjust"></i>
+                    </a>
+                    <a href="" class="btn btn-success pie">
+                        <i class="icon-eye-open icon-white icon_adjust"></i>
+                    </a>
+                </td>
+                % endif
+            </tr>
+            % endfor
+        </tbody>
+    </table>
+<div style="text-align:center">
+    <input type='hidden' value='${search}' name='search'>
+    <input type='submit' value="Save Changes" class="btn btn-primary" id="save">
+</div>
+</form>
+<div id="pagination" class="bigger" style="text-align:center">
+    % if page > 1:
+    <a href="${reverse('blue_mgnt:users')}?page=${page - 1}&search=${search}">previous</a>
+    % endif
+    Page ${page}
+    % if next_page:
+    <a href="${reverse('blue_mgnt:users')}?page=${page + 1}&search=${search}">next</a>
+    % endif
+</div>
+</div>
+</%def>

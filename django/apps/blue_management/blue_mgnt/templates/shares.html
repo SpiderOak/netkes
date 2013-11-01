@@ -1,0 +1,124 @@
+<%inherit file="main.html" />
+
+<%def name="title()">Shares - ${parent.title()}</%def>
+
+<%def name="head()"></%def>
+
+<%def name="top_of_head()">
+</%def>
+
+<%def name="scripts()">
+<script src="/static/blue_common/scripts/jquery.form.js"></script>
+<script type="text/javascript"> 
+$(function(){
+    $('.shares_table').hide();
+    $('tbody > tr').click(function() {
+        $(this).next('.shares_table').toggle();
+    });
+    $('tbody > tr').hover(function() {
+        $(this).css('cursor', 'pointer');
+    });
+});
+</script>
+</%def>
+
+<%def name="body_classes()">shares ${parent.body_classes()}</%def>
+<%def name="container()">
+<h1 class="header">Enterprise Partner: <span>${username}</span></h1>
+<div class="recenter">
+<div class="division">
+${parent.progressbar()}
+</div>
+</div>
+<div style="margin:0 auto; width:950px"
+<div class="section" style="clear:both">
+    <h2 style="float:left">Shares</h2>
+<form action="${reverse('blue_mgnt:shares')}" method="post" action="" style="clear:both">
+    <table id="groups" class="table">
+        <thead>
+            <tr class="bigger">
+                <th>Name</th>
+                % if features['email_as_username']:
+                <th>Email</th>
+                % else:
+                <th>Username</th>
+                % endif
+                <th>Shares</th>
+            </tr>
+        </thead>
+        <tbody>
+            % for user in users:
+                <tr>
+                <td>${user['name']}</td>
+                    % if features['email_as_username']:
+                    <td>${user['email']}</td>
+                    % else:
+                    <td>${user['username']}</td>
+                    % endif
+                    <td>${len(user['shares'])}</td>
+                </tr>
+                <tr class="shares_table"><td colspan="3">
+                    <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Room Key</th>
+                            <th>URL</th>
+                            <th>Description</th>
+                            <th>Creation Time</th>
+                            <th>Update Time</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        % for share in user['shares']:
+                        <tr>
+                            <td title="${share['name']}">${share['name']}</td>
+                            <td title="${share['room_key']}">${share['room_key']}</td>
+                            <td title="${share_url}/browse/share/${user['share_identifier']}/${share['room_key']}">
+                                <a href="${share_url}/browse/share/${user['share_identifier']}/${share['room_key']}">
+                                                                ${share_url}/browse/share/${user['share_identifier']}/${share['room_key']}
+                            </a></td>
+                            <td title="${share['description'] if share['description'] else ''}">${share['description'] if share['description'] else ''}</td>
+                            <td title="${datetime.datetime.fromtimestamp(share['creation_time'])}">${datetime.datetime.fromtimestamp(share['creation_time'])}</td>
+                            <td title="${datetime.datetime.fromtimestamp(share['update_time'])}">${datetime.datetime.fromtimestamp(share['update_time'])}</td>
+                            <td>
+                                <form method="post" action="${reverse('blue_mgnt:shares')}">
+                                    <input type='submit' 
+                                        value="${'Disable' if share['enabled'] else 'Enable'} Share" 
+                                        class="btn btn-primary" 
+                                        id="edit_share" 
+                                        style="display: inline-block">
+                                    <input type='hidden' value='edit_share' name='form'>
+                                    <input type='hidden' value='${share['room_key']}' name='room_key'>
+                                    <input type='hidden' value='${share['enabled']}' name='enabled'>
+                                    <input type='hidden' value='${user['email']}' name='email'>
+                                </form>
+                            </td>
+                        </tr>
+                        % endfor
+                    </tbody>
+                    </table>
+                </td></tr>
+            % endfor
+        </tbody>
+    </table>
+</form>
+    <div id="pagination" class="bigger" style="text-align:center">
+        % if page > 1:
+            <a href="${reverse('blue_mgnt:shares')}?page=${page - 1}">previous</a>
+        % endif
+        Page ${page}
+        % if next_page:
+            <a href="${reverse('blue_mgnt:shares')}?page=${page + 1}">next</a>
+        % endif
+    </div>
+<form action="${reverse('blue_mgnt:shares')}" method="post" action="" style="clear:both">
+    <div style="text-align:center">
+        <input type='submit' value="${'Disable' if sharing_enabled else 'Enable'} Shares" class="btn btn-primary" id="edit_shares">
+        <input type='hidden' value='${sharing_enabled}' name='sharing_enabled'>
+        <input type='hidden' value='edit_shares' name='form'>
+    </div>
+</form>
+</div>
+</%def>
