@@ -17,4 +17,10 @@ api = Api.create(
     'w0mbat',
 )
 from accounts_api import Api
+api = Api.create(
+    'https://spideroak.com/apis/accounts/v1/',
+    'newben',
+    'wbL9w0eV',
+)
+from accounts_api import Api
 api = Api.create('https://spideroak.com/apis/accounts/v1/', username, password,)
