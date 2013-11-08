@@ -22,6 +22,8 @@ fi
 deploy_dir=$source_dir/deploy
 buildit_dir=$deploy_dir/openmanage
 
+$HOME/netkes/upgrade/gather_resources.sh
+
 if [ -f $deploy_dir/openmanage.tar.bz2 ]; then
     rm $deploy_dir/openmanage.tar.bz2
 fi
