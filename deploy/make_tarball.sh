@@ -12,12 +12,7 @@ popd > /dev/null
 
 version=$2
 
-brand_identifier=$3
-ldap=$4
-echo "Building OpenManage software suite from $source_dir for $3"
-if [ $4 == "ldap" ]; then
-    echo "Enabling LDAP integration in this build."
-fi
+echo "Building OpenManage software suite from $source_dir"
 
 deploy_dir=$source_dir/deploy
 buildit_dir=$deploy_dir/openmanage
@@ -66,8 +61,6 @@ for file in $included_management; do
     cp $source_dir/etc/$file $buildit_dir/etc
 done
 
-# Set the brand in the configuration
-echo "OPENMANAGE_BRAND=$3" > $buildit_dir/etc/brand
 
 # Configure the runsv service.
 mkdir -p $buildit_dir/etc/service/openmanage
@@ -83,7 +76,7 @@ echo "Commit `git log -n 1 --pretty=format:%H`" >> $buildit_dir/etc/OpenManage_v
 
 # Zip it
 pushd $deploy_dir
-tar cjf openmanage.tar.bz2 openmanage
+tar cjf openmanage-$version.tar.bz2 openmanage
 popd
 
 cat $buildit_dir/etc/OpenManage_version.txt
