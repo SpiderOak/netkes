@@ -25,6 +25,8 @@ from django.conf import settings as django_settings
 from django.contrib.auth.models import Group, Permission
 from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth.decorators import permission_required
+from django.forms.util import ErrorList
+from django.forms.forms import NON_FIELD_ERRORS
 
 from interval.forms import IntervalFormField
 from mako.lookup import TemplateLookup
@@ -37,6 +39,7 @@ from so_common.forms import PasswordForm
 from netkes.account_mgr.accounts_api import Api
 from netkes.netkes_agent import config_mgr 
 from netkes.common import read_config_file
+from netkes.account_mgr.user_source import ldap_source
 
 LOG = logging.getLogger('admin_actions')
 
@@ -125,19 +128,38 @@ class LdapBackend(ModelBackend):
             return None
 
     def authenticate_ldap(self, username, password):
+        c = CONFIG
         conn = ldap.initialize(CONFIG['dir_uri'])
         try:
-            conn.simple_bind_s(username, password)
+            auth_user = ldap_source.get_auth_username(CONFIG, username)
+            conn.simple_bind_s(auth_user, password)
             group = False
+            ldap_conn = ldap_source.OMLDAPConnection(CONFIG["dir_uri"], 
+                                                     CONFIG["dir_base_dn"], 
+                                                     CONFIG["dir_user"], 
+                                                     CONFIG["dir_password"])
             for admin_group in models.AdminGroup.objects.all():
-                results = conn.search_s(
-                    CONFIG["dir_base_dn"], ldap.SCOPE_SUBTREE, 
-                    "(&(userPrincipalName=%s)(memberOf=%s))" % (username, admin_group.ldap_dn),
-                    [CONFIG['dir_username_source'].encode('utf-8'),]
+                group = ldap_source.LdapGroup.get_group(
+                    ldap_conn, 
+                    CONFIG,
+                    admin_group.ldap_dn,
+                    admin_group.ldap_dn,
                 )
-                if results:
-                    group = Group.objects.get(pk=admin_group.group_id)
-                    break
+                for user in group.userlist():
+                    key = 'email'
+                    if 'username' in user:
+                        key = 'username'
+                    if user[key] == username:
+                        group = Group.objects.get(pk=admin_group.group_id)
+                        break
+
+#                results = conn.search_s(
+#                    CONFIG["dir_base_dn"], ldap.SCOPE_SUBTREE, 
+#                    "(&(userPrincipalName=%s)(memberOf=%s))" % (username, admin_group.ldap_dn)#,
+#                    [CONFIG['dir_username_source'].encode('utf-8'),]
+#                )
+#                if results:
+#                    group = Group.objects.get(pk=admin_group.group_id)
             if not group:
                 return None
             try:
@@ -181,6 +203,9 @@ def login_user(request):
                 request.session['username'] = CONFIG['api_user']
                 request.session['password'] = CONFIG['api_password']
                 return redirect('blue_mgnt:index')
+            else:
+                errors = form._errors.setdefault(NON_FIELD_ERRORS , ErrorList())
+                errors.append('Invalid username or password')
 
     return render_to_response('login.html', dict(
         form=form,
@@ -821,11 +846,10 @@ def groups(request, api, account_info, username, saved=False):
             if delete_group.is_valid():
                 deleted_group_id = int(delete_group.cleaned_data['deleted_group_id']) 
                 new_group_id = int(delete_group.cleaned_data['new_group_id'])
-                data = (delete_group, new_group_id)
+                data = (deleted_group_id, new_group_id)
                 log_admin_action(request, 
                                  'delete group %s and move users to group %s' % data)
-                api.delete_group(deleted_group_id,
-                                 new_group_id,)
+                api.delete_group(deleted_group_id, new_group_id,)
                 return redirect('blue_mgnt:groups_saved')
         else:
             if features['group_permissions']:
