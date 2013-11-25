@@ -33,7 +33,7 @@ class CodeForm(forms.Form):
 
 @enterprise_required
 @permission_required('blue_mgnt.can_manage_auth_codes')
-def auth_codes(request, api, account_info, username, saved=False):
+def auth_codes(request, api, account_info, config, username, saved=False):
     features = api.enterprise_features()
     opts = api.enterprise_settings()
     page = int(request.GET.get('page', 1))
@@ -86,7 +86,7 @@ def auth_codes(request, api, account_info, username, saved=False):
 
 @enterprise_required
 @permission_required('blue_mgnt.can_manage_admins')
-def admin_groups(request, api, account_info, username, saved=False):
+def admin_groups(request, api, account_info, config, username, saved=False):
     features = api.enterprise_features()
 
 
@@ -213,7 +213,7 @@ def admin_groups(request, api, account_info, username, saved=False):
 
 @enterprise_required
 @permission_required('blue_mgnt.can_manage_logs')
-def logs(request, api, account_info, username, saved=False):
+def logs(request, api, account_info, config, username, saved=False):
     features = api.enterprise_features()
     page = int(request.GET.get('page', 1))
     search = request.GET.get('search', '')

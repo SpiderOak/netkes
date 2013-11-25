@@ -145,7 +145,8 @@ ${groups.management_form}
 <table id="groups" class="table" style="max-width:100%">
     <thead>
         <tr class="bigger">
-            <th>Group Name</th>
+            <th>User Source</th>
+            <th>Name</th>
             <th>Plan</th>
             <th>Allow WebAPI</th>
             % if features['ldap']:
@@ -157,7 +158,7 @@ ${groups.management_form}
     </thead>
     <tbody>
         % if groups.non_form_errors():
-        <tr><td colspan="5" style="color:#FF0000; font-size:1.3em">${groups.non_form_errors()}</td> </tr>
+        <tr><td colspan="5" style="color:#FF0000; font-size:1.3em">${groups.non_form_errors()}</td></tr>
         % endif
         % for form in groups.forms:
         <tr>
@@ -171,6 +172,10 @@ ${groups.management_form}
                 % if field.name == 'DELETE':
                     <span class="del_box">${field}</span>
                 % else:
+                    ${dir(field)}
+                    (value: ${field.value})
+                    (name: ${field.name})
+                    (data: ${field.data})
                     ${field}
                     %if field.errors:
                         <br />

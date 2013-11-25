@@ -17,7 +17,6 @@
 <%def name="scripts()">
 <script src="/static/blue_common/scripts/jquery.form.js"></script>
 <script type="text/javascript">
-% if features['ldap']:
     $(function(){
         $('#users input').click(function(){
             $(this).blur();
@@ -27,7 +26,6 @@
             $(this).blur();
         });
     });
-% endif
 </script>
 </%def>
 
@@ -42,7 +40,7 @@ ${parent.progressbar()}
 <p id="saved" class="bigger" style="display:none">Changes saved successfully!</p>
 % endif
 
-% if not features['ldap']:
+% if config['enable_local_users']:
 <div id="mk_new_usr" class="section">
 <h2>Create New User</h2>
 <form action="${reverse('blue_mgnt:users')}" enctype="multipart/form-data" method="post">
@@ -77,6 +75,8 @@ ${parent.progressbar()}
     %endfor
 </form>
 </div>
+% endif
+% if not features['ldap']:
 <div class="section">
 <h2>Upload CSV</h2>
 <form action="${reverse('blue_mgnt:users')}" enctype="multipart/form-data" method="post">
