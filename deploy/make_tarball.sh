@@ -1,23 +1,33 @@
 #!/bin/bash
 
 # Usage information:
-# make_tarball.sh <netkes repo root> <version number> <brand_id> ldap
+#
+# make_tarball.sh <source_dir> <version_number>
+#
+# where:
+#  source_dir is the netkes repo root, like $HOME/netkes
+#  version_number is a tag in netkes, like 1.2 or 1.2.3a
+
 set -e
-set -x
+#set -x
 set -o pipefail
 
 pushd $1 > /dev/null
-source_dir=`pwd`
+export source_dir=`pwd`
 popd > /dev/null
 
 version=$2
 
 echo "Building OpenManage software suite from $source_dir"
 
-deploy_dir=$source_dir/deploy
-buildit_dir=$deploy_dir/openmanage
+deploy_dir=$source_dir/deploy           # source_dir/deploy
+buildit_dir=$deploy_dir/openmanage      # source_dir/deploy/openmanage
 
-$HOME/netkes/upgrade/gather_resources.sh
+# The following script gets packages, like from pip, and puts them in $source_dir/upgrade.
+echo
+echo Downloading dependencies:
+echo
+$source_dir/upgrade/gather_resources.sh
 
 if [ -f $deploy_dir/openmanage.tar.bz2 ]; then
     rm $deploy_dir/openmanage.tar.bz2
@@ -27,14 +37,15 @@ if [ -e $buildit_dir ]; then
     rm -rf $buildit_dir
 fi
 
+echo
+echo Copying files into place...
 mkdir $buildit_dir
 
 # Setup the base.
 mkdir $buildit_dir/bin
 
-# XXX: Why not just rm *.pyc?
-# XXX: Alan notes to use find
-cp $source_dir/bin/*.{sh,py} $buildit_dir/bin
+find $source_dir/bin/*.pyc -delete 2> /dev/null || true  # hack to make pipefail not fail
+cp $source_dir/bin/* $buildit_dir/bin
 
 # Copy libraries
 cp -r $source_dir/netkes $buildit_dir
@@ -75,8 +86,13 @@ echo "Branch `git branch | grep '*' | sed 's/* //'`" >> $buildit_dir/etc/OpenMan
 echo "Commit `git log -n 1 --pretty=format:%H`" >> $buildit_dir/etc/OpenManage_version.txt
 
 # Zip it
-pushd $deploy_dir
+echo
+echo Making tarball...
+echo
+pushd $deploy_dir > /dev/null
 tar cjf openmanage-$version.tar.bz2 openmanage
-popd
+popd > /dev/null
 
+echo Done setting up!
+echo
 cat $buildit_dir/etc/OpenManage_version.txt
