@@ -39,7 +39,7 @@ from so_common.forms import PasswordForm
 from netkes.account_mgr.accounts_api import Api
 from netkes.netkes_agent import config_mgr 
 from netkes.common import read_config_file
-from netkes.account_mgr.user_source import ldap_source
+from netkes.account_mgr.user_source import ldap_source, local_source
 
 LOG = logging.getLogger('admin_actions')
 
@@ -321,255 +321,6 @@ class ReadOnlyWidget(forms.Widget):
     def _has_changed(self, initial, data):
         return False
 
-class UserDetailWidget(ReadOnlyWidget):
-    def render(self, name, value, attrs):
-        email = super(UserDetailWidget, self).render(name, value, attrs)
-        if email:
-            link = '<a href="%s">Detail</a>' % (reverse('blue_mgnt:user_detail', args=[email]),)
-        else:
-            link = ''
-        return super(UserDetailWidget, self).render(name, link, attrs)
-
-class LoginLinkWidget(ReadOnlyWidget):
-    def render(self, name, value, attrs):
-        username = super(LoginLinkWidget, self).render(name, value, attrs)
-        b32_username = b32encode(username).rstrip('=')
-        link = '<a href="%s/storage/%s/escrowlogin">Login</a>' % (get_base_url(), 
-                                                                  b32_username,)
-        return super(LoginLinkWidget, self).render(name, link, attrs)
-
-def get_group_name(groups, group_id):
-    for group in groups:
-        if group['group_id'] == group_id:
-            return group['name']
-
-def get_local_groups(config, groups):
-    local_groups = []
-    for c_group in config['groups']:
-        if c_group['user_source'] == 'local':
-            for api_group in groups:
-                if c_group['group_id'] == api_group['group_id']:
-                    local_groups.append((c_group['group_id'], api_group['name']))
-    return local_groups
-
-@enterprise_required
-def users(request, api, account_info, config, username, saved=False):
-    page = int(request.GET.get('page', 1))
-    show_disabled = int(request.GET.get('show_disabled', 1))
-    search_back = request.GET.get('search_back', '')
-    groups = api.list_groups()
-    features = api.enterprise_features()
-    search = request.GET.get('search', '')
-
-    if not search:
-        search = request.POST.get('search', '')
-
-
-    class UserCSVForm(forms.Form):
-        csv_file = forms.FileField(label='User CSV')
-
-        def clean_csv_file(self):
-            data = self.cleaned_data['csv_file']
-
-            csv_data = csv.DictReader(data)
-            for x, row in enumerate(csv_data):
-                if not('email' in row):
-                    raise forms.ValidationError('Invalid data in row %s. email is required' % x)
-                if row.get('name'):
-                    if not new_user_value_re_tests['avatar']['firstname'].match(row['name']):
-                        raise forms.ValidationError('Invalid data in row %s. Names must be between 1 and 45 characters long' % x)
-                    name = row['name']
-                if row.get('new_email'):
-                    if not new_user_value_re_tests['avatar']['email'].match(row['new_email']):
-                        raise forms.ValidationError('Invalid data in row %s. Invalid new_email' % x)
-
-                user_info = dict()
-                if row.get('new_email'):
-                    user_info['email'] = row['new_email']
-                if row.get('name'):
-                    user_info['name'] = row['name']
-                if row.get('group_id'):
-                    user_info['group_id'] = row['group_id']
-                if row.get('enabled'):
-                    user_info['enabled'] = row['enabled']
-                try:
-                    log_admin_action(request, 
-                                     'edit user %s through csv. ' % row['email'] + \
-                                     'set user data to: %s' % user_info
-                                    )
-                    api.edit_user(row['email'], user_info)
-                except Api.NotFound:
-                    raise forms.ValidationError('Invalid data in row %s. email not found' % x)
-            return data
-
-    class NewUserForm(forms.Form):
-        if not features['email_as_username']:
-            username = forms.CharField(max_length=45)
-        email = forms.EmailField()
-        name = forms.CharField(max_length=45)
-        group_id = forms.ChoiceField(get_local_groups(config, groups))
-
-        def clean_username(self):
-            data = self.cleaned_data['username']
-            if not new_user_value_re_tests['avatar']['username'].match(data):
-                raise forms.ValidationError('Your username must start with a letter, '
-                                            'be at least four characters long, '
-                                            'and may contain letters, numbers, '
-                                            'and underscores.') 
-            return data
-
-        def clean(self):
-            cleaned_data = super(NewUserForm, self).clean()
-            email = cleaned_data.get('email', '')
-            name = cleaned_data.get('name', '')
-            group_id = cleaned_data['group_id']
-            username = cleaned_data.get('username', '')
-
-            valid_username = username
-            if not hasattr(self, username):
-                valid_username = True
-            
-            if email and name and group_id and valid_username:
-                plan_id = [x for x in groups if x['group_id'] == int(group_id)][0]['plan_id']
-                data = dict(email=email, name=name, group_id=group_id, plan_id=plan_id) 
-                if username:
-                    data.update(dict(username=username))
-                try:
-                    log_admin_action(request, 'create user: %s' % data) 
-                    api.create_user(data)
-                except api.DuplicateEmail:
-                    self._errors['email'] = self.error_class(["Email address already in use"])
-                except api.DuplicateUsername:
-                    self._errors['username'] = self.error_class(["Username already in use"])
-
-            return cleaned_data
-
-
-    class UserForm(forms.Form):
-        if not features['email_as_username']:
-            username = forms.CharField(widget=ReadOnlyWidget, required=False)
-        if features['ldap']:
-            name = forms.CharField(max_length=45, widget=ReadOnlyWidget, required=False)
-            email = forms.EmailField(widget=ReadOnlyWidget, required=False)
-            group_id = forms.ChoiceField([(g['group_id'], g['name']) for g in groups], widget=ReadOnlyWidget, required=False)
-        else:
-            name = forms.CharField(max_length=45)
-            email = forms.EmailField()
-            group_id = forms.ChoiceField([(g['group_id'], g['name']) for g in groups])
-        orig_email = forms.CharField(widget=forms.HiddenInput)
-        gigs_stored = forms.FloatField(widget=ReadOnlyWidget, required=False)
-        creation_time = forms.DateTimeField(widget=ReadOnlyWidget, required=False)
-        last_login = forms.DateTimeField(required=False, widget=ReadOnlyWidget)
-        if features['ldap'] and request.user.has_perm('blue_mgnt.can_view_user_data'):
-            escrow_login = forms.CharField(required=False, widget=LoginLinkWidget)
-        user_detail = forms.CharField(required=False, widget=UserDetailWidget)
-        if features['ldap']:
-            enabled = forms.BooleanField(required=False, widget=ReadOnlyWidget)
-        else:
-            enabled = forms.BooleanField(required=False)
-
-
-    class BaseUserFormSet(forms.formsets.BaseFormSet):
-        def clean(self):
-            if any(self.errors) or features['ldap']:
-                return
-            for x in range(0, self.total_form_count()):
-                form = self.forms[x]
-                data = dict(name=form.cleaned_data['name'], 
-                            group_id=form.cleaned_data['group_id'], 
-                            email=form.cleaned_data['email'], 
-                            enabled=form.cleaned_data['enabled'],
-                           )
-                if request.user.has_perm('blue_mgnt.can_manage_users'):
-                    log_admin_action(request,
-                                    'edit user %s ' % form.cleaned_data['orig_email'] + \
-                                    'with data: %s' % data)
-                    api.edit_user(form.cleaned_data['orig_email'], data)
-
-
-    UserFormSet = formset_factory(UserForm, extra=0, formset=BaseUserFormSet, can_delete=True)
-    page = int(page)
-    user_limit = 25
-    user_offset = user_limit * (page - 1)
-    if search_back == '1':
-        search = ''
-        all_users = api.list_users(user_limit, user_offset)
-    elif search:
-        all_users = api.search_users(search, user_limit, user_offset)
-    else:
-        all_users = api.list_users(user_limit, user_offset)
-
-    next_page = len(all_users) == user_limit
-
-    all_users.sort(key=lambda x: x['creation_time'], reverse=True)
-
-    if not show_disabled:
-        all_users = [x for x in all_users if x['enabled']]
-    page_users = all_users
-    #paginator = Paginator(all_users, 25)
-    #try:
-    #    page_users = paginator.page(page)
-    #except (EmptyPage, InvalidPage):
-    #    page_users = paginator.page(paginator.num_pages)
-    
-    initial = []
-    for x in page_users:
-        entry = dict(username=x['username'],
-                     email=x['email'], 
-                     orig_email=x['email'], 
-                     user_detail=x['email'], 
-                     name=x['name'], 
-                     gigs_stored=round(x['bytes_stored'] / (10.0 ** 9), 2),
-                     creation_time=datetime.datetime.fromtimestamp(x['creation_time']),
-                     last_login=datetime.datetime.fromtimestamp(x['last_login']) if x['last_login'] else None,
-                     group_id=x['group_id'] if 'group_id' in x else '', 
-                     escrow_login=x['username'],
-                     enabled=x['enabled'],
-                    )
-        if features['ldap'] and entry['group_id']:
-            entry['group_id'] = get_group_name(groups, entry['group_id'])
-        initial.append(entry)
-    users = UserFormSet(initial=initial)
-    user_csv = UserCSVForm()
-    new_user = NewUserForm()
-
-    if request.method == 'POST':
-        if request.POST.get('form', '') == 'csv':
-            user_csv = UserCSVForm(request.POST, request.FILES)
-            if user_csv.is_valid():
-                return redirect('blue_mgnt:users_saved')
-        elif request.POST.get('form', '') == 'new_user':
-            new_user = NewUserForm(request.POST)
-            if new_user.is_valid():
-                return redirect('blue_mgnt:users_saved')
-        else:
-            users = UserFormSet(request.POST)
-            if request.user.has_perm('blue_mgnt.can_manage_users') and users.is_valid():
-                for form in users.deleted_forms:
-                    orig_email = form.cleaned_data['orig_email']
-                    api.delete_user(orig_email)
-                    log_admin_action(request, 'delete user "%s"' % orig_email)
-                return redirect(reverse('blue_mgnt:users_saved') + '?search=%s' % search)
-
-    return render_to_response('users.html', dict(
-        user=request.user,
-        page=page,
-        config=config,
-        next_page=next_page,
-        new_user=new_user,
-        username=username,
-        users=users,
-        user_csv=user_csv,
-        features=api.enterprise_features(),
-        page_users=page_users,
-        saved=saved,
-        account_info=account_info,
-        show_disabled=show_disabled,
-        search=search,
-        search_back=search_back,
-    ),
-    RequestContext(request))
-
 @enterprise_required
 def user_detail(request, api, account_info, config, username, email, saved=False):
     user = api.get_user(email)
@@ -691,6 +442,25 @@ def process_row(row):
                 webapi_enable=bool(row.get('webapi_enable', True)),
                )
 
+def get_group_form(config, plans, features, show_user_source):
+    class GroupForm(forms.Form):
+        if config['enable_local_users'] and show_user_source:
+            user_source = forms.ChoiceField([('ldap', 'ldap'), ('local', 'local')])
+        name = forms.CharField()
+        plan_id = forms.ChoiceField(
+            [(p['plan_id'], '%s GB' % (p['storage_bytes'] / SIZE_OF_GIGABYTE)) \
+             for p in plans], 
+            label='Plan'
+        )
+        webapi_enable = forms.BooleanField(required=False, initial=True)
+        if features['ldap']:
+            check_domain = forms.BooleanField(required=False)
+            ldap_dn = forms.CharField(required=False, 
+                                      widget=forms.Textarea(attrs={'rows':'1', 'cols':'60'}))
+        priority = forms.IntegerField(initial=0, required=False)
+        group_id = forms.IntegerField(widget=forms.HiddenInput, required=False)
+    return GroupForm
+
 @enterprise_required
 @permission_required('blue_mgnt.can_view_groups')
 def groups(request, api, account_info, config, username, saved=False):
@@ -702,6 +472,7 @@ def groups(request, api, account_info, config, username, saved=False):
 
     if not search:
         search = request.POST.get('search', '')
+
 
     class GroupCSVForm(forms.Form):
         csv_file = forms.FileField(label='Group CSV')
@@ -723,23 +494,6 @@ def groups(request, api, account_info, config, username, saved=False):
             return data
 
 
-    class GroupForm(forms.Form):
-        if config['enable_local_users']:
-            user_source = forms.ChoiceField([('ldap', 'ldap'), ('local', 'local')])
-        name = forms.CharField()
-        plan_id = forms.ChoiceField(
-            [(p['plan_id'], '%s GB' % (p['storage_bytes'] / SIZE_OF_GIGABYTE)) \
-             for p in plans], 
-            label='Plan'
-        )
-        webapi_enable = forms.BooleanField(required=False, initial=True)
-        if features['ldap']:
-            check_domain = forms.BooleanField(required=False)
-            ldap_dn = forms.CharField(required=False, 
-                                      widget=forms.Textarea(attrs={'rows':'1', 'cols':'60'}))
-        priority = forms.IntegerField(initial=0, required=False)
-        group_id = forms.IntegerField(widget=forms.HiddenInput, required=False)
-
     class DeleteGroupForm(forms.Form):
         deleted_group_id = forms.ChoiceField([(g['group_id'], g['name']) for g in groups_list],
                                             label='Group to delete')
@@ -758,6 +512,7 @@ def groups(request, api, account_info, config, username, saved=False):
         def clean(self):
             if any(self.errors):
                 return
+            config_mgr_ = config_mgr.ConfigManager(config_mgr.default_config())
             for x in range(0, self.total_form_count()):
                 form = self.forms[x]
                 try:
@@ -784,24 +539,25 @@ def groups(request, api, account_info, config, username, saved=False):
                                          'create group with data: %s' % data)
                         group_id = api.create_group(data)
                     found = False
-                    for g in config.config['groups']:
+                    for g in config_mgr_.config['groups']:
                         if g['group_id'] == group_id:
                             g['ldap_id'] = form.cleaned_data['ldap_dn']
                             g['priority'] = form.cleaned_data['priority']
-                            g['user_source'] = form.cleaned_data['user_source']
                             found = True
                     if not found:
-                        config.config['groups'].append(
+                        config_mgr_.config['groups'].append(
                             dict(group_id=group_id, 
                                     type='dn',
                                     ldap_id=form.cleaned_data['ldap_dn']
                                 ))
                 except api.DuplicateGroupName:
                     raise forms.ValidationError('Duplicate group name')
-            config.apply_config()
+            config_mgr_.apply_config()
 
 
-    GroupFormSet = formset_factory(GroupForm, extra=0, formset=BaseGroupFormSet)
+    GroupForm = get_group_form(config, plans, features, True)
+    GroupFormSet = formset_factory(get_group_form(config, plans, features, False), 
+                                   extra=0, formset=BaseGroupFormSet)
 
     if search_back == '1':
         search = ''
@@ -812,9 +568,8 @@ def groups(request, api, account_info, config, username, saved=False):
         initial = groups_list
     
     if features['ldap'] and MANAGEMENT_VM:
-        config = config_mgr.ConfigManager(config_mgr.default_config())
         for i in initial:
-            for g in config.config['groups']:
+            for g in config['groups']:
                 if i['group_id'] == g['group_id']:
                     i['ldap_dn'] = g['ldap_id']
                     i['priority'] = g['priority']
@@ -838,15 +593,15 @@ def groups(request, api, account_info, config, username, saved=False):
                 log_admin_action(request, 'create group with data: %s' % data)
                 group_id = api.create_group(data) 
 
-                config = config_mgr.ConfigManager(config_mgr.default_config())
+                config_mgr_ = config_mgr.ConfigManager(config_mgr.default_config())
                 data = dict(group_id=group_id, 
                             type='dn',
                             ldap_id=new_group.cleaned_data['ldap_dn'],
                             priority=new_group.cleaned_data['priority'],
                             user_source=new_group.cleaned_data.get('user_source', 'ldap')
                            )
-                config.config['groups'].append(data)
-                config.apply_config()
+                config_mgr_.config['groups'].append(data)
+                config_mgr_.apply_config()
                 return redirect('blue_mgnt:groups_saved')
         elif request.POST.get('form', '') == 'csv':
             group_csv = GroupCSVForm(request.POST, request.FILES)
@@ -869,6 +624,8 @@ def groups(request, api, account_info, config, username, saved=False):
                     return redirect(reverse('blue_mgnt:groups_saved') + '?search=%s' % search)
 
     return render_to_response('groups.html', dict(
+        initial=initial,
+        config=config,
         user=request.user,
         username=username,
         new_group=new_group,
@@ -988,10 +745,10 @@ def settings(request, api, account_info, config, username, saved=False):
             log_admin_action(request, 'update settings with data: %s' % data)
             api.update_enterprise_settings(data)
 
-            config = config_mgr.ConfigManager(config_mgr.default_config())
+            config_mgr_ = config_mgr.ConfigManager(config_mgr.default_config())
             local_users = cleaned_data['enable_local_users']
-            config.config['enable_local_users'] = local_users
-            config.apply_config()
+            config_mgr_.config['enable_local_users'] = local_users
+            config_mgr_.apply_config()
 
             return cleaned_data
 
@@ -1038,8 +795,8 @@ def settings(request, api, account_info, config, username, saved=False):
             return redirect('blue_mgnt:settings_saved')
         elif request.POST.get('form', '') == 'restart_directory':
             log_admin_action(request, 'restart directory')
-            config = config_mgr.ConfigManager(config_mgr.default_config())
-            config._kick_services()
+            config_mgr_ = config_mgr.ConfigManager(config_mgr.default_config())
+            config_mgr_._kick_services()
             return redirect('blue_mgnt:settings_saved')
         else:
             options = OpenmanageOptsForm(request.POST)
@@ -1119,9 +876,9 @@ def password(request, api, account_info, config, username, saved=False):
                 new_password = password_form.cleaned_data['password']
                 log_admin_action(request, 'change password')
                 api.update_enterprise_password(new_password)
-                config = config_mgr.ConfigManager(config_mgr.default_config())
-                config.config['api_password'] = new_password
-                config.apply_config()
+                config_mgr_ = config_mgr.ConfigManager(config_mgr.default_config())
+                config_mgr_.config['api_password'] = new_password
+                config_mgr_.apply_config()
                 request.session['password'] = new_password
                 return redirect('blue_mgnt:password_saved')
 

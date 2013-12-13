@@ -2,6 +2,7 @@ from django.conf.urls import *
 from django.conf import settings as django_settings
 
 from views.views import *
+from views.users import *
 from views.managementvm import *
 
 urlpatterns = patterns('',

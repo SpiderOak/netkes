@@ -1,0 +1,7 @@
+#users td {
+    font-size: 14px;
+    padding:8px; 
+    max-width:160px; 
+    overflow:hidden; 
+    text-overflow:ellipsis;
+}

@@ -26,6 +26,10 @@ insert into admin_token_avatar_use (token, avatar_id)
 values (%(token)s, (select avatar_id from users where email=%(email)s))
 '''
 
+SELECT_LOCAL_USER = '''
+select * from passwords where email=%s;
+'''
+
 @contextmanager
 def get_cursor(config):
     try:
@@ -87,7 +91,6 @@ def authenticator(config, username, password):
     auth_method = config.get('auth_method', None)
     auth_source = None
 
-    print 'checking'
     if admin_token_auth(config, username, password):
         return True
 
@@ -110,5 +113,12 @@ def authenticator(config, username, password):
         log.error("No user authentication source provided, please check agent_config.")
         log.warn("Returning failed authentication for %s" % (username,))
         return False
+
+    with get_cursor(config) as cur:
+        cur.execute(SELECT_LOCAL_USER, [username])
+        if cur.rowcount == 1:
+            log.debug('Found user %s in the local users table' % username)
+            from account_mgr.user_source import local_source
+            auth_source = local_source
 
     return auth_source.can_auth(config, username, password)

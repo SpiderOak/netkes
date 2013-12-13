@@ -18,13 +18,6 @@
 <script src="/static/blue_common/scripts/jquery.form.js"></script>
 <script type="text/javascript">
     $(function(){
-        $('#users input').click(function(){
-            $(this).blur();
-        });
-        
-        $('#users select').click(function(){
-            $(this).blur();
-        });
     });
 </script>
 </%def>
@@ -111,6 +104,7 @@ ${parent.progressbar()}
 </div>
 % endif
 </div>
+
 <div class="section">
 <a name="user_table" style="display:hidden"></a>
     <h2 style="float:left">Users</h2>
@@ -120,13 +114,6 @@ ${parent.progressbar()}
         <input id="input_search" name="search" type="text" value="${search}" style="width:260px; margin-right:12px" placeholder="Name or Email" />
         <input type='submit' value="Find Users" class="btn btn-primary">
     </form>
-    % if search:
-    <!--
-    <form method="get">
-        <input type="submit" value="Reset" class="btn btn" />
-    </form>
-    -->
-    % endif
 </div>
     <a href="${reverse('blue_mgnt:users_csv_download')}" class="btn btn-primary" style="display:inline; float:right; padding:0 10px">
         <i class="icon-chevron-down icon-white"></i>
@@ -137,15 +124,18 @@ ${parent.progressbar()}
         <div style="height:60px"></div>
 <form action="${reverse('blue_mgnt:users')}" method="post" action="">
     ${users.management_form}
+    ${delete_user_formset.management_form}
+    ${tmp_user_formset.management_form}
     <table id="users" class="table" style="max-width:100%; clear:both">
         <thead>
             <tr class="bigger">
                 % if not features['email_as_username']:
                 <th>Username</th>
                 % endif
-                <th>Full Name</th>
+                <th>Name</th>
                 <th>Email</th>
                 <th>Group</th>
+                <th>Enabled</th>
                 <th>GBs Stored</th>
                 <th>Creation Time</th>
                 <th>Last Login</th>
@@ -153,52 +143,62 @@ ${parent.progressbar()}
                     <th>Storage Login</th>
                 % endif
                 <th>User Detail</th>
-                <th>Enabled</th>
-                % if user.has_perm('blue_mgnt.can_manage_users'):
                 <th id="del">Delete User<br />
                     <input id="sel_all" type="checkbox">
                 </th>
-                % endif
             </tr>
         </thead>
         <tbody>
-            % for form in users.forms:
+            <% local_index = 0 %>
+            % for x, curr_user in enumerate(all_users):
             <tr>
-                % for x, field in enumerate(form.visible_fields()):
-                <td class="bigger" style="padding:8px; max-width:160px; overflow:hidden; text-overflow:ellipsis">
-                    % if not x:
-                        % for hidden in form.hidden_fields():
-                        ${hidden}
-                        % endfor
-                    % endif
-                    % if field.name == 'DELETE' and (not features['ldap'] or not form.initial.get('enabled', 1)) and user.has_perm('blue_mgnt.can_manage_users'):
-                        <span class="del_box">${field}</span>
-                    % elif field.name != 'DELETE':
-                        ${field}
-                    % endif 
-                    % if field.errors:
-                        <br />
-                        <span class="table_errors">
-                        % for error in field.errors:
-                            ${error}
-                        % endfor
-                        </span>
-                        </td>
-                    %else:
-                        </td>
-                    % endif
+                % for hidden in delete_user_formset[x].hidden_fields():
+                    ${hidden}
                 % endfor
-                % if not features['ldap']:
-                <td style="width:160px; display:none">
-                    <a href="" class="btn btn-danger pie">
-                        <i class="icon-remove icon-white icon_adjust"></i>
-                    </a>
-                    <a href="" class="btn btn-success pie">
-                        <i class="icon-eye-open icon-white icon_adjust"></i>
+                % if not features['email_as_username']:
+                <td>${curr_user['username']}</td>
+                % endif
+                % if curr_user['is_local_user']:
+                    % for hidden in tmp_user_formset[local_index].hidden_fields():
+                        ${hidden}
+                    % endfor
+                    % for field in tmp_user_formset[local_index].visible_fields():
+                        <td>
+                            ${field}
+                        % if field.errors:
+                            <br />
+                            <span class="table_errors">
+                            % for error in field.errors:
+                                ${error}
+                            % endfor
+                            </span>
+                        % endif
+                        </td>
+                    % endfor
+                % else:
+                <td>${curr_user['name']}</td>
+                <td>${curr_user['email']}</td>
+                <td>${curr_user['group_name']}</td>
+                <td>${curr_user['enabled']}</td>
+                % endif
+                <td>${curr_user['gigs_stored']}</td>
+                <td>${curr_user['creation_time']}</td>
+                <td>${curr_user['last_login'] if curr_user['last_login'] else ''}</td>
+                <td><a href="${curr_user['login_link']}">Login</a></td>
+                <td>
+                    <a href="${reverse('blue_mgnt:user_detail', args=[curr_user['email']])}">
+                        Detail
                     </a>
                 </td>
-                % endif
+                <td>
+                    % if (not curr_user['enabled'] or curr_user['is_local_user']) and user.has_perm('blue_mgnt.can_manage_users'):
+                    <span class="del_box">${delete_user_formset[x]['DELETE']}</span>
+                    % endif
+                </td>
             </tr>
+                % if curr_user['is_local_user']:
+                    <% local_index += 1 %>
+                % endif
             % endfor
         </tbody>
     </table>

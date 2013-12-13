@@ -86,31 +86,3 @@ def set_multi_passwords(db_conn, emails, passwords):
     )
 
     db_conn.commit()
-
-def create_user(db_conn, user, password):
-    """
-    Creates a user given a dictionary representing the user's data.
-    """
-
-    if set(['email', 'firstname', 'lastname', 'group_id']) != set(user.keys()):
-        raise TypeError("Need correct keys in the user dict")
-
-    my_unique_id = uuid.uuid4()
-
-    # TODO: Add API call here. Make sure we return gotten_avatar!
-
-    gotten_avatar = 1
-
-    cur = db_conn.cursor()
-    try:
-        cur.execute(
-            "insert into users (uniqueid, email, avatar_id, givenname, surname, group_id) "
-            "values (%s, %s, %s, %s, %s, %s)",
-            my_unique_id, user['email'], gotten_avatar, 
-            user['firstname'], user['lastname'], user['group_id'])
-    except:
-        db_conn.rollback()
-    
-    db_conn.commit()
-
-def modify_user
