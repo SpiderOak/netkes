@@ -27,6 +27,7 @@ from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth.decorators import permission_required
 from django.forms.util import ErrorList
 from django.forms.forms import NON_FIELD_ERRORS
+from django.core.servers.basehttp import FileWrapper
 
 from interval.forms import IntervalFormField
 from mako.lookup import TemplateLookup
@@ -260,6 +261,18 @@ def enterprise_required(fun):
                    request.session['username'], *args, **kwargs)
     return new_fun
 
+@enterprise_required
+def download_logs(request, api, account_info, config, username):
+    date = datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
+    filename = 'openmanage-logs-%s.tar.bz2' % date
+    path = '/opt/openmanage/tmp_logs/%s' % filename
+
+    call(['/opt/openmanage/bin/gather_logs.sh', date])
+
+    response = HttpResponse(FileWrapper(open(path)),
+                            mimetype='application/bzip2')
+    response['Content-Disposition'] = 'attachment; filename=%s' % filename
+    return response
 
 @enterprise_required
 def users_csv(request, api, account_info, config, username):

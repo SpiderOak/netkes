@@ -30,6 +30,7 @@ urlpatterns = patterns('',
     (r'^admingroups/$', admin_groups, {}, 'admin_groups'),
     (r'^admingroups/saved/$', admin_groups, {'saved': True}, 'admin_groups_saved'),
     (r'^logs/$', logs, {}, 'logs'),
+    (r'^logs/download/$', download_logs, {}, 'download_logs'),
     (r'^validate/$', validate, {}, 'validate'),
 )
 
