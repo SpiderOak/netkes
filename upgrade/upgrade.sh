@@ -3,10 +3,10 @@
 # Standard  upgrade script for OMVAs.  We expect this script to be run
 # via sudo.
 #
-# upgrade.sh upgradefile.tgz brand_id
+# See usage below.
 #
 
-set -x
+#set -x
 #set -e
 #set -o pipefail
 
