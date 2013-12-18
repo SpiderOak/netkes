@@ -8,6 +8,7 @@
         % if user.has_perm('blue_mgnt.can_view_groups'):
         <li class="tl"><a id="nav_groups" class="lnk_business" href="${reverse('blue_mgnt:groups')}">Groups</a></li>
         % endif
+        <li class="tl"><a id="nav_policy" class="lnk_business" href="${reverse('blue_mgnt:policy')}">Policy</a></li>
         % if user.has_perm('blue_mgnt.can_manage_shares'):
         <li class="tl"><a id="nav_shares" class="lnk_shares" href="${reverse('blue_mgnt:shares')}">Shares</a></li>
         % endif

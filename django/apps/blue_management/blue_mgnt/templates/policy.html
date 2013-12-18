@@ -1,0 +1,129 @@
+<%inherit file="main.html" />
+
+<%def name="title()">Users - ${parent.title()}</%def>
+
+<%def name="head()">
+<style type="text/css">
+#container {
+    width:1070px;
+}
+</style>
+</%def>
+
+
+<%def name="top_of_head()">
+</%def>
+
+<%def name="scripts()">
+<script src="/static/blue_common/scripts/jquery.form.js"></script>
+<script type="text/javascript">
+    $(function(){
+    });
+</script>
+</%def>
+
+<%def name="body_classes()">policy ${parent.body_classes()}</%def>
+<%def name="container()">
+<h1 class="header">Enterprise Partner: <span>${username} </span></h1>
+<div class="recenter">
+<div class="division">
+${parent.progressbar()}
+</div>
+% if saved:
+<p id="saved" class="bigger" style="display:none">Changes saved successfully!</p>
+% endif
+
+<div id="mk_new_policy" class="section">
+<h2>Create New Policy</h2>
+<form action="${reverse('blue_mgnt:policy')}" enctype="multipart/form-data" method="post">
+    <table class="table" style="max-width:100%">
+        <tr>
+        %for x, field in enumerate(new_policy.visible_fields()):
+            <td>
+                ${field.label_tag()}
+                ${field}
+            
+            %if field.errors:
+                <br />
+                <span class="errors">
+                %for error in field.errors:
+                    ${error}
+                %endfor
+                </span>
+            </td>
+            %else:
+            </td>
+            %endif
+
+        %endfor
+            <td style="padding-top:30px">
+            <input type='submit' value="+ New User" class="btn btn-primary">
+            </td>
+        </tr>
+    </table>
+    <input type='hidden' value='new_policy' name='form'>
+    %for hidden in new_policy.hidden_fields():
+        ${hidden}
+    %endfor
+</form>
+</div>
+</div>
+
+<div class="section">
+<h2 style="float:left">Policies</h2>
+        <div style="height:60px"></div>
+<form action="${reverse('blue_mgnt:policy')}" method="post" action="">
+    ${policy_formset.management_form}
+    <table id="policy" class="table" style="max-width:100%; clear:both">
+        <thead>
+            <tr class="bigger">
+                <th>Name</th>
+                <th>Detail</th>
+                <th id="del">Delete User<br />
+                    <input id="sel_all" type="checkbox">
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+        % if policy_formset.non_form_errors():
+        <tr><td class="bigger">${policy_formset.non_form_errors()}</td></tr>
+        % endif
+        % for x, form in enumerate(policy_formset.forms):
+            % for hidden in form.hidden_fields():
+            ${hidden}
+            % endfor
+        <tr>
+            % for field in form.visible_fields():
+            % if field.name == 'DELETE':
+            <td>
+                <a class="bigger" href="${reverse('blue_mgnt:policy_detail', args=(policies[x]['name'],))}">
+                    Detail
+                </a>
+            </td>
+            % endif
+            <td>
+                % if field.name == 'DELETE':
+                    <span class="del_box">${field}</span>
+                % else:
+                    ${field}
+                    %if field.errors:
+                        <br />
+                        %for error in field.errors:
+                            <span class="table_errors">
+                                ${error}
+                            </span>
+                        %endfor
+                    %endif
+                % endif
+            </td>
+            % endfor
+        </tr>
+        % endfor
+        </tbody>
+    </table>
+<div style="text-align:center">
+    <input type='submit' value="Save Changes" class="btn btn-primary" id="save">
+</div>
+</form>
+</div>
+</%def>

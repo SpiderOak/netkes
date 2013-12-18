@@ -3,6 +3,7 @@ from django.conf import settings as django_settings
 
 from views.views import *
 from views.users import *
+from views.policy import *
 from views.managementvm import *
 
 urlpatterns = patterns('',
@@ -19,6 +20,11 @@ urlpatterns = patterns('',
     (r'^users/(?P<email>.+)/$', user_detail, {}, 'user_detail'),
     (r'^groups/$', groups, {}, 'groups'),
     (r'^groups/saved/$', groups, {'saved': True}, 'groups_saved'),
+    (r'^policy/$', policy, {}, 'policy'),
+    (r'^policy/saved/$', policy, {'saved': True}, 'policy_saved'),
+    (r'^policy/detail/(?P<name>.+)/saved/$', policy_detail, {'saved': True}, 'policy_detail_saved'),
+    (r'^policy/detail/(?P<name>.+)/$', policy_detail, {}, 'policy_detail'),
+    (r'^shares/$', shares, {}, 'shares'),
     (r'^shares/$', shares, {}, 'shares'),
     (r'^shares/saved/$', shares, {'saved': True}, 'shares_saved'),
     (r'^settings/$', settings, {}, 'settings'),
