@@ -9,7 +9,7 @@
 #  version_number is a tag in netkes, like 1.2 or 1.2.3a
 
 set -e
-#set -x
+set -x
 set -o pipefail
 
 pushd $1 > /dev/null
