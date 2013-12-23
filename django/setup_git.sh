@@ -8,7 +8,6 @@ pushd ${1:?}/django
 
 git clone https://github.com/jimfunk/django-postgresql-netfields.git
 
-mkdir apps
 pushd apps
 
 git clone https://spideroak.com/dist/so_common.git
