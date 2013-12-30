@@ -1,0 +1,24 @@
+{
+    "api_password": "",
+    "api_root": "https://spideroak.com/apis/accounts/v1/",
+    "api_user": "{{BRAND}}",
+    "auth_method": "",
+    "db_pass": "initial",
+    "dir_auth_source": "",
+    "dir_base_dn": "",
+    "dir_fname_source": "",
+    "dir_guid_source": "",
+    "dir_lname_source": "",
+    "dir_member_source": "",
+    "dir_password": "",
+    "dir_type": "posix",
+    "dir_uid_source": "",
+    "dir_uri": "",
+    "dir_user": "",
+    "dir_username_source": "",
+    "enable_local_users": true,
+    "groups": [
+    ],
+    "listen_addr": "0.0.0.0",
+    "listen_port": 443
+}

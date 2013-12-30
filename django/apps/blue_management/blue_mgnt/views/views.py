@@ -189,14 +189,22 @@ def login_user(request):
     if request.method == 'POST':
         form = LoginForm(request.POST)
         if form.is_valid():
+            password = form.cleaned_data['password']
             user = authenticate(username=form.cleaned_data['username'], 
-                                password=form.cleaned_data['password'])
+                                password=password)
             if user and user.is_active:
                 login(request, user)
-                log_admin_action(request, 'logged in from ip: %s' % request.META['REMOTE_ADDR'])
+                remote_addr = request.META['HTTP_REMOTE_ADDR']
+                log_admin_action(request, 'logged in from ip: %s' % remote_addr)
                 config = read_config_file()
+
+                if not config['api_password']:
+                    config_mgr_ = config_mgr.ConfigManager(config_mgr.default_config())
+                    config_mgr_.config['api_password'] = password
+                    config_mgr_.apply_config()
+
                 request.session['username'] = config['api_user']
-                request.session['password'] = config['api_password']
+                request.session['password'] = password
                 return redirect('blue_mgnt:index')
             else:
                 errors = form._errors.setdefault(NON_FIELD_ERRORS , ErrorList())
