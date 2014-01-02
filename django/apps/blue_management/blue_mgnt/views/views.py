@@ -10,10 +10,11 @@ import logging
 
 from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import redirect
+from django.shortcuts import render_to_response as django_render_to_response
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ObjectDoesNotExist
 from django.template.context import Context
-from django.template import RequestContext
+from django.template import RequestContext, TemplateDoesNotExist
 from django import forms
 from django.forms.models import modelformset_factory
 from django.forms.formsets import formset_factory
@@ -47,7 +48,7 @@ LOG = logging.getLogger('admin_actions')
 
 MANAGEMENT_VM = getattr(django_settings, 'MANAGEMENT_VM', False)
 APP_DIR = os.path.abspath(os.path.dirname(__file__))
-LOOKUP = TemplateLookup(directories=[os.path.join(APP_DIR, '../templates')],
+LOOKUP = TemplateLookup(directories=[os.path.join(APP_DIR, '../mako_templates')],
                         input_encoding='utf-8',
                         output_encoding='utf-8',
                         encoding_errors='replace')
@@ -55,6 +56,20 @@ SHARE_URL = os.getenv('SHARE_URL', 'https://spideroak.com')
 SIZE_OF_GIGABYTE = 10 ** 9
 
 def render_to_response(template, data=None, context=None):
+    # pass ?force_template=mako to force using mako template
+    # or ?force_template=django to force using Django
+    try:
+        force_template = context['request'].GET.get('force_template')
+    except (AttributeError, KeyError):
+        force_template = None
+
+    if force_template != 'mako':
+        try:
+            return django_render_to_response(template, data, context_instance=context)
+        except TemplateDoesNotExist as e:
+            if force_template == 'django':
+                raise e
+
     template = LOOKUP.get_template(template)
     if data is None:
         data = {}
