@@ -7,6 +7,7 @@ from base64 import b32encode
 import urlparse
 import ldap
 import logging
+import pytz
 
 from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import redirect
@@ -706,6 +707,45 @@ def shares(request, api, account_info, config, username, saved=False):
     ),
     RequestContext(request))
 
+def save_settings(request, api, options):
+    cleaned_data = options.cleaned_data
+    data = dict()
+    data.update(cleaned_data)
+    del data['timezone']
+    if 'enable_local_users' in data: 
+        del data['enable_local_users']
+    if 'share_link_ttl' in data: 
+        data['share_link_ttl'] = data['share_link_ttl'].days * 1440
+    if 'autopurge_interval' in data:
+        data['autopurge_interval'] = data['autopurge_interval'].days
+    if 'versionpurge_interval' in data:
+        data['versionpurge_interval'] = data['versionpurge_interval'].days
+
+    log_admin_action(request, 'update settings with data: %s' % data)
+    api.update_enterprise_settings(data)
+
+    config_mgr_ = config_mgr.ConfigManager(config_mgr.default_config())
+    local_users = cleaned_data['enable_local_users']
+    config_mgr_.config['enable_local_users'] = local_users
+    config_mgr_.apply_config()
+
+    with open('/etc/timezone', 'w') as f:
+        f.write(cleaned_data['timezone'])
+    call(['dpkg-reconfigure', '-f', 'noninteractive', 'tzdata'])
+
+
+class IPBlockForm(forms.Form):
+    ip_block = forms.CharField(max_length=43, label='IP Block:')
+
+    def clean_ip_block(self):
+        data = self.cleaned_data['ip_block']
+        try:
+            ip = IP(data)
+        except ValueError, e:
+            raise forms.ValidationError('Invalid IP Block')
+        return data
+
+
 @enterprise_required
 @permission_required('blue_mgnt.can_view_settings')
 def settings(request, api, account_info, config, username, saved=False):
@@ -735,56 +775,26 @@ def settings(request, api, account_info, config, username, saved=False):
             initial=datetime.timedelta(days=opts['versionpurge_interval'])
         )
         support_email = forms.EmailField(initial=opts['support_email'])
-
         enable_local_users = forms.BooleanField(
             initial=config.get('enable_local_users', False),
             required=False
+        )
+        timezone = forms.ChoiceField(
+            choices=[(x, x) for x in pytz.common_timezones],
+            initial=file('/etc/timezone').read().strip(),
         )
 
         def __init__(self, *args, **kwargs):
             super(OpenmanageOptsForm, self).__init__(*args, **kwargs)
             
             if features['netkes']:
-                self.fields['omva_url'] = forms.URLField(label='OpenManage Virtual Appliance URL', 
-                                                        initial=opts['omva_url'], 
-                                                        help_text='This address must be accessible from SpiderOak. Please refer to the OpenManage documentation.')
-
-        def clean(self):
-            cleaned_data = super(OpenmanageOptsForm, self).clean()
-
-            data = dict()
-            data.update(cleaned_data)
-            if 'enable_local_users' in data: 
-                del data['enable_local_users']
-            if 'share_link_ttl' in data: 
-                data['share_link_ttl'] = data['share_link_ttl'].days * 1440
-            if 'autopurge_interval' in data:
-                data['autopurge_interval'] = data['autopurge_interval'].days
-            if 'versionpurge_interval' in data:
-                data['versionpurge_interval'] = data['versionpurge_interval'].days
-
-            log_admin_action(request, 'update settings with data: %s' % data)
-            api.update_enterprise_settings(data)
-
-            config_mgr_ = config_mgr.ConfigManager(config_mgr.default_config())
-            local_users = cleaned_data['enable_local_users']
-            config_mgr_.config['enable_local_users'] = local_users
-            config_mgr_.apply_config()
-
-            return cleaned_data
+                self.fields['omva_url'] = forms.URLField(
+                    label='OpenManage Virtual Appliance URL', 
+                    initial=opts['omva_url'], 
+                    help_text='This address must be accessible from SpiderOak. Please refer to the OpenManage documentation.'
+                )
 
     options = OpenmanageOptsForm()
-
-    class IPBlockForm(forms.Form):
-        ip_block = forms.CharField(max_length=43, label='IP Block:')
-
-        def clean_ip_block(self):
-            data = self.cleaned_data['ip_block']
-            try:
-                ip = IP(data)
-            except ValueError, e:
-                raise forms.ValidationError('Invalid IP Block')
-            return data
 
     class BaseIPBlockFormSet(forms.formsets.BaseFormSet):
         def clean(self):
@@ -823,6 +833,7 @@ def settings(request, api, account_info, config, username, saved=False):
             options = OpenmanageOptsForm(request.POST)
 
             if options.is_valid():
+                save_settings(request, api, options)
                 return redirect('blue_mgnt:settings_saved')
 
     return render_to_response('settings.html', dict(

@@ -1,12 +1,10 @@
 #!/bin/bash
 
-if [ -e ~/.ran_firstlogin ]; then
+if [ -e ~/.ran_firstsetup ]; then
     exit 0
 fi
 
 . /etc/default/openmanage
-
-sudo dpkg-reconfigure tzdata
 
 # Setup the NetKES escrow keys.
 if [ ! -f /var/lib/openmanage/keys/base.cfg ]; then
@@ -19,15 +17,17 @@ python manage.py syncdb --noinput
 python manage.py createsuperuser --noinput --username="console_admin" --email="invalid@email.act"
 popd
 
-touch ~/.ran_firstlogin
+if [ -e $OPENMANAGE_ROOT/netkes/account_mgr/user_source ]; then
+    sudo ln -s $OPENMANAGE_ROOT/bin/run_openmanage.sh /etc/cron.hourly/run_openmanage || exit 1
+fi
 
-echo "PATH=$OPENMANAGE_ROOT/bin:\$PATH" >> ~/.bashrc
+sudo mkdir -p /etc/service/openmanage/supervise
+sudo ln -s $OPENMANAGE_ROOT/etc/service/openmanage/run /etc/service/openmanage/run
+sudo sv start openmanage
 
-echo "Great, all done!
+python $HOME/netkes/upgrade/apply_sql.py
 
-To setup the directory agent, please configure your settings, and then run
-'finish_setup.sh' to start services.
+touch ~/.ran_firstsetup
 
-Please see the documentation for more detail.
 
-"
+
