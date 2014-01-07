@@ -195,7 +195,7 @@ def login_user(request):
                                 password=password)
             if user and user.is_active:
                 login(request, user)
-                remote_addr = request.META['HTTP_REMOTE_ADDR']
+                remote_addr = request.META['REMOTE_ADDR']
                 log_admin_action(request, 'logged in from ip: %s' % remote_addr)
                 config = read_config_file()
 
