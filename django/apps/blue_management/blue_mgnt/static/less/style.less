@@ -27,10 +27,12 @@
 
 @ZEBRA_STRIPE: #fafafa;
 
+
 body {
 	font-size: 16px;
 	font-family: @FONTFAMILY_R;
 	color: #505050;
+    text-rendering: optimizeLegibility;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -145,7 +147,7 @@ nav {
 			right: 5px;
 		}
 		i {
-			top: -8px;
+			top: 0;
 			right: 5px;
 			color: white;
 			font-size: 45px;
@@ -215,6 +217,34 @@ h1.page-header {
 	}
 	.actions {
 		float: right;
+        
+        form {
+            display: inline-block;
+            position: relative;
+        }
+
+        .widget-search-input {
+            width: 275px;
+            height: 30px;
+            border-radius: 5px;
+            border: 1px solid @NAVTAB_BORDER_COLOR;
+            text-indent: 12px;
+            color: darken(@NAVTAB_BORDER_COLOR, 10%);
+            font: 13px~"/"23px @FONTFAMILY_R;
+        }
+        .search-button {
+            height: 30px;
+            width: 28px;
+            font-size: 12px;
+            position: absolute;
+            top: 14px;
+            right: 0;
+            background-color: @NAVTAB_BORDER_COLOR;
+            border: none;
+            border-top-right-radius: 3px;
+            border-bottom-right-radius: 3px;
+            color: lighten(@NAVTAB_BORDER_COLOR, 3%);
+        }
 	}
 }
 

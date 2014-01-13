@@ -5,10 +5,13 @@
 {% block navtab %}{% include "partials/navtab-widget.html" with active="users" %}{% endblock navtab %}
 {% block content %}
 <h1 class="page-header">
-	<i class="icon">&#x1F464;</i> Users
+	<i class="ss-icon">&#x1F464;</i> Users
 	<div class="actions">
 		<button class="button button-primary">Add user</button>
-		<input type="text">
+        <form method="POST">
+		    <input type="text" class="widget-search-input" placeholder="Find Users by Name or Email">
+            <button class="search-button ss-icon">&#x1F50E;</button>
+        </form>
 	</div>
 </h1>
 <table class="widget-table">

@@ -32,6 +32,7 @@ urlpatterns = patterns('',
     (r'^logs/$', logs, {}, 'logs'),
     (r'^logs/download/$', download_logs, {}, 'download_logs'),
     (r'^validate/$', validate, {}, 'validate'),
+    (r'^favicon\.ico$', 'django.views.generic.simple.redirect_to', {'url': '/static/blue_mgnt/img/favicon.ico'}),
 )
 
 # We don't want to serve some pages *AT ALL* if we're not on a management VM.
