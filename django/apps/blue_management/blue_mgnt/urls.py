@@ -1,5 +1,6 @@
 from django.conf.urls import *
 from django.conf import settings as django_settings
+from django.views.generic import RedirectView
 
 from views.views import *
 from views.users import *
@@ -7,7 +8,7 @@ from views.managementvm import *
 from views.settings import *
 
 urlpatterns = patterns('',
-    (r'^$', index, {}, 'index'),
+    (r'^$', users, {}, 'users'),
     (r'^saved/$', index, {'saved': True}, 'index_saved'),
     (r'^login/$', login_user, {}, 'login'),
     (r'^logout/$', logout, {}, 'logout'),
@@ -32,7 +33,7 @@ urlpatterns = patterns('',
     (r'^logs/$', logs, {}, 'logs'),
     (r'^logs/download/$', download_logs, {}, 'download_logs'),
     (r'^validate/$', validate, {}, 'validate'),
-    (r'^favicon\.ico$', 'django.views.generic.simple.redirect_to', {'url': '/static/blue_mgnt/img/favicon.ico'}),
+    (r'^favicon\.ico$', RedirectView.as_view(url='/static/blue_mgnt/img/favicon.ico')),
 )
 
 # We don't want to serve some pages *AT ALL* if we're not on a management VM.
