@@ -36,26 +36,33 @@
 		</th>
 	</thead>
 	<tbody>
+    {% for ppl in all_users %}
 		<tr>
-			<td>
-				John Smith
+            <td title="{{ ppl.name }}">
+                {{ ppl.name }}
 			</td>
-			<td>
-				jsmith@gmail.com
+			<td title="{{ ppl.email }}">
+                {{ ppl.email }}
 			</td>
-			<td>
-				10 GB
+			<td title="{{ ppl.group_name }}">
+                {{ ppl.group_name }}
 			</td>
-			<td>
-				100 MB
+			<td title="{{ ppl.gigs_stored }}">
+                {{ ppl.gigs_stored }}
 			</td>
-			<td>
-				Details
+			<td title="{{ ppl.user_detail }}">
+                {{ ppl.user_detail }}
 			</td>
-			<td>
-				Check
+			<td>	
+                {{ delete_user_formset }}
+                {{ delete_user_formset.hidden }}
 			</td>
-		</tr>
+        </tr>
+    {% empty %}
+        <tr>
+            <td>Not Found</td>
+        </tr>
+    {% endfor %}
 		<tr>
 			<td>
 				John Smith

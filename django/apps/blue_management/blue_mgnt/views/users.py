@@ -26,7 +26,7 @@ class LoginLinkWidget(ReadOnlyWidget):
     def render(self, name, value, attrs):
         username = super(LoginLinkWidget, self).render(name, value, attrs)
         b32_username = b32encode(username).rstrip('=')
-        link = '<a href="%s/storage/%s/escrowlogin">Login</a>' % (get_base_url(), 
+        link = '<a href="%s/storage/%s/escrowlogin">Login</a>' % (get_base_url(),
                                                                   b32_username,)
         return super(LoginLinkWidget, self).render(name, link, attrs)
 
@@ -73,7 +73,7 @@ def get_user_csv_form(api):
                 if row.get('enabled'):
                     user_info['enabled'] = row['enabled']
                 try:
-                    log_admin_action(request, 
+                    log_admin_action(request,
                                      'edit user %s through csv. ' % row['email'] + \
                                      'set user data to: %s' % user_info
                                     )
@@ -98,7 +98,7 @@ def get_new_user_form(api, features, config, local_groups):
                 raise forms.ValidationError('Your username must start with a letter, '
                                             'be at least four characters long, '
                                             'and may contain letters, numbers, '
-                                            'and underscores.') 
+                                            'and underscores.')
             return data
 
         def clean(self):
@@ -112,16 +112,16 @@ def get_new_user_form(api, features, config, local_groups):
             valid_username = username
             if not hasattr(self, username):
                 valid_username = True
-            
+
             if email and name and group_id and valid_username:
                 plan_id = [x for x in groups if x['group_id'] == int(group_id)][0]['plan_id']
-                data = dict(email=email, name=name, group_id=group_id, plan_id=plan_id) 
+                data = dict(email=email, name=name, group_id=group_id, plan_id=plan_id)
                 if username:
                     data.update(dict(username=username))
                 try:
-                    log_admin_action(request, 'create user: %s' % data) 
+                    log_admin_action(request, 'create user: %s' % data)
                     api.create_user(data)
-                    local_source.set_user_password(local_source._get_db_conn(config), 
+                    local_source.set_user_password(local_source._get_db_conn(config),
                                                    email, password)
                 except api.DuplicateEmail:
                     self._errors['email'] = self.error_class(["Email address already in use"])
@@ -180,7 +180,7 @@ def users(request, api, account_info, config, username, saved=False):
         if features['ldap']:
             name = forms.CharField(max_length=45, widget=ReadOnlyWidget, required=False)
             email = forms.CharField(widget=ReadOnlyWidget, required=False)
-            group_id = forms.ChoiceField([(g['group_id'], g['name']) for g in groups], 
+            group_id = forms.ChoiceField([(g['group_id'], g['name']) for g in groups],
                                          widget=ReadOnlyWidget, required=False)
         else:
             name = forms.CharField(max_length=45)
@@ -205,9 +205,9 @@ def users(request, api, account_info, config, username, saved=False):
                 return
             for x in range(0, self.total_form_count()):
                 form = self.forms[x]
-                data = dict(name=form.cleaned_data['name'], 
-                            group_id=form.cleaned_data['group_id'], 
-                            email=form.cleaned_data['email'], 
+                data = dict(name=form.cleaned_data['name'],
+                            group_id=form.cleaned_data['group_id'],
+                            email=form.cleaned_data['email'],
                             enabled=form.cleaned_data['enabled'],
                            )
                 if request.user.has_perm('blue_mgnt.can_manage_users'):
@@ -217,9 +217,9 @@ def users(request, api, account_info, config, username, saved=False):
                     api.edit_user(form.cleaned_data['orig_email'], data)
 
 
-    UserFormSet = formset_factory(UserForm, extra=0, formset=BaseUserFormSet, 
+    UserFormSet = formset_factory(UserForm, extra=0, formset=BaseUserFormSet,
                                   can_delete=True)
-    
+
     TmpUserForm = get_user_form(local_groups)
     TmpUserFormSet = formset_factory(TmpUserForm, extra=0, formset=BaseUserFormSet)
     DeleteUserFormSet = formset_factory(DeleteUserForm, extra=0, can_delete=True)
@@ -241,18 +241,18 @@ def users(request, api, account_info, config, username, saved=False):
     if not show_disabled:
         all_users = [x for x in all_users if x['enabled']]
     page_users = all_users
-    
+
     initial = []
     for x in page_users:
         entry = dict(username=x['username'],
-                     email=x['email'], 
-                     orig_email=x['email'], 
-                     user_detail=x['email'], 
-                     name=x['name'], 
+                     email=x['email'],
+                     orig_email=x['email'],
+                     user_detail=x['email'],
+                     name=x['name'],
                      gigs_stored=round(x['bytes_stored'] / (10.0 ** 9), 2),
                      creation_time=datetime.datetime.fromtimestamp(x['creation_time']),
                      last_login=datetime.datetime.fromtimestamp(x['last_login']) if x['last_login'] else None,
-                     group_id=x['group_id'] if 'group_id' in x else '', 
+                     group_id=x['group_id'] if 'group_id' in x else '',
                      escrow_login=x['username'],
                      enabled=x['enabled'],
                      login_link=get_login_link(x['username']),
@@ -286,7 +286,7 @@ def users(request, api, account_info, config, username, saved=False):
             user_formset = UserFormSet(request.POST, prefix='user')
             tmp_user_formset = TmpUserFormSet(request.POST, prefix='tmp_user')
             delete_user_formset = DeleteUserFormSet(request.POST, prefix='delete_user')
-            if (request.user.has_perm('blue_mgnt.can_manage_users') 
+            if (request.user.has_perm('blue_mgnt.can_manage_users')
                 and tmp_user_formset.is_valid()
                 and delete_user_formset.is_valid()):
                 for form in delete_user_formset.deleted_forms:
@@ -295,7 +295,7 @@ def users(request, api, account_info, config, username, saved=False):
                     log_admin_action(request, 'delete user "%s"' % orig_email)
                 return redirect(reverse('blue_mgnt:users_saved') + '?search=%s' % search)
 
-    return render_to_response('users.html', dict(
+    return render_to_response('index.html', dict(
         all_users=initial,
         user=request.user,
         page=page,

@@ -244,6 +244,10 @@ h1.page-header {
             border-top-right-radius: 3px;
             border-bottom-right-radius: 3px;
             color: lighten(@NAVTAB_BORDER_COLOR, 3%);
+                &:hover {
+                    color: #FFF;
+                    background-color: @NAVTAB_BGCOLOR_MANAGE;
+                }
         }
 	}
 }
@@ -305,6 +309,8 @@ h1.page-header {
 	&>tbody>tr>td {
 		padding: 14px 4px 14px 8px;
 		border-bottom: 1px solid #dddddd;
+        overflow:hidden;
+        text-overflow:ellipsis;
 	}
 	&>tbody>tr:nth-child(odd) {
 		background-color: @ZEBRA_STRIPE;

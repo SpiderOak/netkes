@@ -1,6 +1,6 @@
 import os
 import datetime
-import csv 
+import csv
 from subprocess import call
 import urllib2
 from base64 import b32encode
@@ -39,7 +39,7 @@ from blue_mgnt import models
 from so_common.regex import new_user_value_re_tests
 from so_common.forms import PasswordForm
 from netkes.account_mgr.accounts_api import Api
-from netkes.netkes_agent import config_mgr 
+from netkes.netkes_agent import config_mgr
 from netkes.common import read_config_file
 from netkes.account_mgr.user_source import ldap_source, local_source
 
@@ -112,7 +112,7 @@ def log_admin_action(request, message):
     if request.user.is_superuser:
         group_name = 'superuser'
     else:
-        group_name = request.user.groups.all()[0].name  
+        group_name = request.user.groups.all()[0].name
     LOG.info('%s (%s): %s' % (request.user.username, group_name, message))
 
 class LdapBackend(ModelBackend):
@@ -122,7 +122,7 @@ class LdapBackend(ModelBackend):
             return None
         api = Api.create(
             django_settings.ACCOUNT_API_URL,
-            username, 
+            username,
             password,
         )
         try:
@@ -150,13 +150,13 @@ class LdapBackend(ModelBackend):
             auth_user = ldap_source.get_auth_username(config, username)
             conn.simple_bind_s(auth_user, password)
             group = False
-            ldap_conn = ldap_source.OMLDAPConnection(config["dir_uri"], 
-                                                     config["dir_base_dn"], 
-                                                     config["dir_user"], 
+            ldap_conn = ldap_source.OMLDAPConnection(config["dir_uri"],
+                                                     config["dir_base_dn"],
+                                                     config["dir_user"],
                                                      config["dir_password"])
             for admin_group in models.AdminGroup.objects.all():
                 group = ldap_source.LdapGroup.get_group(
-                    ldap_conn, 
+                    ldap_conn,
                     config,
                     admin_group.ldap_dn,
                     admin_group.ldap_dn,
@@ -204,7 +204,7 @@ def login_user(request):
     if request.method == 'POST':
         form = LoginForm(request.POST)
         if form.is_valid():
-            user = authenticate(username=form.cleaned_data['username'], 
+            user = authenticate(username=form.cleaned_data['username'],
                                 password=form.cleaned_data['password'])
             if user and user.is_active:
                 login(request, user)
@@ -258,7 +258,7 @@ def enterprise_required(fun):
 
         api = Api.create(
             django_settings.ACCOUNT_API_URL,
-            request.session['username'], 
+            request.session['username'],
             request.session['password'],
         )
         account_info = dict()
@@ -272,7 +272,7 @@ def enterprise_required(fun):
             account_info['space_available'] = account_info['space_allocated']
         account_info['total_users'] = api.get_user_count()
         config = read_config_file()
-        return fun(request, api, account_info, config, 
+        return fun(request, api, account_info, config,
                    request.session['username'], *args, **kwargs)
     return new_fun
 
@@ -307,7 +307,7 @@ def users_csv_download(request, api, account_info, config, username):
     response['Content-Disposition'] = 'attachment; filename=users.csv'
 
     writer = csv.writer(response)
-    headers = [ 'name', 
+    headers = [ 'name',
                'email',
                'share_id',
                'creation_time',
@@ -320,9 +320,9 @@ def users_csv_download(request, api, account_info, config, username):
         headers = ['username'] + headers
     writer.writerow(headers)
     for user in users:
-        row = [user['name'].encode('utf-8'), 
-               user['email'].encode('utf-8'), 
-               (user['share_id'] if user['share_id'] else '').encode('utf-8'), 
+        row = [user['name'].encode('utf-8'),
+               user['email'].encode('utf-8'),
+               (user['share_id'] if user['share_id'] else '').encode('utf-8'),
                user['creation_time'],
                user['last_login'],
                user['bytes_stored'],
@@ -338,14 +338,14 @@ def users_csv_download(request, api, account_info, config, username):
         writer.writerow(row)
 
     return response
-    
+
 class ReadOnlyWidget(forms.Widget):
     def render(self, name, value, attrs):
         final_attrs = self.build_attrs(attrs, name=name)
         if hasattr(self, 'initial'):
             value = self.initial
         return "%s" % (value if value != None else '')
-    
+
     def _has_changed(self, initial, data):
         return False
 
@@ -360,7 +360,7 @@ def user_detail(request, api, account_info, config, username, email, saved=False
             name = forms.CharField(widget=ReadOnlyWidget, required=False, max_length=45)
             email = forms.EmailField(widget=ReadOnlyWidget, required=False)
             group_id = forms.ChoiceField(
-                [(g['group_id'], g['name']) for g in api.list_groups()], 
+                [(g['group_id'], g['name']) for g in api.list_groups()],
                 widget=ReadOnlyWidget, required=False
             )
         else:
@@ -425,7 +425,7 @@ def index(request, api, account_info, config, username):
                        ['sarah', 3800],
                        ['molly', 3000],
                        ['rick', 2200]]]
-    
+
     top_recent_uploads = ['Top 5 Recent Biggest Uploaders',
                       [['larry', 'image1.jpg'],
                        ['bob', 'doc1.docx'],
@@ -464,9 +464,9 @@ def index(request, api, account_info, config, username):
 
 
 def process_row(row):
-    return dict(name=row['name'], 
-                plan_id=int(row['plan_id']), 
-                check_domain=bool(row.get('check_domain', True)), 
+    return dict(name=row['name'],
+                plan_id=int(row['plan_id']),
+                check_domain=bool(row.get('check_domain', True)),
                 webapi_enable=bool(row.get('webapi_enable', True)),
                )
 
@@ -477,13 +477,13 @@ def get_group_form(config, plans, features, show_user_source):
         name = forms.CharField()
         plan_id = forms.ChoiceField(
             [(p['plan_id'], '%s GB' % (p['storage_bytes'] / SIZE_OF_GIGABYTE)) \
-             for p in plans], 
+             for p in plans],
             label='Plan'
         )
         webapi_enable = forms.BooleanField(required=False, initial=True)
         if features['ldap']:
             check_domain = forms.BooleanField(required=False)
-            ldap_dn = forms.CharField(required=False, 
+            ldap_dn = forms.CharField(required=False,
                                       widget=forms.Textarea(attrs={'rows':'1', 'cols':'60'}))
         priority = forms.IntegerField(initial=0, required=False)
         group_id = forms.IntegerField(widget=forms.HiddenInput, required=False)
@@ -510,7 +510,7 @@ def groups(request, api, account_info, config, username, saved=False):
 
             csv_data = csv.DictReader(data)
             for x, row in enumerate(csv_data):
-                try: 
+                try:
                     try:
                         group_id = int(row['group_id'])
                         group = api.get_group(group_id)
@@ -535,7 +535,7 @@ def groups(request, api, account_info, config, username, saved=False):
 
             return cleaned_data
 
-    
+
     class BaseGroupFormSet(forms.formsets.BaseFormSet):
         def clean(self):
             if any(self.errors):
@@ -553,7 +553,7 @@ def groups(request, api, account_info, config, username, saved=False):
                                 )
                     if group_id:
                         try:
-                            log_admin_action(request, 
+                            log_admin_action(request,
                                              'edit group %s with data: %s' % (group_id, data))
                             api.edit_group(group_id, data)
                         except api.QuotaExceeded:
@@ -563,7 +563,7 @@ def groups(request, api, account_info, config, username, saved=False):
                                 'or more users over quota. Please choose "Force '
                                 'Plan Change" if you are sure you want to do this.'])
                     else:
-                        log_admin_action(request, 
+                        log_admin_action(request,
                                          'create group with data: %s' % data)
                         group_id = api.create_group(data)
                     found = False
@@ -574,7 +574,7 @@ def groups(request, api, account_info, config, username, saved=False):
                             found = True
                     if not found:
                         config_mgr_.config['groups'].append(
-                            dict(group_id=group_id, 
+                            dict(group_id=group_id,
                                     type='dn',
                                     ldap_id=form.cleaned_data['ldap_dn']
                                 ))
@@ -584,7 +584,7 @@ def groups(request, api, account_info, config, username, saved=False):
 
 
     GroupForm = get_group_form(config, plans, features, True)
-    GroupFormSet = formset_factory(get_group_form(config, plans, features, False), 
+    GroupFormSet = formset_factory(get_group_form(config, plans, features, False),
                                    extra=0, formset=BaseGroupFormSet)
 
     if search_back == '1':
@@ -594,7 +594,7 @@ def groups(request, api, account_info, config, username, saved=False):
         initial = api.search_groups(search)
     else:
         initial = groups_list
-    
+
     if features['ldap'] and MANAGEMENT_VM:
         for i in initial:
             for g in config['groups']:
@@ -612,17 +612,17 @@ def groups(request, api, account_info, config, username, saved=False):
         if request.POST.get('form', '') == 'new_group':
             new_group = GroupForm(request.POST)
             if new_group.is_valid():
-                data = dict(name=new_group.cleaned_data['name'], 
-                            plan_id=new_group.cleaned_data['plan_id'], 
-                            webapi_enable=new_group.cleaned_data['webapi_enable'], 
+                data = dict(name=new_group.cleaned_data['name'],
+                            plan_id=new_group.cleaned_data['plan_id'],
+                            webapi_enable=new_group.cleaned_data['webapi_enable'],
                             check_domain=new_group.cleaned_data.get('check_domain', False),
                            )
 
                 log_admin_action(request, 'create group with data: %s' % data)
-                group_id = api.create_group(data) 
+                group_id = api.create_group(data)
 
                 config_mgr_ = config_mgr.ConfigManager(config_mgr.default_config())
-                data = dict(group_id=group_id, 
+                data = dict(group_id=group_id,
                             type='dn',
                             ldap_id=new_group.cleaned_data['ldap_dn'],
                             priority=new_group.cleaned_data['priority'],
@@ -638,10 +638,10 @@ def groups(request, api, account_info, config, username, saved=False):
         elif request.POST.get('form', '') == 'delete_group':
             delete_group = DeleteGroupForm(request.POST)
             if delete_group.is_valid():
-                deleted_group_id = int(delete_group.cleaned_data['deleted_group_id']) 
+                deleted_group_id = int(delete_group.cleaned_data['deleted_group_id'])
                 new_group_id = int(delete_group.cleaned_data['new_group_id'])
                 data = (deleted_group_id, new_group_id)
-                log_admin_action(request, 
+                log_admin_action(request,
                                  'delete group %s and move users to group %s' % data)
                 api.delete_group(deleted_group_id, new_group_id,)
                 return redirect('blue_mgnt:groups_saved')
@@ -690,7 +690,7 @@ def shares(request, api, account_info, config, username, saved=False):
             msg = 'edit share %s for user %s. Action %s share' % \
                     (room_key, email, 'enable' if enable else 'disable')
             log_admin_action(request, msg)
-            api.edit_share(email, room_key, enable) 
+            api.edit_share(email, room_key, enable)
             return redirect('blue_mgnt:shares_saved')
         if request.POST.get('form', '') == 'edit_shares':
             sharing_enabled = request.POST['sharing_enabled'] == 'False'
@@ -721,24 +721,24 @@ def settings(request, api, account_info, config, username, saved=False):
 
     class OpenmanageOptsForm(forms.Form):
         share_link_ttl = IntervalFormField(
-            'D', 
-            label='Share Link Time-to-Live', 
+            'D',
+            label='Share Link Time-to-Live',
             initial=datetime.timedelta(minutes=opts['share_link_ttl'])
         )
         if features['ldap']:
             ad_domain = forms.CharField(
-                required=False, 
-                label='Restrict client installs to domain', 
+                required=False,
+                label='Restrict client installs to domain',
                 initial=opts['ad_domain']
             )
         autopurge_interval = IntervalFormField(
-            'D', 
-            label='Deleted Items Automatic Purge', 
+            'D',
+            label='Deleted Items Automatic Purge',
             initial=datetime.timedelta(days=opts['autopurge_interval'])
         )
         versionpurge_interval = IntervalFormField(
-            'D', 
-            label='Historical Version Automatic Purge', 
+            'D',
+            label='Historical Version Automatic Purge',
             initial=datetime.timedelta(days=opts['versionpurge_interval'])
         )
         support_email = forms.EmailField(initial=opts['support_email'])
@@ -750,10 +750,10 @@ def settings(request, api, account_info, config, username, saved=False):
 
         def __init__(self, *args, **kwargs):
             super(OpenmanageOptsForm, self).__init__(*args, **kwargs)
-            
+
             if features['netkes']:
-                self.fields['omva_url'] = forms.URLField(label='OpenManage Virtual Appliance URL', 
-                                                        initial=opts['omva_url'], 
+                self.fields['omva_url'] = forms.URLField(label='OpenManage Virtual Appliance URL',
+                                                        initial=opts['omva_url'],
                                                         help_text='This address must be accessible from SpiderOak. Please refer to the OpenManage documentation.')
 
         def clean(self):
@@ -761,9 +761,9 @@ def settings(request, api, account_info, config, username, saved=False):
 
             data = dict()
             data.update(cleaned_data)
-            if 'enable_local_users' in data: 
+            if 'enable_local_users' in data:
                 del data['enable_local_users']
-            if 'share_link_ttl' in data: 
+            if 'share_link_ttl' in data:
                 data['share_link_ttl'] = data['share_link_ttl'].days * 1440
             if 'autopurge_interval' in data:
                 data['autopurge_interval'] = data['autopurge_interval'].days
@@ -802,11 +802,11 @@ def settings(request, api, account_info, config, username, saved=False):
             log_admin_action(request, 'update signup network restrictions: %s' % blocks)
             api.update_enterprise_settings(dict(signup_network_restriction=blocks))
 
-    IPBlockFormSet = formset_factory(IPBlockForm, 
+    IPBlockFormSet = formset_factory(IPBlockForm,
                                      can_delete=True,
                                      formset=BaseIPBlockFormSet)
 
-    ip_blocks = IPBlockFormSet(initial=[dict(ip_block=x) for x in opts['signup_network_restriction']], 
+    ip_blocks = IPBlockFormSet(initial=[dict(ip_block=x) for x in opts['signup_network_restriction']],
                                prefix='ip_blocks')
     error = False
 
@@ -848,7 +848,7 @@ def settings(request, api, account_info, config, username, saved=False):
 def features(request, api, account_info, config, username, saved=False):
     if username not in django_settings.TEST_ACCOUNTS:
         return HttpResponseForbidden()
-        
+
     opts = api.enterprise_settings()
     features = api.enterprise_features()
 
