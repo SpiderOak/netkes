@@ -3,17 +3,48 @@
 {% block body_classes %}home {{ block.super }}{% endblock body_classes %}
 {% block breadcrumb %}<a href="#">Back to Something</a>{% endblock breadcrumb %}
 {% block navtab %}{% include "partials/navtab-widget.html" with active="users" %}{% endblock navtab %}
+<div class="modal-wrapper"><!-- ADD TO PARTIALS -->
+<div class="widget-add-user" style="display:none">
+    <form action="{% url 'blue_mgnt:users' %}" enctype="multipart/form-data" method="POST">
+    {% for field in new_user.visible_fields %}
+        <td>
+            {{ field.label_tag }}
+            {{ field }}
+        {% if field.errors %}
+            <br />
+            <span class="errors">
+            {% for error in field.errors %}
+                {{ error }}
+            {% endfor %}
+            </span>
+        </td>
+        {% else %}
+        </td>
+        {% endif %}
+    
+    {% endfor %}
+    <td>
+        <input type="submit" value="Submit" class="button button-primary">
+    </td>
+    </form>
+</div>
+</div>
 {% block content %}
 <h1 class="page-header">
 	<i class="ss-icon">&#x1F464;</i> Users
-	<div class="actions">
-		<button class="button button-primary">Add user</button>
-        <form method="POST">
-		    <input type="text" class="widget-search-input" placeholder="Find Users by Name or Email">
-            <button class="search-button ss-icon">&#x1F50E;</button>
+    <div class="actions">
+		<button id="add-user" class="button button-primary">Add user</button>
+        <form action="{% url 'blue_mgnt:users' %}" method="GET">
+            <input name="show_disabled" type="hidden" value="{{ show_disabled }}">
+            <input type="text" class="widget-search-input" value="{{ search }}" placeholder="Find Users by Name or Email">
+            <input type="submit" class="search-button ss-icon" value="&#x1F50E;">
         </form>
 	</div>
 </h1>
+<form action="{% url 'blue_mgnt:users' %}" method="POST" action="">
+    {{ users.management_form }}
+    {{ delete_user_formset.management_form }}
+    {{ tmp_users_formset.management_form }}
 <table class="widget-table">
 	<thead>
 		<th>
@@ -33,76 +64,59 @@
 		</th>
 		<th>
 			Delete?
+            <input id="sel_all" type="checkbox">
 		</th>
 	</thead>
 	<tbody>
-    {% for ppl in all_users %}
-		<tr>
-            <td title="{{ ppl.name }}">
-                {{ ppl.name }}
-			</td>
-			<td title="{{ ppl.email }}">
-                {{ ppl.email }}
-			</td>
-			<td title="{{ ppl.group_name }}">
-                {{ ppl.group_name }}
-			</td>
-			<td title="{{ ppl.gigs_stored }}">
-                {{ ppl.gigs_stored }}
-			</td>
-			<td title="{{ ppl.user_detail }}">
-                {{ ppl.user_detail }}
-			</td>
-			<td>	
-                {{ delete_user_formset }}
-                {{ delete_user_formset.hidden }}
-			</td>
-        </tr>
-    {% empty %}
+    {% for curr_user in all_users %}
         <tr>
-            <td>Not Found</td>
+            {% for hidden in delete_user_formset.count0.hidden_fields %}
+                {{ hidden }}
+            {% endfor %}
+
+            {% if not features.email_as_username %}
+                <td>{{ curr_user.username}}</td>
+            {% endif %}
+
+            {% if curr_user.is_local_user %}
+                {% for hidden in tmp_user_formset.local_index.hidden_fields %}
+                    {{ hidden }}
+                {% endfor %}
+
+                {% for field in tmp_user_formset.local_index.visible_fields %}
+                    <td>{{ field }}
+                    {% if field.errors %}
+                        <br />
+                        <span class="table_errors">
+                            {% for error in field.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </span>
+                    {% endif %} 
+                {% endfor %}
+            {% else %}
+            <td>{{ curr_user.name }}</td>
+            <td>{{ curr_user.email }}</td>
+            <td>{{ curr_user.group_name }}</td>
+            <td>{{ curr_user.gigs_stored }}</td>
+            <td>
+                <a href="{% url 'blue_mgnt:user_detail' curr_user.email %}">Detail</a>
+            </td>
+            <td>
+                {% if not curr_user.enabled or curr_user.is_local_user and user.has_perm.blue_mgnt.can_manage_users %}
+                    <span class="del_box">{{ delete_user_formset.count0 }}</span>
+                {% endif %}
+                <!-- TEST (Show the fromset no matter what) -->
+                <span class="del_box">{{ delete_user_formset.count0 }}</span>
+            </td>
         </tr>
-    {% endfor %}
-		<tr>
-			<td>
-				John Smith
-			</td>
-			<td>
-				jsmith@gmail.com
-			</td>
-			<td>
-				10 GB
-			</td>
-			<td>
-				100 MB
-			</td>
-			<td>
-				Details
-			</td>
-			<td>
-				Check
-			</td>
-		</tr>
-		<tr>
-			<td>
-				John Smith
-			</td>
-			<td>
-				jsmith@gmail.com
-			</td>
-			<td>
-				10 GB
-			</td>
-			<td>
-				100 MB
-			</td>
-			<td>
-				Details
-			</td>
-			<td>
-				Check
-			</td>
-		</tr>
+                {% if curr_user.is_local_user %}
+                    {{ local_index|add:"1" }}
+                {% endif %}
+            {% endif %}
+            {% empty %}
+                <p>Nothing to show</p>
+            {% endfor %}
 	</tbody>
 </table>
 
@@ -127,33 +141,5 @@
 </div>
 
 <div class="spacer"><!--ZXP--></div>
-
-<hr />
-
-<fieldset class="widget-fieldset">
-	<div>
-		<label>Name</label>
-		<p>John Smith <span class="tag">Administrator</span></p>
-	</div>
-	<div>
-		<label>Email Address</label>
-		<p>jsmith@gmail.com</p>
-	</div>
-	<div>
-		<label>Group ID</label>
-		<p>Friendly Name of the Group</p>
-	</div>
-</fieldset>
-
-<div class="widget-splitactions">
-	<div class="rhs">
-		<a class="button button-primary" href="#">Save Changes</a>
-	</div>
-	<div class="lhs">
-		<a class="button button-secondary" href="#">Delete User</a>
-		<a class="button button-muted" href="#">Disable User</a>
-	</div>
-</div>
-
 
 {% endblock content %}

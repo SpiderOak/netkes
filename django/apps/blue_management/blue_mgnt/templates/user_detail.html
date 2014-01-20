@@ -1,0 +1,209 @@
+<%inherit file="main.html" />
+
+<%def name="title()">Users - ${parent.title()}</%def>
+
+<%def name="head()"></%def>
+
+<%def name="top_of_head()">
+</%def>
+
+<%def name="scripts()">
+<script src="/static/blue_common/scripts/jquery.form.js"></script>
+<script type="text/javascript">
+</script>
+</%def>
+
+<%def name="body_classes()">udetail ${parent.body_classes()}</%def>
+<%def name="container()">
+<h1 class="header">Enterprise Partner: <span>${username} </span></h1>
+<div class="recenter">
+<div class="division">
+${parent.progressbar()}
+</div>
+% if saved:
+<p id="saved" class="bigger">Changes saved successfully!</p>
+% endif
+
+<div class="section">
+<form method="post" action="${reverse('blue_mgnt:user_detail', args=[email])}">
+    <h2>
+        User Details
+    </h2>
+    <div class="" id="options" style="margin:0;">
+        <fieldset style="margin:0">
+            <table class="table" style="width:400px">
+            % if not features['email_as_username']:
+            <tr>
+                <td><label>Username</label></td>
+                <td style="font-size:1.3em">${api_user['username']}</td>
+            </tr>
+            % endif
+            % for field in user_form:
+            <tr>
+                <td>
+                    <div class="${'error' if field.errors else ''}" style="width:200px">
+                        ${field.label_tag()}
+                    </div>
+                </td>
+                <td>
+                    ${field}
+                    %if field.errors:
+                        <br />
+                        %for error in field.errors:
+                        <span class="table_errors">
+                            ${error}
+                        </span>
+                        %endfor
+                    %else:
+                        <label for="id_${field.name}">
+                        </label>
+                    %endif
+                </td>
+            </tr>
+            % endfor
+            <tr>
+                <td><label>Devices</label></td>
+                <td style="font-size:1.3em">${api_user['num_devices']}</td>
+            </tr>
+            <tr>
+                <td><label>GBs Stored</label></td>
+                <td style="font-size:1.3em">${round(api_user['bytes_stored'] / (10.0 ** 9), 2)}</td>
+            </tr>
+            <tr>
+                <td><label>Storage GBs</label></td>
+                <td style="font-size:1.3em">${api_user['storage_bytes'] / (10 ** 9)}</td>
+            </tr>
+            <tr>
+                <td><label>Creation Time</label></td>
+                <td style="font-size:1.3em">${datetime.datetime.fromtimestamp(api_user['creation_time'])}</td>
+            </tr>
+            <tr>
+                <td><label>Last Login</label></td>
+                <td style="font-size:1.3em">${datetime.datetime.fromtimestamp(api_user['last_login']) if api_user['last_login'] else ''}</td>
+            </tr>
+            <tr>
+                <td><label>Enabled</label></td>
+                <td style="font-size:1.3em">${api_user['enabled']}</td>
+            </tr>
+            <tr><td colspan="2">
+                <input type='submit' value="Save Changes" class="btn btn-primary" id="edit_user" style="display: inline-block">
+                <input type='hidden' value='edit_user' name='form'>
+</form>
+            </td></tr>
+            % if devices:
+            <tr><td colspan="2"><h2>Devices</h2></td></tr>
+            % endif
+            % for device in devices:
+            <tr>
+                <td><label style="font-weight:bold">Device ID</label></td>
+                <td style="font-size:1.3em">${device['device_id']}</td>
+            </tr>
+            <tr>
+                <td><label>Name</label></td>
+                <td style="font-size:1.3em">${device['name']}</td>
+            </tr>
+            <tr>
+                <td><label>Creation Time</label></td>
+                <td style="font-size:1.3em">${datetime.datetime.fromtimestamp(device['creation_time'])}</td>
+            </tr>
+            <tr>
+                <td><label>Reinstalled</label></td>
+                <td style="font-size:1.3em">
+                % if device['reinstalled']:
+                    ${datetime.datetime.fromtimestamp(device['reinstalled'])}
+                % endif
+                </td>
+            </tr>
+            <tr>
+                <td><label>Last Login</label></td>
+                <td style="font-size:1.3em">
+                % if device['last_login']:
+                    ${datetime.datetime.fromtimestamp(device['last_login'])}
+                % endif
+                </td>
+            </tr>
+            <tr>
+                <td><label>Last Backup Complete</label></td>
+                <td style="font-size:1.3em">
+                % if device['last_backup_complete']:
+                    ${datetime.datetime.fromtimestamp(device['last_backup_complete'])}
+                % endif
+                </td>
+            </tr>
+            % endfor
+            % if shares:
+            <tr><td colspan="2"><h2>Shares</h2></td></tr>
+            % for share in shares:
+            <tr>
+                <td><label style="font-weight:bold">Room Key</label></td>
+                <td style="font-size:1.3em">${share['room_key']}</td>
+            </tr>
+            <tr>
+                <td><label style="font-weight:bold">URL</label></td>
+                <td style="font-size:1.3em">
+                    <a href="${share_url}/browse/share/${api_user['share_identifier']}/${share['room_key']}">
+                        ${share_url}/browse/share/${api_user['share_identifier']}/${share['room_key']}
+                    </a>
+                </td>
+            </tr>
+            <tr>
+                <td><label>Description</label></td>
+                <td style="font-size:1.3em">${share['description']}</td>
+            </tr>
+            <tr>
+                <td><label>Password Required</label></td>
+                <td style="font-size:1.3em">${share['password_required']}</td>
+            </tr>
+            <tr>
+                <td><label>Creation Time</label></td>
+                <td style="font-size:1.3em">
+                % if share['creation_time']:
+                    ${datetime.datetime.fromtimestamp(share['creation_time'])}
+                % endif
+                </td>
+            </tr>
+            <tr>
+                <td><label>Update Time</label></td>
+                <td style="font-size:1.3em">
+                % if share['update_time']:
+                    ${datetime.datetime.fromtimestamp(share['update_time'])}
+                % endif
+                </td>
+            </tr>
+            <tr>
+                <td><label>Status</label></td>
+                <td style="font-size:1.3em">${'Enabled' if share['enabled'] else 'Disabled'}</td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <form method="post" action="${reverse('blue_mgnt:user_detail', args=[email])}">
+                        <input type='submit' 
+                               value="${'Disable' if share['enabled'] else 'Enable'} Share" 
+                               class="btn btn-primary" 
+                               id="edit_share" 
+                               style="display: inline-block">
+                        <input type='hidden' value='edit_share' name='form'>
+                        <input type='hidden' value='${share['room_key']}' name='room_key'>
+                        <input type='hidden' value='${share['enabled']}' name='enabled'>
+                    </form>
+                </td>
+            </tr>
+            % endfor
+            % endif
+            </table>
+        </fieldset>
+        <div style="margin-top:30px">
+        </div>
+    </div>
+% if not features['ldap']:
+    % if not api_user['num_devices']:
+        <form method="post" action="${reverse('blue_mgnt:user_detail', args=[email])}" style="width:300px; display:inline;">
+            <input type='hidden' value='resend_email' name='form'>
+            <input type='submit' value="Re-send Activation Email" class="btn btn-primary" style="display: inline-block">
+        </form>
+    % endif
+% endif
+</div>
+</div>
+
+</%def>

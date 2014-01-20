@@ -7,7 +7,7 @@ from views.users import *
 from views.managementvm import *
 
 urlpatterns = patterns('',
-    (r'^$', users, {}, 'users'),
+    (r'^$', users, {}, 'index'),
     (r'^saved/$', index, {'saved': True}, 'index_saved'),
     (r'^login/$', login_user, {}, 'login'),
     (r'^logout/$', logout, {}, 'logout'),

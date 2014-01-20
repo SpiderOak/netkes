@@ -165,6 +165,7 @@ def users(request, api, account_info, config, username, saved=False):
     features = api.enterprise_features()
     search = request.GET.get('search', '')
     local_groups = get_local_groups(config, groups)
+    local_index = 0
     if not search:
         search = request.POST.get('search', '')
 
@@ -315,5 +316,6 @@ def users(request, api, account_info, config, username, saved=False):
         show_disabled=show_disabled,
         search=search,
         search_back=search_back,
+        local_index=local_index,
     ),
     RequestContext(request))
