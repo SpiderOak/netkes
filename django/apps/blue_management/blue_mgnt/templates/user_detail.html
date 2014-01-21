@@ -1,209 +1,206 @@
-<%inherit file="main.html" />
+{% extends "base.html" %}
 
-<%def name="title()">Users - ${parent.title()}</%def>
+{% block title %}Management Console - {{ block.super }}{% endblock %}
 
-<%def name="head()"></%def>
+{% block body_classes %}home {{ block.super }}{% endblock body_classes %}
+{% block breadcrumb %}<a href="#">Back to Something</a>{% endblock breadcrumb %}
+{% block modal_options %}{% include "partials/add-user-widget.html" with active="users" %}{% endblock modal_options %}
+{% block navtab %}{% include "partials/navtab-widget.html" with active="users" %}{% endblock navtab %}
+{% block content %}
+<h1 class="page-header">
+	<i class="ss-icon">&#x1F464;</i> User Detials
+    <div class="actions">
+		<button id="add-user" class="button button-primary">Add user</button>
+        <form action="{% url 'blue_mgnt:users' %}" method="GET">
+            <input name="show_disabled" type="hidden" value="{{ show_disabled }}">
+            <input type="text" class="widget-search-input" value="{{ search }}" placeholder="Find Users by Name or Email">
+            <input type="submit" class="search-button ss-icon" value="&#x1F50E;">
+        </form>
+	</div>
+</h1>
 
-<%def name="top_of_head()">
-</%def>
 
-<%def name="scripts()">
-<script src="/static/blue_common/scripts/jquery.form.js"></script>
-<script type="text/javascript">
-</script>
-</%def>
+{% if saved %}
+<p id="saved">Changes saved successfully!</p>
+{% endif %}
 
-<%def name="body_classes()">udetail ${parent.body_classes()}</%def>
-<%def name="container()">
-<h1 class="header">Enterprise Partner: <span>${username} </span></h1>
-<div class="recenter">
-<div class="division">
-${parent.progressbar()}
-</div>
-% if saved:
-<p id="saved" class="bigger">Changes saved successfully!</p>
-% endif
-
-<div class="section">
-<form method="post" action="${reverse('blue_mgnt:user_detail', args=[email])}">
-    <h2>
-        User Details
-    </h2>
-    <div class="" id="options" style="margin:0;">
-        <fieldset style="margin:0">
-            <table class="table" style="width:400px">
-            % if not features['email_as_username']:
+<form method="POST" action="{% url 'blue_mgnt:user_detail' email %}">
+    <div class="" id="options">
+        <fieldset>
+            <table class="widget-table">
+            {% if not features.email_as_username %}
             <tr>
                 <td><label>Username</label></td>
-                <td style="font-size:1.3em">${api_user['username']}</td>
+                <td>{{ api_user.username }}</td>
             </tr>
-            % endif
-            % for field in user_form:
+            {% endif %}
+            {% for field in user_form %}
             <tr>
                 <td>
-                    <div class="${'error' if field.errors else ''}" style="width:200px">
-                        ${field.label_tag()}
+                    <div class="{{ field.errors|yesno:"error, ''" }}">
+                        {{ field.label_tag }}
                     </div>
                 </td>
                 <td>
-                    ${field}
-                    %if field.errors:
+                    {{ field }}
+                    {% if field.errors %}
                         <br />
-                        %for error in field.errors:
+                        {% for error in field.errors %}
                         <span class="table_errors">
-                            ${error}
+                            {{ error }}
                         </span>
-                        %endfor
-                    %else:
-                        <label for="id_${field.name}">
+                        {% endfor %}
+                    {% else %}
+                        <label for="id_{{ field.name }}">
                         </label>
-                    %endif
+                    {% endif %}
                 </td>
             </tr>
-            % endfor
+            {% endfor %}
             <tr>
                 <td><label>Devices</label></td>
-                <td style="font-size:1.3em">${api_user['num_devices']}</td>
+                <td>{{ api_user.num_devices }}</td>
             </tr>
             <tr>
                 <td><label>GBs Stored</label></td>
-                <td style="font-size:1.3em">${round(api_user['bytes_stored'] / (10.0 ** 9), 2)}</td>
+                <td>{{ api_user.bytes_stored|filesizeformat }}</td>
             </tr>
             <tr>
                 <td><label>Storage GBs</label></td>
-                <td style="font-size:1.3em">${api_user['storage_bytes'] / (10 ** 9)}</td>
+                <td>{{ api_user.storage_bytes|filesizeformat }}</td>
             </tr>
             <tr>
                 <td><label>Creation Time</label></td>
-                <td style="font-size:1.3em">${datetime.datetime.fromtimestamp(api_user['creation_time'])}</td>
+                <td>{{ api_user.creation_time }}</td>
             </tr>
             <tr>
                 <td><label>Last Login</label></td>
-                <td style="font-size:1.3em">${datetime.datetime.fromtimestamp(api_user['last_login']) if api_user['last_login'] else ''}</td>
+                <td>{% if api_user.last_login %}
+                    {{ api_user.last_login }}</td>
+                {% else %}</td>
+                {% endif %}
             </tr>
             <tr>
                 <td><label>Enabled</label></td>
-                <td style="font-size:1.3em">${api_user['enabled']}</td>
+                <td>{{ api_user.enabled }}</td>
             </tr>
             <tr><td colspan="2">
-                <input type='submit' value="Save Changes" class="btn btn-primary" id="edit_user" style="display: inline-block">
+                <input type='submit' value="Save Changes" class="button button-primary" id="edit_user">
                 <input type='hidden' value='edit_user' name='form'>
 </form>
             </td></tr>
-            % if devices:
+            {% if devices %}
             <tr><td colspan="2"><h2>Devices</h2></td></tr>
-            % endif
-            % for device in devices:
+            {% endif %}
+            {% for device in devices %}
             <tr>
-                <td><label style="font-weight:bold">Device ID</label></td>
-                <td style="font-size:1.3em">${device['device_id']}</td>
+                <td><label>Device ID</label></td>
+                <td>{{ device.device_id }}</td>
             </tr>
             <tr>
                 <td><label>Name</label></td>
-                <td style="font-size:1.3em">${device['name']}</td>
+                <td>{{ device.name }}</td>
             </tr>
             <tr>
                 <td><label>Creation Time</label></td>
-                <td style="font-size:1.3em">${datetime.datetime.fromtimestamp(device['creation_time'])}</td>
+                <td>{{ device.creation_time }}</td>
             </tr>
             <tr>
                 <td><label>Reinstalled</label></td>
-                <td style="font-size:1.3em">
-                % if device['reinstalled']:
-                    ${datetime.datetime.fromtimestamp(device['reinstalled'])}
-                % endif
+                <td>
+                    {% if device.reinstalled %}
+                        {{ device.reinstalled }}
+                    {% endif %}
                 </td>
             </tr>
             <tr>
                 <td><label>Last Login</label></td>
-                <td style="font-size:1.3em">
-                % if device['last_login']:
-                    ${datetime.datetime.fromtimestamp(device['last_login'])}
-                % endif
+                <td>
+                {% if device.last_login %}
+                    {{ device.last_login }}
+                {% endif %}
                 </td>
             </tr>
             <tr>
                 <td><label>Last Backup Complete</label></td>
-                <td style="font-size:1.3em">
-                % if device['last_backup_complete']:
-                    ${datetime.datetime.fromtimestamp(device['last_backup_complete'])}
-                % endif
+                <td>
+                {% if device.last_backup_complete %}
+                    {{ device.last_backup_complete }}
+                {% endif %}
                 </td>
             </tr>
-            % endfor
-            % if shares:
+            {% endfor %}
+            {% if shares %}
             <tr><td colspan="2"><h2>Shares</h2></td></tr>
-            % for share in shares:
+            {% for share in shares %}
             <tr>
-                <td><label style="font-weight:bold">Room Key</label></td>
-                <td style="font-size:1.3em">${share['room_key']}</td>
+                <td><label>Room Key</label></td>
+                <td>{{ share.room_key }}</td>
             </tr>
             <tr>
-                <td><label style="font-weight:bold">URL</label></td>
-                <td style="font-size:1.3em">
-                    <a href="${share_url}/browse/share/${api_user['share_identifier']}/${share['room_key']}">
-                        ${share_url}/browse/share/${api_user['share_identifier']}/${share['room_key']}
-                    </a>
+                <td><label>URL</label></td>
+                <td>
+                    <a href="{{ share_url }}/browse/share/{{ api_user.share_identifier }}/{{ share.room_key }}">{{ share_url }}/browse/share/{{ api_user.share_identifier }}/{{ share.room_key }}</a>
                 </td>
             </tr>
             <tr>
                 <td><label>Description</label></td>
-                <td style="font-size:1.3em">${share['description']}</td>
+                <td>{{ share.description }}</td>
             </tr>
             <tr>
                 <td><label>Password Required</label></td>
-                <td style="font-size:1.3em">${share['password_required']}</td>
+                <td>{{ share.password_required }}</td>
             </tr>
             <tr>
                 <td><label>Creation Time</label></td>
-                <td style="font-size:1.3em">
-                % if share['creation_time']:
-                    ${datetime.datetime.fromtimestamp(share['creation_time'])}
-                % endif
+                <td>
+                {% if share.creation_time %}
+                    {{ share.creation_time }}
+                {% endif %}
                 </td>
             </tr>
             <tr>
                 <td><label>Update Time</label></td>
-                <td style="font-size:1.3em">
-                % if share['update_time']:
-                    ${datetime.datetime.fromtimestamp(share['update_time'])}
-                % endif
+                <td>
+                {% if share.update_time %}
+                    {{ share.update_time }}
+                {% endif %}
                 </td>
             </tr>
             <tr>
                 <td><label>Status</label></td>
-                <td style="font-size:1.3em">${'Enabled' if share['enabled'] else 'Disabled'}</td>
+                <td>{{ share.enabled|yesno:"Enabled, Disabled" }}</td>
             </tr>
             <tr>
                 <td colspan="2">
-                    <form method="post" action="${reverse('blue_mgnt:user_detail', args=[email])}">
+                    <form method="post" action="{% url 'blue_mgnt:user_detail' email %}">
                         <input type='submit' 
-                               value="${'Disable' if share['enabled'] else 'Enable'} Share" 
-                               class="btn btn-primary" 
+                        value="{{ share.enabled|yesno:'Disable, Enable' }} Share" 
+                               class="button button-primary" 
                                id="edit_share" 
-                               style="display: inline-block">
+                              >
                         <input type='hidden' value='edit_share' name='form'>
-                        <input type='hidden' value='${share['room_key']}' name='room_key'>
-                        <input type='hidden' value='${share['enabled']}' name='enabled'>
+                        <input type='hidden' value='{{ share.room_key }}' name='room_key'>
+                        <input type='hidden' value='{{ share.enabled }}' name='enabled'>
                     </form>
                 </td>
             </tr>
-            % endfor
-            % endif
+            {% endfor %}
+            {% endif %}
             </table>
         </fieldset>
-        <div style="margin-top:30px">
+        <div>
         </div>
     </div>
-% if not features['ldap']:
-    % if not api_user['num_devices']:
-        <form method="post" action="${reverse('blue_mgnt:user_detail', args=[email])}" style="width:300px; display:inline;">
+{% if not features.ldap %}
+    {% if not api_user.num_devices %}
+        <form method="post" action="{% url 'blue_mgnt:user_detail' email %}">
             <input type='hidden' value='resend_email' name='form'>
-            <input type='submit' value="Re-send Activation Email" class="btn btn-primary" style="display: inline-block">
+            <input type='submit' value="Re-send Activation Email" class="button button-primary">
         </form>
-    % endif
-% endif
+    {% endif %}
+{% endif %}
 </div>
 </div>
 
-</%def>
+{% endblock content %}

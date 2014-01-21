@@ -1,0 +1,43 @@
+<div class="modal-wrapper">
+<div class="add-user-option-widget">
+    <h1 class="page-header"><i class="ss-icon">&#x1F464;</i>Add User</h1>
+    <div class="spacer"><!--ZXP--></div>
+    <p>You can either import users via a CSV file or manually add them.
+    If you are using LDAP for user management, users will be added automatically.</p>
+
+    <div class="option-box" id="option-upload-csv">
+        <p>Upload from a CSV file.</p>
+        <button class="button button-primary">Upload CSV</button>
+    </div>
+
+    <div class="option-box" id="option-add-user">
+        <p>Manually add users.</p>
+        <button class="button button-primary">Create User</button>
+    </div>
+</div>
+
+<div class="widget-add-user" style="display:none">
+    <form action="{% url 'blue_mgnt:users' %}" enctype="multipart/form-data" method="POST">
+    {% for field in new_user.visible_fields %}
+        <td>
+            {{ field.label_tag }}
+            {{ field }}
+        {% if field.errors %}
+            <br />
+            <span class="errors">
+            {% for error in field.errors %}
+                {{ error }}
+            {% endfor %}
+            </span>
+        </td>
+        {% else %}
+        </td>
+        {% endif %}
+    
+    {% endfor %}
+    <td>
+        <input type="submit" value="Submit" class="button button-primary">
+    </td>
+    </form>
+</div>
+</div>
