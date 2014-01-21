@@ -2,33 +2,8 @@
 {% block title %}Management Console - {{ block.super }}{% endblock %}
 {% block body_classes %}home {{ block.super }}{% endblock body_classes %}
 {% block breadcrumb %}<a href="#">Back to Something</a>{% endblock breadcrumb %}
+{% block modal_options %}{% include "partials/add-user-widget.html" with active="users" %}{% endblock modal_options %}
 {% block navtab %}{% include "partials/navtab-widget.html" with active="users" %}{% endblock navtab %}
-<div class="modal-wrapper"><!-- ADD TO PARTIALS -->
-<div class="widget-add-user" style="display:none">
-    <form action="{% url 'blue_mgnt:users' %}" enctype="multipart/form-data" method="POST">
-    {% for field in new_user.visible_fields %}
-        <td>
-            {{ field.label_tag }}
-            {{ field }}
-        {% if field.errors %}
-            <br />
-            <span class="errors">
-            {% for error in field.errors %}
-                {{ error }}
-            {% endfor %}
-            </span>
-        </td>
-        {% else %}
-        </td>
-        {% endif %}
-    
-    {% endfor %}
-    <td>
-        <input type="submit" value="Submit" class="button button-primary">
-    </td>
-    </form>
-</div>
-</div>
 {% block content %}
 <h1 class="page-header">
 	<i class="ss-icon">&#x1F464;</i> Users
@@ -95,25 +70,25 @@
                     {% endif %} 
                 {% endfor %}
             {% else %}
-            <td>{{ curr_user.name }}</td>
-            <td>{{ curr_user.email }}</td>
-            <td>{{ curr_user.group_name }}</td>
+                <td>{{ curr_user.name }}</td>
+                <td>{{ curr_user.email }}</td>
+                <td>{{ curr_user.group_name }}</td>
+            {% endif %}
             <td>{{ curr_user.gigs_stored }}</td>
             <td>
                 <a href="{% url 'blue_mgnt:user_detail' curr_user.email %}">Detail</a>
             </td>
             <td>
                 {% if not curr_user.enabled or curr_user.is_local_user and user.has_perm.blue_mgnt.can_manage_users %}
-                    <span class="del_box">{{ delete_form }}</span>
+                    <span class="del_box">{{ delete_form.DELETE }}</span>
                 {% endif %}
                 <!-- TEST (Show the fromset no matter what) -->
-                <span class="del_box">{{ delete_form }}</span>
+                <span class="del_box">{{ delete_form.DELETE }}</span>
             </td>
         </tr>
                 {% if curr_user.is_local_user %}
                     {{ local_index|add:"1" }}
                 {% endif %}
-            {% endif %}
             {% empty %}
                 <p>Nothing to show</p>
             {% endfor %}
@@ -122,16 +97,23 @@
 
 <div class="widget-pagination">
 	<ul>
+        {% if page > 1 %}
+            <li><a href="{% url 'blue_mgnt:users' page=page|add:"-1" %}">Previous</a></li>
+        {% endif %}
 		<li class="active">1</li>
 		<li>2</li>
 		<li>3</li>
 		<li>4</li>
 		<li>5</li>
+        {% if page < 1 %}
+            <li><a href="{% url 'blue_mgnt:users' page=page|add:"1" %}">Next</a></li>
+        {% endif %}
 	</ul>
 </div>
 
 <div class="widget-splitactions">
 	<div class="rhs">
+        <input type="hidden" value="{{ search }}" name="search">
 		<button class="button button-primary">Save Changes</button>
 	</div>
 	<div class="lhs">
@@ -139,7 +121,7 @@
 		<button class="button button-muted">Download CSV</button>
 	</div>
 </div>
-
+</form>
 <div class="spacer"><!--ZXP--></div>
 
 {% endblock content %}
