@@ -1,13 +1,13 @@
 <nav>
 <ul class="navtab-widget">
 	<li class="navtab-item-users{% if active == "users" %} active {% endif %}">
-		<a href="{% url "blue_mgnt:logout" %}">
+		<a href="{% url "blue_mgnt:users" %}">
 			<i class="ss-icon">&#x1F464;</i>
 			<span>Users</span>
 		</a>
 	</li>
-	<li class="navtab-item-shares">
-		<a href="{% url "blue_mgnt:logout" %}">
+    <li class="navtab-item-shares{% if active == "shares" %} active {% endif %}">
+		<a href="{% url "blue_mgnt:shares" %}">
 			<i class="ss-icon">&#xEE00;</i>
 			<span>Shares</span>
 		</a>
