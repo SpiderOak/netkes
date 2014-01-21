@@ -68,9 +68,9 @@
 		</th>
 	</thead>
 	<tbody>
-    {% for curr_user in all_users %}
+    {% for curr_user, delete_form in users_and_delete %}
         <tr>
-            {% for hidden in delete_user_formset.count0.hidden_fields %}
+            {% for hidden in delete_form.hidden_fields %}
                 {{ hidden }}
             {% endfor %}
 
@@ -104,10 +104,10 @@
             </td>
             <td>
                 {% if not curr_user.enabled or curr_user.is_local_user and user.has_perm.blue_mgnt.can_manage_users %}
-                    <span class="del_box">{{ delete_user_formset.count0 }}</span>
+                    <span class="del_box">{{ delete_form }}</span>
                 {% endif %}
                 <!-- TEST (Show the fromset no matter what) -->
-                <span class="del_box">{{ delete_user_formset.count0 }}</span>
+                <span class="del_box">{{ delete_form }}</span>
             </td>
         </tr>
                 {% if curr_user.is_local_user %}

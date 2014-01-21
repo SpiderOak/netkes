@@ -270,7 +270,7 @@ def users(request, api, account_info, config, username, saved=False):
 
     user_formset = UserFormSet(initial=initial, prefix='user')
     tmp_user_formset = TmpUserFormSet(initial=local_users, prefix='tmp_user')
-    delete_user_formset = DeleteUserFormSet(initial=initial, prefix='delete_user')
+    delete_user_formset = DeleteUserFormSet(initial=initial, prefix='delete_user', auto_id=False)
     user_csv = UserCSVForm()
     new_user = NewUserForm()
 
@@ -286,7 +286,7 @@ def users(request, api, account_info, config, username, saved=False):
         else:
             user_formset = UserFormSet(request.POST, prefix='user')
             tmp_user_formset = TmpUserFormSet(request.POST, prefix='tmp_user')
-            delete_user_formset = DeleteUserFormSet(request.POST, prefix='delete_user')
+            delete_user_formset = DeleteUserFormSet(request.POST, prefix='delete_user', auto_id=False)
             if (request.user.has_perm('blue_mgnt.can_manage_users')
                 and tmp_user_formset.is_valid()
                 and delete_user_formset.is_valid()):
@@ -317,5 +317,6 @@ def users(request, api, account_info, config, username, saved=False):
         search=search,
         search_back=search_back,
         local_index=local_index,
+        users_and_delete=zip(all_users, delete_user_formset),
     ),
     RequestContext(request))
