@@ -355,14 +355,6 @@ def user_detail(request, api, account_info, config, username, email, saved=False
     devices = api.list_devices(email)
     features = api.enterprise_features()
 
-    user['creation_time']=datetime.datetime.fromtimestamp(user['creation_time'])
-    user['last_login']=datetime.datetime.fromtimestamp(user['last_login'])
-
-    #Django is accusing these of being strings instead of integers.
-    devices['creation_time']=datetime.datetime.fromtimestamp(devices['creation_time'])
-    devices['last_login']=datetime.datetime.fromtimestamp(devices['last_login'])
-    devices['last_backup_complete']=datetime.datetime.fromtimestamp(devices['last_backup_complete'])
-
     class UserForm(forms.Form):
         if features['ldap']:
             name = forms.CharField(widget=ReadOnlyWidget, required=False, max_length=45)
