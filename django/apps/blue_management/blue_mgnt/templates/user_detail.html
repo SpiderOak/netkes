@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load filter_todate %}
 
 {% block title %}Management Console - {{ block.super }}{% endblock %}
 
@@ -71,12 +72,12 @@
             </tr>
             <tr>
                 <td><label>Creation Time</label></td>
-                <td>{{ api_user.creation_time }}</td>
+                <td>{{ api_user.creation_time|todate }}</td>
             </tr>
             <tr>
                 <td><label>Last Login</label></td>
                 <td>{% if api_user.last_login %}
-                    {{ api_user.last_login }}</td>
+                    {{ api_user.last_login|todate }}</td>
                 {% else %}</td>
                 {% endif %}
             </tr>
@@ -103,13 +104,15 @@
             </tr>
             <tr>
                 <td><label>Creation Time</label></td>
-                <td>{{ device.creation_time }}</td>
+                <td>{{ device.creation_time|todate }}</td>
             </tr>
             <tr>
                 <td><label>Reinstalled</label></td>
                 <td>
                     {% if device.reinstalled %}
-                        {{ device.reinstalled }}
+                        {{ device.reinstalled|todate }}
+                    {% else %}
+                        No recorded reinstall
                     {% endif %}
                 </td>
             </tr>
@@ -117,7 +120,9 @@
                 <td><label>Last Login</label></td>
                 <td>
                 {% if device.last_login %}
-                    {{ device.last_login }}
+                    {{ device.last_login|todate }}
+                {% else %}
+                    No login recorded
                 {% endif %}
                 </td>
             </tr>
@@ -125,7 +130,9 @@
                 <td><label>Last Backup Complete</label></td>
                 <td>
                 {% if device.last_backup_complete %}
-                    {{ device.last_backup_complete }}
+                    {{ device.last_backup_complete|todate }}
+                {% else %}
+                    No backup recorded
                 {% endif %}
                 </td>
             </tr>
@@ -155,7 +162,7 @@
                 <td><label>Creation Time</label></td>
                 <td>
                 {% if share.creation_time %}
-                    {{ share.creation_time }}
+                    {{ share.creation_time|todate }}
                 {% endif %}
                 </td>
             </tr>
@@ -163,7 +170,7 @@
                 <td><label>Update Time</label></td>
                 <td>
                 {% if share.update_time %}
-                    {{ share.update_time }}
+                    {{ share.update_time|todate }}
                 {% endif %}
                 </td>
             </tr>
