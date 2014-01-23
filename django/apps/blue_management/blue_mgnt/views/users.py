@@ -131,11 +131,6 @@ def get_new_user_form(api, features, config, local_groups):
             return cleaned_data
     return NewUserForm
 
-def get_login_link(username):
-    orig_email = forms.CharField(widget=forms.HiddenInput)
-    b32_username = b32encode(username).rstrip('=')
-    return '%s/storage/%s/escrowlogin' % (get_base_url(), b32_username,)
-
 def get_group_name(groups, group_id):
     for group in groups:
         if group['group_id'] == group_id:
@@ -155,6 +150,9 @@ def is_local_user(config, group_id):
         if group['group_id'] == group_id:
             return group['user_source'] == 'local'
     return False
+
+def get_login_link(username):
+    return reverse('blue_mgnt:escrow_login', args=[username])
 
 @enterprise_required
 def users(request, api, account_info, config, username, saved=False):

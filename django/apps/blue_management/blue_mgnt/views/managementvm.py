@@ -2,8 +2,9 @@ import os
 import datetime
 import subprocess
 import glob
+from base64 import b32encode
 
-from views import enterprise_required, render_to_response, log_admin_action
+from views import enterprise_required, render_to_response, log_admin_action, get_base_url
 from django.template import RequestContext
 from django.shortcuts import redirect
 from django.db import connection
@@ -20,6 +21,25 @@ from blue_mgnt import models
 from netkes.account_mgr import setup_token
 
 RESULTS_PER_PAGE = 25
+
+def get_login_link(username, auth_token):
+    b32_username = b32encode(username).rstrip('=')
+    return '%s/storage/%s/escrowlogin?auth_token=%s' % (get_base_url(), 
+                                                        b32_username,
+                                                        auth_token
+                                                       )
+@enterprise_required
+@permission_required('blue_mgnt.can_view_user_data')
+def escrow_login(request, api, account_info, config, username, 
+                 escrow_username, saved=False):
+    data = dict(
+        token=setup_token.new_token(),
+        expiry=datetime.datetime.now() + datetime.timedelta(minutes=1), 
+        no_devices_only=False, 
+        single_use_only=False,
+    )
+    models.AdminSetupTokens.objects.create(**data)
+    return redirect(get_login_link(escrow_username, data['token']))
 
 class CodeForm(forms.Form):
     expiry_interval = IntervalFormField('D', 
