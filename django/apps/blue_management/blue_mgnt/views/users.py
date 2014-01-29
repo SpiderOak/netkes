@@ -2,7 +2,7 @@ import datetime
 from base64 import b32encode
 
 from views import enterprise_required, render_to_response, log_admin_action
-from views import ReadOnlyWidget, get_base_url
+from views import ReadOnlyWidget, get_base_url, SIZE_OF_GIGABYTE
 
 from django import forms
 from django.core.urlresolvers import reverse
@@ -313,5 +313,75 @@ def users(request, api, account_info, config, username, saved=False):
         show_disabled=show_disabled,
         search=search,
         search_back=search_back,
+    ),
+    RequestContext(request))
+
+@enterprise_required
+def user_detail(request, api, account_info, config, username, email, saved=False):
+    user = api.get_user(email)
+    devices = api.list_devices(email)
+    features = api.enterprise_features()
+    local_user = is_local_user(config, user['group_id'])
+    local_groups = get_local_groups(config, api.list_groups())
+
+    class UserForm(forms.Form):
+        if local_user:
+            enabled = forms.BooleanField(required=False)
+            name = forms.CharField(max_length=45)
+            email = forms.EmailField()
+            group_id = forms.ChoiceField(local_groups, label='Group')
+        else:
+            enabled = forms.BooleanField(widget=ReadOnlyWidget, required=False)
+            name = forms.CharField(widget=ReadOnlyWidget, required=False, max_length=45)
+            email = forms.EmailField(widget=ReadOnlyWidget, required=False)
+            group_id = forms.ChoiceField(
+                local_groups,
+                widget=ReadOnlyWidget, required=False
+            )
+        bonus_gigs = forms.IntegerField(label="Bonus GBs", min_value=0)
+
+    data = dict()
+    data.update(user)
+    data['bonus_gigs'] = user['bonus_bytes'] / SIZE_OF_GIGABYTE
+    user_form = UserForm(initial=data)
+    if request.method == 'POST':
+        if request.POST.get('form', '') == 'resend_email':
+            log_admin_action(request, 'resent activation email for %s ' % email)
+            api.send_activation_email(email)
+            return redirect('blue_mgnt:user_detail', email)
+        if request.POST.get('form', '') == 'edit_user':
+            user_form = UserForm(request.POST)
+            if request.user.has_perm('blue_mgnt.can_manage_users') and user_form.is_valid():
+                data = dict()
+                if local_user:
+                    data.update(user_form.cleaned_data)
+                    del data['bonus_gigs']
+                if request.user.has_perm('blue_mgnt.can_edit_bonus_gigs'):
+                    data['bonus_bytes'] = user_form.cleaned_data['bonus_gigs'] * SIZE_OF_GIGABYTE
+                if data:
+                    log_admin_action(request, 'edit user "%s" with data: %s' % (email, data))
+                    api.edit_user(email, data)
+                return redirect('blue_mgnt:user_detail_saved', email)
+        if request.POST.get('form', '') == 'edit_share':
+            room_key = request.POST['room_key']
+            enable = request.POST['enabled'] == 'False'
+            msg = 'edit share %s for user %s. Action %s share' % \
+                    (room_key, email, 'enable' if enable else 'disable')
+            log_admin_action(request, msg)
+            api.edit_share(email, room_key, enable)
+            return redirect('blue_mgnt:user_detail_saved', email)
+
+    return render_to_response('user_detail.html', dict(
+        shares=api.list_shares(email),
+        share_url=get_base_url(),
+        username=username,
+        email=email,
+        api_user=user,
+        user_form=user_form,
+        features=features,
+        account_info=account_info,
+        datetime=datetime,
+        devices=devices,
+        saved=saved,
     ),
     RequestContext(request))

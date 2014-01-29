@@ -81,10 +81,6 @@ ${parent.progressbar()}
                 <td><label>Last Login</label></td>
                 <td style="font-size:1.3em">${datetime.datetime.fromtimestamp(api_user['last_login']) if api_user['last_login'] else ''}</td>
             </tr>
-            <tr>
-                <td><label>Enabled</label></td>
-                <td style="font-size:1.3em">${api_user['enabled']}</td>
-            </tr>
             <tr><td colspan="2">
                 <input type='submit' value="Save Changes" class="btn btn-primary" id="edit_user" style="display: inline-block">
                 <input type='hidden' value='edit_user' name='form'>

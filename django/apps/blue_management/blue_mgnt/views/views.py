@@ -354,74 +354,6 @@ class ReadOnlyWidget(forms.Widget):
         return False
 
 @enterprise_required
-def user_detail(request, api, account_info, config, username, email, saved=False):
-    user = api.get_user(email)
-    devices = api.list_devices(email)
-    features = api.enterprise_features()
-
-    class UserForm(forms.Form):
-        if features['ldap']:
-            name = forms.CharField(widget=ReadOnlyWidget, required=False, max_length=45)
-            email = forms.EmailField(widget=ReadOnlyWidget, required=False)
-            group_id = forms.ChoiceField(
-                [(g['group_id'], g['name']) for g in api.list_groups()], 
-                widget=ReadOnlyWidget, required=False
-            )
-        else:
-            enabled = forms.BooleanField(required=False)
-            name = forms.CharField(max_length=45)
-            email = forms.EmailField()
-            group_id = forms.ChoiceField([(g['group_id'], g['name']) for g in api.list_groups()])
-            enabled = forms.BooleanField(required=False)
-        bonus_gigs = forms.IntegerField(label="Bonus GBs", min_value=0)
-
-    data = dict()
-    data.update(user)
-    data['bonus_gigs'] = user['bonus_bytes'] / SIZE_OF_GIGABYTE
-    user_form = UserForm(initial=data)
-    if request.method == 'POST':
-        if request.POST.get('form', '') == 'resend_email':
-            log_admin_action(request, 'resent activation email for %s ' % email)
-            api.send_activation_email(email)
-            return redirect('blue_mgnt:user_detail', email)
-        if request.POST.get('form', '') == 'edit_user':
-            user_form = UserForm(request.POST)
-            if request.user.has_perm('blue_mgnt.can_manage_users') and user_form.is_valid():
-                data = dict()
-                if not features['ldap']:
-                    data.update(user_form.cleaned_data)
-                    del data['bonus_gigs']
-                if request.user.has_perm('blue_mgnt.can_edit_bonus_gigs'):
-                    data['bonus_bytes'] = user_form.cleaned_data['bonus_gigs'] * SIZE_OF_GIGABYTE
-                if data:
-                    log_admin_action(request, 'edit user "%s" with data: %s' % (email, data))
-                    api.edit_user(email, data)
-                return redirect('blue_mgnt:user_detail_saved', email)
-        if request.POST.get('form', '') == 'edit_share':
-            room_key = request.POST['room_key']
-            enable = request.POST['enabled'] == 'False'
-            msg = 'edit share %s for user %s. Action %s share' % \
-                    (room_key, email, 'enable' if enable else 'disable')
-            log_admin_action(request, msg)
-            api.edit_share(email, room_key, enable)
-            return redirect('blue_mgnt:user_detail_saved', email)
-
-    return render_to_response('user_detail.html', dict(
-        shares=api.list_shares(email),
-        share_url=get_base_url(),
-        username=username,
-        email=email,
-        api_user=user,
-        user_form=user_form,
-        features=features,
-        account_info=account_info,
-        datetime=datetime,
-        devices=devices,
-        saved=saved,
-    ),
-    RequestContext(request))
-
-@enterprise_required
 def index(request, api, account_info, config, username):
     top_space_used = ['Top 5 Space Used by User',
                       [['larry', 5000],
@@ -833,6 +765,12 @@ def settings(request, api, account_info, config, username, saved=False):
         elif request.POST.get('form', '') == 'reboot':
             log_admin_action(request, 'reboot management vm')
             call(['shutdown', '-r', 'now'])
+            return redirect('blue_mgnt:settings_saved')
+        elif request.POST.get('form', '') == 'sync':
+            log_admin_action(request, 'sync management vm')
+            return redirect('blue_mgnt:settings_saved')
+        elif request.POST.get('form', '') == 'rebuild_db':
+            log_admin_action(request, 'Rebuild DB')
             return redirect('blue_mgnt:settings_saved')
         elif request.POST.get('form', '') == 'restart_directory':
             log_admin_action(request, 'restart directory')
