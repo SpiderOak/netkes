@@ -12,8 +12,8 @@
 			<span>Shares</span>
 		</a>
 	</li>
-	<li class="navtab-item-manage">
-		<a href="{% url "blue_mgnt:logout" %}">
+    <li class="navtab-item-manage{% if active == "manage" %} active {% endif %}">
+		<a href="{% url "blue_mgnt:manage" %}">
 			<i class="ss-icon">&#x21C6;</i>
 			<span>Manage</span>
 		</a>

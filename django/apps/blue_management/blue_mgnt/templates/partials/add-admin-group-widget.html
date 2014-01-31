@@ -1,0 +1,36 @@
+{% if saved %}
+<p id="saved" class="bigger" style="display:none">Changes saved successfully!</p>
+{% endif %}
+</div>
+<div id="" class="section">
+<h2>Create New Admin Group</h2>
+<form action="{% url 'blue_mgnt:admin_groups' %}" enctype="multipart/form-data" method="post">
+    <table class="table" style="max-width:100%">
+        <tr>
+        {% for field in new_admin_group.visible_fields %}
+            <td>
+                {{ field.label_tag }}
+                {{ field }}
+            {% if field.errors %}
+                <br />
+                {% for error in field.errors %}
+                    <span class="errors">
+                            {{ error }}
+                    </span>
+                {% endfor %}
+            {% endif %}
+            </td>
+
+        {% endfor %}
+            <td style="padding-top:30px">
+                <input type='submit' value="+ New Admin Group" class="btn btn-primary">
+            </td>
+        </tr>
+    </table>
+    <input type='hidden' value='new_admin_group' name='form'>
+    {% for hidden in new_admin_group.hidden_fields %}
+        {{ hidden }}
+    {% endfor %}
+</form>
+</div>
+

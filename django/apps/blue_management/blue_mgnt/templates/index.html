@@ -50,7 +50,7 @@
             {% endfor %}
 
             {% if not features.email_as_username %}
-                <td>{{ curr_user.username}}</td>
+                <td>{{ curr_user.username }}</td>
             {% endif %}
 
             {% if curr_user.is_local_user %}
@@ -72,9 +72,9 @@
             {% else %}
                 <td>{{ curr_user.name }}</td>
                 <td>{{ curr_user.email }}</td>
-                <td>{{ curr_user.group_name }}</td>
             {% endif %}
-            <td>{{ curr_user.gigs_stored }}</td>
+            <td>{{ curr_user.group_name }}</td>
+            <td>{{ curr_user.gigs_stored|filesizeformat }}</td>
             <td>
                 <a href="{% url 'blue_mgnt:user_detail' curr_user.email %}">Detail</a>
             </td>
