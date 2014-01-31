@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Management Console - {{ block.super }}{% endblock %}
+{% block body_classes %}home {{ block.super }}{% endblock body_classes %}
+{% block breadcrumb %}<a href="#">Back to Something</a>{% endblock breadcrumb %}
+{% block modal_options %}{% include "partials/add-user-widget.html" with active="users" %}{% endblock modal_options %}
+{% block navtab %}{% include "partials/navtab-widget.html" with active="users" %}{% endblock navtab %}
+{% block content %}
+<h1 class="page-header">
+	<i class="ss-icon">&#xED50;</i> Logs
+    <div class="actions">
+        <form action="{% url 'blue_mgnt:logs' %}" method="GET">
+            <input name="show_disabled" type="hidden" value="{{ show_disabled }}">
+            <input type="text" class="widget-search-input" value="{{ search }}" placeholder="Find Logs">
+            <input type="submit" class="search-button ss-icon" value="&#x1F50E;">
+        </form>
+	</div>
+</h1>
+<table id="groups" class="widget-table">
+    <thead>
+        <tr class="bigger">
+            <th>Log</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for log in log_entries %}
+        <tr>
+            <td>
+                {{ log }}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+    <a class="button button-primary" href="/logs/download/">Download Logs</a>
+<div id="pagination" class="bigger" style="text-align:center">
+    {% if page > 1 %}
+    <a href="{% url 'blue_mgnt:logs' %}?page={{ page|add:"-1" }}&search={{ search }}">previous</a>
+    {% endif %}
+    Page {{ page }}
+    {% if next_page %}
+    <a href="{% url 'blue_mgnt:logs' %}?page={{ page|add:"1" }}&search={{ search }}">next</a>
+    {% endif %}
+</div>
+</div>
+{% endblock content %}

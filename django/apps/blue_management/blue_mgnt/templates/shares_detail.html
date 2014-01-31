@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Management Console - {{ block.super }}{% endblock %}
+
+{% block body_classes %}shares_detail {{ block.super }}{% endblock body_classes %}
+{% block breadcrumb %}<a href="#">Back to Something</a>{% endblock breadcrumb %}
+{% block modal_options %}{% endblock modal_options %}
+{% block navtab %}{% include "partials/navtab-widget.html" with active="shares" %}{% endblock navtab %}
+{% block content %}
+<h1 class="page-header">
+	<i class="ss-icon">&#xEE00;</i> ShareRoom Details
+</h1>
+<form action="{% url 'blue_mgnt:shares' %}" method="POST" action="">
+    <table id="groups" class="widget-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Room Key</th>
+                            <th>URL</th>
+                            <th>Description</th>
+                            <th>Creation Time</th>
+                            <th>Update Time</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for share in user.shares %}
+                        <tr>
+                            <td>Name</td><td title="{{ share.name }}">{{ share.name }}</td>
+                        </tr><tr>
+                            <td>Room Key</td><td title="{{ share.room_key }}">{{ share.room_key }}</td>
+                        </tr><tr>
+                            <td>URL</td><td title="{{ share_url }}/browse/share/{{ user.share_identifier }}/{{ share.room_key }}">
+                                <a href="{{ share_url }}/browse/share/{{ user.share_identifier }}/{{ share.room_key }}">
+                                    {{ share_url }}/browse/share/{{ user.share_identifier }}/{{ share.room_key }}
+                            </a></td>
+                        </tr>
+                            <td title="{% if share.description %} {{ share.description }} {% endif %}">{% if share.description %} {{ share.description }} {% endif %}</td>
+                            <td title="{{ share.creation_time }}">{{ share.creation_time }}</td>
+                            <td title="{{ share.update_time }}">{{ share.update_time }}</td>
+                            <td>
+                                <form method="post" action="{% url 'blue_mgnt:shares' %}">
+                                    <input type='submit' 
+                                    value="{{ share.enabled|yesno:"Disable, Enable" }} Share" 
+                                        class="button button-primary" 
+                                        id="edit_share" 
+                                        style="display: inline-block">
+                                    <input type='hidden' value='edit_share' name='form'>
+                                    <input type='hidden' value='{{ share.room_key }}' name='room_key'>
+                                    <input type='hidden' value='{{ share.enabled }}' name='enabled'>
+                                    <input type='hidden' value='{{ user.email }}' name='email'>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    </table>
+                </td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</form>
+    <div id="pagination" class="bigger" style="text-align:center">
+        {% if page > 1 %}
+        <a href="{% url 'blue_mgnt:shares' page=page|add:'-1' %}">previous</a>
+        {% endif %}
+        Page {{ page }}
+        {% if next_page %}
+        <a href="{% url 'blue_mgnt:shares' page=page|add:'1' %}">next</a>
+        {% endif %}
+    </div>
+<form action="{% url 'blue_mgnt:shares' %}" method="post" action="" style="clear:both">
+    <div style="text-align:center">
+        <input type='submit' value="{{ sharing_enabled|yesno:"Disable, Enable" }} Shares" class="button button-primary" id="edit_shares">
+        <input type='hidden' value='{{ sharing_enabled }}' name='sharing_enabled'>
+        <input type='hidden' value='edit_shares' name='form'>
+    </div>
+</form>
+</div>
+{% endblock content %}
+

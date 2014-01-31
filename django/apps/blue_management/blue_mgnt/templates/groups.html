@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Management Console - {{ block.super }}{% endblock %}
+{% block body_classes %}home {{ block.super }}{% endblock body_classes %}
+{% block breadcrumb %}<a href="#">Back to Something</a>{% endblock breadcrumb %}
+{% block modal_options %}{% include "partials/add-group-widget.html" with active="manage" %}{% endblock modal_options %}
+{% block navtab %}{% include "partials/navtab-widget.html" with active="manage" %}{% endblock navtab %}
+{% block content %}
+<h1 class="page-header">
+	<i class="ss-icon">&#x1F465;</i> Groups
+    <div class="actions">
+		<button id="add-group" class="button button-primary">Add Group</button>
+        <form action="{{% url 'blue_mgnt:groups' %}" method="GET">
+            <input name="show_disabled" type="hidden" value="{{ show_disabled }}">
+            <input type="text" class="widget-search-input" value="{{ search }}" placeholder="Find Groups">
+            <input type="submit" class="search-button ss-icon" value="&#x1F50E;">
+        </form>
+	</div>
+</h1>
+{% if saved and not search_back %}
+<p id="saved" class="bigger" style="display:none">Changes saved successfully!</p>
+{% endif %}
+</div>
+{% if user.perms.blue_mgnt.can_manage_groups %}
+<form action="{% url 'blue_mgnt:groups' %}" method="post" action="">
+{{ groups.management_form }}
+<table id="groups" class="widget-table">
+    <thead>
+        <tr>
+            {% if config.enable_local_users %}
+            <th>Group Name</th>
+            {% endif %}
+            <th>Plan</th>
+            <th>Users in Group</th>
+            <th>Space Used</th>
+            <th>Group Details</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% if groups.non_form_errors %}
+        <tr><td colspan="5">{{ groups.non_form_errors }}</td></tr>
+        {% endif %}
+        {% for form in groups.forms %}
+        <tr>
+            <td>{{ form.name }}</td>
+            <td>{{ form.plan_id }}</td>
+            <td>{{ form.users_in_group|length }}</td>
+            <td>{{ forms.space_used|filesizeformat }}</td>
+            <td><a href="{% url 'blue_mgnt:groups_detial' %}">Details</a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<div>
+    {% if user.has_perm.blue_mgnt.can_manage_groups %}
+    <input type='submit' value="Save Changes" class="button button-primary">
+    {% if show_force %}
+    <input type='submit' value="Force Plan Change" class="button button-warning" name="force_plan_change">
+    {% endif %}
+    <input type='hidden' value='management' name='form'>
+    <input type='hidden' value='{{ search }}' name='search'>
+    {% endif %}
+</div>
+</form>
+
+        {% else %}
+        <p>CAN'T FIND NUTHIN'!!!</p>
+{% endif %}
+</div>
+{% endblock content %}

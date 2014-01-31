@@ -1,0 +1,41 @@
+<div class="modal-wrapper">
+    <div class="modal-content">
+        <h2 class="page-header"><i class="ss-icon">&#x1F464;</i>Add User
+            <span class="actions"><i class="ss-icon">&#x2421;</i></span>
+        </h2>
+            <div class="spacer"><!--ZXP--></div>
+        <div class="widget-add-groups">
+            <form action="{% url 'blue_mgnt:groups' %}" enctype="multipart/form-data" method="post">
+                <table class="widget-table">
+                    {% for field in new_group.visible_fields %}
+                    <tr>
+                        <td>
+                            {{ field.label_tag }}
+                        </td>
+                        <td>
+                            {{ field }}
+                        {% if field.errors %}
+                            <br />
+                            {% for error in field.errors %}
+                                <span class="errors">
+                                    {{ error }}
+                                </span>
+                            {% endfor %}
+                        {% endif %}
+                        </td>
+                    </tr> 
+                    {% endfor %}
+                <tr>
+                    <td style="padding-top:30px">
+                        <input type='submit' value="Add Group" class="button button-primary">
+                    </td>
+                </tr>
+            </table>
+            <input type='hidden' value='new_group' name='form'>
+            {% for hidden in new_group.hidden_fields %}
+                {{ hidden }}
+            {% endfor %}
+        </form>
+    </div>
+</div>
+</div>

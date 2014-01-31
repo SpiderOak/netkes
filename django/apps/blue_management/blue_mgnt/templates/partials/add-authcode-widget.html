@@ -1,0 +1,30 @@
+<h2>Create New Setup Code</h2>
+<form action="{% url 'blue_mgnt:auth_codes' %}?show_inactive={{ show_inactive }}" enctype="multipart/form-data" method="post">
+    <table class="table" style="max-width:100%">
+        <tr>
+        {% for field in new_code.visible_fields %}
+            <td>
+                {{ field.label_tag }}
+                {{ field }}
+            {% if field.errors %}
+                <br />
+                {% for error in field.errors %}
+                    <span class="errors">
+                            {{ error }}
+                    </span>
+                {% endfor %}
+            {% endif %}
+            </td>
+
+        {% endfor %}
+            <td style="padding-top:30px">
+            <input type='submit' value="+ Create Code" class="button button-primary">
+            </td>
+        </tr>
+    </table>
+    <input type='hidden' value='new_code' name='form'>
+    {% for hidden in new_code.hidden_fields %}
+        {{ hidden }}
+    {% endfor %}
+</form>
+

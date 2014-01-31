@@ -27,6 +27,12 @@
 
 @ZEBRA_STRIPE: #fafafa;
 
+/* apply a natural box layout model to all elements */
+*, *:before, *:after {
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+}
 
 body {
 	font-size: 16px;
@@ -317,25 +323,138 @@ h1.page-header {
 	}
 }
 
-.widget-add-user {
-    height:300px;
-    width:600px;
+.widget-manage-blocks {
+    width: 425px;
     border: 1px solid @NAVTAB_BORDER_COLOR;
-    border-radius: 8px;
+    border-radius: 4px;
+    margin-bottom: 20px;
     background-color: #FFF;
+    position: relative;
+    
+    .manage-icon {
+        font-size: 60px;
+        color: @NAVTAB_BORDER_COLOR;
+        padding: 10px;
+        i {
+            margin:0 auto;
+        }
+    }
+
+    div {
+        border-left: 1px solid @NAVTAB_BORDER_COLOR;
+        padding: 10px;
+        display: inline-block;
+        width: 80%;
+        h3 {
+            font-size: 16px;
+            span {
+                float: right;
+                font-size: 10px;
+            }
+        }
+        p {
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+    }
+}
+
+.widget-add-user {
+    display: none;
+}
+
+.widget-add-user-option {
+    text-align: center;
 }
 
 .modal-wrapper {
     background-color:rgba(0,0,0,.5);
     position:absolute;
-    top:0;
-    left:0;
-    right:0;
-    bottom:0;
-    width:100%;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
     height: 100%;
     display: none;
-    z-index:9000;
+    z-index: 9000;
+}
+
+.modal-content {
+    position: absolute;
+    width: 530px;
+    left: 22%;
+    top: 22%;
+    border: 1px solid @NAVTAB_BORDER_COLOR;
+    border-radius: 8px;
+    background-color: #FFF;
+
+    label {
+        font-family: @FONTFAMILY_SB;
+    }
+
+    input[type='text'],
+    input[type='password'] {
+        width: 275px;
+        height: 30px;
+        border-radius: 5px;
+        border: 1px solid @NAVTAB_BORDER_COLOR;
+        text-indent: 12px;
+        color: darken(@NAVTAB_BORDER_COLOR, 10%);
+        font: 13px~"/"23px @FONTFAMILY_R;
+        display: block;
+    }
+
+    input[type='submit'] {
+        float: right;
+        position: relative;
+        right: 20px;
+    }
+
+    .modal-table-label {
+        width: 30%;
+        padding-left: 20px;
+    }
+
+    h2.page-header {
+            border-bottom: 1px solid @NAVTAB_BORDER_COLOR;
+            text-align: left;
+            padding: 10px;
+            i { padding-right: 10px }
+
+            .actions {
+                float: right;
+                cursor: pointer;
+                &:hover { 
+                    color: lighten(@NAVTAB_BORDER_COLOR, 2%);
+                }
+            }
+    }
+
+    .lower-content {
+        padding: 20px;
+
+        .description {
+            margin-bottom: 20px;
+        }
+
+    }
+
+    .option-box {
+        position: relative;
+        width: 130px;
+        display: inline-block;
+        margin: 10px;
+        border-radius: 4px;
+        border: 1px solid @NAVTAB_BORDER_COLOR;
+        text-align: center;
+        padding: 40px;
+
+        p {
+            font-family: @FONTFAMILY_SB;
+            margin-bottom: 20px;
+        }
+    }
 }
 
 .widget-pagination {
@@ -422,3 +541,12 @@ button, .button {
 	margin-top: -1px;
 }
 
+.left-col {
+    display: inline-block;
+    margin-right: 10px;
+}
+
+.right-col {
+    display: inline-block;
+    margin-left: 10px;
+}

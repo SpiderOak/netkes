@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-
+{% load filter_todate %}
 {% block title %}Management Console - {{ block.super }}{% endblock %}
 
 {% block body_classes %}shares {{ block.super }}{% endblock body_classes %}
@@ -22,68 +22,32 @@
         <thead>
             <tr class="bigger">
                 <th>Name</th>
+                <th>Creator</th>
                 {% if features.email_as_username %}
                 <th>Email</th>
                 {% else %}:
                 <th>Username</th>
                 {% endif %}
-                <th>Shares</th>
+                <th>Creation Time</th>
+                <th>Details</th>
             </tr>
         </thead>
         <tbody>
             {% for user in users %}
+                {% for share in user.shares %}
                 <tr>
-                    <td>{{ user.name }}</td>
+                    <td>{{ share.name }}</td>
+                    <td>{{ user.name }}</td><!-- Switch for "created by" -->
                     {% if features.email_as_username %}
                     <td>{{ user.email }}</td>
-                    {% else %}:
+                    {% else %}
                     <td>{{ user.username }}</td>
                     {% endif %}
-                    <td>${len(user['shares'])}</td>
+                    <td>{{ share.creation_time|todate  }}</td>
+                    <!-- Need to fix link below -->
+                    <td><a href="{% url 'blue_mgnt:shares_detail' %}">Details</a></td>
                 </tr>
-                <tr class="shares_table"><td colspan="3">
-                    <table>
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Room Key</th>
-                            <th>URL</th>
-                            <th>Description</th>
-                            <th>Creation Time</th>
-                            <th>Update Time</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for share in user.shares %}
-                        <tr>
-                            <td title="{{ share.name }}">{{ share.name }}</td>
-                            <td title="{{ share.room_key }}">{{ share.room_key }}</td>
-                            <td title="{{ share_url }}/browse/share/{{ user.share_identifier }}/{{ share.room_key }}">
-                                <a href="{{ share_url }}/browse/share/{{ user.share_identifier }}/{{ share.room_key }}">
-                                    {{ share_url }}/browse/share/{{ user.share_identifier }}/{{ share.room_key }}
-                            </a></td>
-                            <td title="{% if share.description %} {{ share.description }} {% endif %}">{% if share.description %} {{ share.description }} {% endif %}</td>
-                            <td title="{{ share.creation_time }}">{{ share.creation_time }}</td>
-                            <td title="{{ share.update_time }}">{{ share.update_time }}</td>
-                            <td>
-                                <form method="post" action="{% url 'blue_mgnt:shares' %}">
-                                    <input type='submit' 
-                                    value="{{ share.enabled|yesno:"Disable, Enable" }} Share" 
-                                        class="button button-primary" 
-                                        id="edit_share" 
-                                        style="display: inline-block">
-                                    <input type='hidden' value='edit_share' name='form'>
-                                    <input type='hidden' value='{{ share.room_key }}' name='room_key'>
-                                    <input type='hidden' value='{{ share.enabled }}' name='enabled'>
-                                    <input type='hidden' value='{{ user.email }}' name='email'>
-                                </form>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                    </table>
-                </td></tr>
+                {% endfor %}
             {% endfor %}
         </tbody>
     </table>

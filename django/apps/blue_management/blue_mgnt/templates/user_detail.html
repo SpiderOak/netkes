@@ -77,9 +77,11 @@
             <tr>
                 <td><label>Last Login</label></td>
                 <td>{% if api_user.last_login %}
-                    {{ api_user.last_login|todate }}</td>
-                {% else %}</td>
+                    {{ api_user.last_login|todate }}
+                {% else %}
+                    No login recorded
                 {% endif %}
+                </td>
             </tr>
             <tr>
                 <td><label>Enabled</label></td>
