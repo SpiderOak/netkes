@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% block title %}Management Console - {{ block.super }}{% endblock %}
+{% block body_classes %}home {{ block.super }}{% endblock body_classes %}
+{% block breadcrumb %}<a href="#">Back to Something</a>{% endblock breadcrumb %}
+{% block modal_options %}{% include "partials/add-user-widget.html" with active="manage" %}{% endblock modal_options %}
+{% block navtab %}{% include "partials/navtab-widget.html" with active="manage" %}{% endblock navtab %}
+{% block content %}
+<h1 class="page-header">
+	<i class="ss-icon">&#x1F464;</i> Accounts
+    <div class="actions">
+		<button id="add-user" class="button button-primary">Add user</button>
+        <form action="{% url 'blue_mgnt:users' %}" method="GET">
+            <input name="show_disabled" type="hidden" value="{{ show_disabled }}">
+            <input type="text" class="widget-search-input" value="{{ search }}" placeholder="Find Users by Name or Email">
+            <input type="submit" class="search-button ss-icon" value="&#x1F50E;">
+        </form>
+	</div>
+</h1>
+{% if saved %}
+    <p id="saved" class="bigger">Changes saved successfully!</p>
+{% endif %}
+
+    {% if not features.ldap %}
+    <div id="s1" class="section">
+    {% else %}
+    <div id="s1" class="section">
+    {% endif %}
+        <form method="post" action="{% url 'blue_mgnt:settings' %}">
+            <h2>Options</h2>
+            <div class="" id="options">
+                <fieldset>
+                    <table class="widget-table">
+                    {% for field in options %}
+                        <tr>
+                            <td>
+                                <div class="${'error' if field.errors else ''}">
+                                    {{ field.label_tag }}
+                                </div>
+                            </td>
+                            <td>
+                                {{ field }}
+                            {% if field.errors %}
+                                {% for error in field.errors %}
+                                <span class="table_errors">
+                                    {{ error }}
+                                </span>
+                                {% endfor %}
+                            {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </table>
+                </fieldset>
+                <div>
+                    {% if perms.blue_mgnt.can_manage_settings %}
+                    <input type='submit' value="Save Changes" class="button button-primary" id="change_password">
+                    {% endif %}
+                </div>
+            </div>
+            <input type='hidden' value='management' name='form'>
+        </form>
+    </div>
+
+<div id="additional_options" class="section">
+<a class="button button-primary button-large" href="{% url 'blue_mgnt:password' %}">Change Password</a>
+{% if features.ldap and perms.blue_mgnt.can_manage_settings %}
+<form method="posst" action="{% url 'blue_mgnt:settings' %}">
+        <input type='hidden' value='reboot' name='form'>
+        <input type='submit' value="Reboot Virtual Appliance" class="button button-primary button-large">
+    </form>
+    <form method="post" action="{% url 'blue_mgnt:settings' %}">
+        <input type='hidden' value='restart_directory' name='form'>
+        <input type='submit' value="Restart Directory / Services" class="button button-primary button-large">
+    </form>
+{% endif %}
+</div>
+
+
+<!-- % if features['signup_restrictions']: -->
+{% if not private_cloud %}
+<div id="s3" class="section">
+<form method="post" action="{% url 'blue_mgnt:settings' %}">
+    {{ ip_blocks.management_form }}
+    <h2 id="netblocks">Consumer Signup Restriction Netblocks
+    <input type="button" value="Add IP Block" id="add_ip_block" class="button button-primary">
+    </h2>
+    <div class="ip_input">
+    <table id="ip_blocks" class="table">
+        <thead>
+            <tr>
+                <th class="bigger">IP Block</th>
+                <th class="bigger">Delete IP Block</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for form in ip_blocks.forms %}
+            <tr>
+                {% for field in form.visible_fields %}
+                <td>
+                    {% if forloop.first %}
+                        {% for hidden in form.hidden_fields %}
+                            {{ hidden }}
+                        {% endfor %}
+                    {% endif %}
+                    {{ field }}
+                    {% if field.errors %}
+                    <br />
+                        {% for error in field.errors %}
+                        <span class="table_errors">
+                            {{ error }}
+                        </span>
+                        {% endfor %}
+                    {% endif %}
+                </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <input type='hidden' value='ip_block' name='form'>
+    <div>
+        {% if perms.blue_mgnt.can_manage_settings %}
+        <input type='submit' value="Save Changes" class="button button-primary">
+        {% endif %}
+    </div>
+    </div>
+</div>
+</form>
+{% endif %}
+<!-- % endif -->
+
+</div>
+{% endblock content %}
+<script src="/static/blue_common/scripts/jquery.form.js"></script>
+<script type="text/javascript"> 
+    var error = ${'true' if error else 'false'};
+var empty_ip_block_form = '';
+function update_form(new_form, total){
+    new_form.find(':input').each(function() {
+        var name = $(this).attr('name').replace('-' + (total-1) + '-','-' + total + '-');
+        var id = 'id_' + name;
+        $(this).attr({'name': name, 'id': id});
+    });
+}
+
+function add_ip_block_form(){
+    var new_form = empty_ip_block_form.clone(true);
+    var total = parseInt($('#id_ip_blocks-TOTAL_FORMS').val());
+    update_form(new_form);
+    $('#id_ip_blocks-TOTAL_FORMS').val(1 + total);
+    $('#ip_blocks > tbody').append(new_form);
+}
+
+$(function(){
+    empty_ip_block_form = $('#ip_blocks > tbody > tr:last').clone();
+    if(!error){
+        $('#ip_blocks > tbody > tr:last').remove();
+        $('#id_ip_blocks-TOTAL_FORMS').val($('#id_ip_blocks-TOTAL_FORMS').val() - 1);
+    }else{
+        empty_ip_block_form.clearForm();
+        $('ul', empty_ip_block_form).remove()
+    }
+    $('#add_ip_block').click(add_ip_block_form);
+});
+</script>

@@ -657,6 +657,13 @@ def groups(request, api, account_info, config, username, saved=False):
     RequestContext(request))
 
 @enterprise_required
+@permission_required('blue_mgnt.can_manage_groups')
+def groups_detail(request):
+    return render_to_response('groups_detail.html',
+    RequestContext(request))
+
+
+@enterprise_required
 @permission_required('blue_mgnt.can_manage_shares')
 def shares(request, api, account_info, config, username, saved=False):
     features = api.enterprise_features()
@@ -702,45 +709,8 @@ def shares(request, api, account_info, config, username, saved=False):
 # Added shares_detail as a copy of shares() -- benny
 @enterprise_required
 @permission_required('blue_mgnt.can_manage_shares')
-def shares_detail(request, api, account_info, config, username, saved=False):
-    features = api.enterprise_features()
-    opts = api.enterprise_settings()
-    page = int(request.GET.get('page', 1))
-
-    user_limit = 25
-    user_offset = user_limit * (page - 1)
-    users = api.list_shares_for_brand(user_limit, user_offset)
-    next_page = len(users) == user_limit
-
-    if request.method == 'POST':
-        if request.POST.get('form', '') == 'edit_share':
-            email = request.POST['email']
-            room_key = request.POST['room_key']
-            enable = request.POST['enabled'] == 'False'
-            msg = 'edit share %s for user %s. Action %s share' % \
-                    (room_key, email, 'enable' if enable else 'disable')
-            log_admin_action(request, msg)
-            api.edit_share(email, room_key, enable)
-            return redirect('blue_mgnt:shares_saved')
-        if request.POST.get('form', '') == 'edit_shares':
-            sharing_enabled = request.POST['sharing_enabled'] == 'False'
-            log_admin_action(request, 'set sharing enabled to %s ' % sharing_enabled)
-            api.update_enterprise_settings(dict(sharing_enabled=sharing_enabled))
-            return redirect('blue_mgnt:shares_saved')
-
-    return render_to_response('shares_detail.html', dict(
-        share_url=get_base_url(),
-        sharing_enabled=opts['sharing_enabled'],
-        page=page,
-        next_page=next_page,
-        datetime=datetime,
-        user=request.user,
-        username=username,
-        features=features,
-        users=users,
-        account_info=account_info,
-        saved=saved,
-    ),
+def shares_detail(request):
+    return render_to_response('shares_detail.html',
     RequestContext(request))
 
 @enterprise_required
@@ -779,4 +749,3 @@ def manage(request, api, account_info, config, username):
         account_info=account_info,
     ),
     RequestContext(request))
-
