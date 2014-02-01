@@ -20,7 +20,7 @@
 <p id="saved" class="bigger" style="display:none">Changes saved successfully!</p>
 {% endif %}
 </div>
-{% if user.perms.blue_mgnt.can_manage_groups %}
+{% if perms.blue_mgnt.can_manage_groups %}
 <form action="{% url 'blue_mgnt:groups' %}" method="post" action="">
 {{ groups.management_form }}
 <table id="groups" class="widget-table">
@@ -45,7 +45,7 @@
             <td>{{ form.plan_id }}</td>
             <td>{{ form.users_in_group|length }}</td>
             <td>{{ forms.space_used|filesizeformat }}</td>
-            <td><a href="{% url 'blue_mgnt:groups_detial' %}">Details</a></td>
+            <td><a href="">Details</a></td>
         </tr>
         {% endfor %}
     </tbody>

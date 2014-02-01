@@ -3,7 +3,7 @@
 {% block title %}Management Console - {{ block.super }}{% endblock %}
 {% block body_classes %}home {{ block.super }}{% endblock body_classes %}
 {% block breadcrumb %}<a href="#">Back to Something</a>{% endblock breadcrumb %}
-{% block modal_options %}{% include "partials/add-user-widget.html" with active="manage" %}{% endblock modal_options %}
+{% block modal_options %}{% endblock modal_options %}
 {% block navtab %}{% include "partials/navtab-widget.html" with active="manage" %}{% endblock navtab %}
 {% block content %}
 <h1 class="page-header">
@@ -31,7 +31,7 @@
         </thead>
         <tbody>
             {% for code in codes %}
-            <tr{{ code.new_token|yesno:' class="success", ""' }}>
+            <tr{% if code.new_token %} class="success"{% endif %}>
                     <td>{{ code.token }}</td>
                     <td>{{ code.date_created|todate}}</td>
                     <td>{{ code.expiry|todate}}</td>
