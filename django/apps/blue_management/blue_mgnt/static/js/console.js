@@ -2,8 +2,8 @@ $(function() {
 
     // Workings for the modal wrapper and widgets
 
-    $('#add-user').click(function(){
-        $('.modal-wrapper').show();
+    $('#add-widget').click(function(){
+        $('.modal-wrapper').show().css('height', $(document).height());
     });
 
     $('#option-add-user button').click(function(){
@@ -15,6 +15,15 @@ $(function() {
         $('.widget-add-user').hide()
         $('.widget-add-user-option').show();
         $('.modal-wrapper').hide();
+    });
+
+    //Auto Tooltips
+    $('td').each(function(){
+        if($(this).text()){
+            if(this.offsetWidth < this.scrollWidth){
+                $(this).attr('title', $(this).text());
+            }
+        }
     });
 
 

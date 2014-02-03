@@ -472,21 +472,22 @@ def process_row(row):
 
 def get_group_form(config, plans, features, show_user_source):
     class GroupForm(forms.Form):
-        if config['enable_local_users'] and show_user_source:
-            user_source = forms.ChoiceField([('ldap', 'ldap'), ('local', 'local')])
-        name = forms.CharField()
+        name = forms.CharField(label="Group Name")
         plan_id = forms.ChoiceField(
             [(p['plan_id'], '%s GB' % (p['storage_bytes'] / SIZE_OF_GIGABYTE)) \
              for p in plans],
             label='Plan'
         )
         webapi_enable = forms.BooleanField(required=False, initial=True)
+        if config['enable_local_users'] and show_user_source:
+            user_source = forms.ChoiceField([('ldap', 'ldap'), ('local', 'local')])
         if features['ldap']:
             check_domain = forms.BooleanField(required=False)
-            ldap_dn = forms.CharField(required=False,
+            ldap_dn = forms.CharField(label="LDAP DN", required=False,
                                       widget=forms.Textarea(attrs={'rows':'1', 'cols':'60'}))
         priority = forms.IntegerField(initial=0, required=False)
         group_id = forms.IntegerField(widget=forms.HiddenInput, required=False)
+        # NEED CUSTOM POLICY
     return GroupForm
 
 @enterprise_required
@@ -672,8 +673,13 @@ def groups(request, api, account_info, config, username, saved=False):
 
 @enterprise_required
 @permission_required('blue_mgnt.can_manage_groups')
-def groups_detail(request):
-    return render_to_response('groups_detail.html',
+def groups_detail(request, g_name, api, account_info, config, username, saved=False):
+    group = g_name
+    detail = api.list_groups(group)
+    return render_to_response('groups_detail.html', dict(
+        detail=detail,
+        group=group,
+    ),
     RequestContext(request))
 
 

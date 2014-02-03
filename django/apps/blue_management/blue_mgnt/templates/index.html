@@ -8,7 +8,7 @@
 <h1 class="page-header">
 	<i class="ss-icon">&#x1F464;</i> Users
     <div class="actions">
-		<button id="add-user" class="button button-primary">Add user</button>
+		<button id="add-widget" class="button button-primary">Add user</button>
         <form action="{% url 'blue_mgnt:users' %}" method="GET">
             <input name="show_disabled" type="hidden" value="{{ show_disabled }}">
             <input type="text" class="widget-search-input" value="{{ search }}" placeholder="Find Users by Name or Email">
@@ -79,11 +79,9 @@
                 <a href="{% url 'blue_mgnt:user_detail' curr_user.email %}">Detail</a>
             </td>
             <td>
-                {% if not curr_user.enabled or curr_user.is_local_user and user.has_perm.blue_mgnt.can_manage_users %}
+                {% if not curr_user.enabled or curr_user.is_local_user and perms.blue_mgnt.can_manage_users %}
                     <span class="del_box">{{ delete_form.DELETE }}</span>
                 {% endif %}
-                <!-- TEST (Show the fromset no matter what) -->
-                <span class="del_box">{{ delete_form.DELETE }}</span>
             </td>
         </tr>
                 {% if curr_user.is_local_user %}
