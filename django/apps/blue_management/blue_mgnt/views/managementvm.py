@@ -108,12 +108,14 @@ def auth_codes(request, api, account_info, config, username, saved=False):
 @permission_required('blue_mgnt.can_manage_admins')
 def admin_groups(request, api, account_info, config, username, saved=False):
     features = api.enterprise_features()
-
+    groups_list = api.list_groups()
 
     class AdminGroupForm(forms.Form):
         name = forms.CharField()
-        ldap_dn = forms.CharField(required=True, 
-                                  widget=forms.Textarea(attrs={'rows':'1', 'cols':'60'}))
+        #ldap_dn = forms.CharField(required=True, 
+        #                          widget=forms.Textarea(attrs={'rows':'1', 'cols':'60'}))
+        user_group_id = forms.ChoiceField([(g['group_id'], g['name']) for g in groups_list],
+                                          label='Group')
         permissions = forms.MultipleChoiceField(
                         required=False, 
                         choices=[(p.id, p.name) for p in 
@@ -141,7 +143,7 @@ def admin_groups(request, api, account_info, config, username, saved=False):
         admin_group = models.AdminGroup.objects.get(pk=group.id)
         initial.append(dict(group_id=group.id,
                             name=group.name,
-                            ldap_dn=admin_group.ldap_dn,
+                            user_group_id=admin_group.user_group_id,
                             permissions=[p.id for p in group.permissions.all()]))
 
 
@@ -176,9 +178,9 @@ def admin_groups(request, api, account_info, config, username, saved=False):
                 group.save()
                 admin_group = models.AdminGroup.objects.create( 
                     group_id=group.id, 
-                    ldap_dn=new_admin_group.cleaned_data['ldap_dn'])
+                    user_group_id=new_admin_group.cleaned_data['user_group_id'])
                 args = (new_admin_group.cleaned_data['name'], 
-                        new_admin_group.cleaned_data['ldap_dn'],
+                        new_admin_group.cleaned_data['user_group_id'],
                        )
                 msg = 'Created admin group: %s %s' % args
                 log_admin_action(request, msg)
@@ -189,7 +191,7 @@ def admin_groups(request, api, account_info, config, username, saved=False):
                 for admin_group_form in admin_groups.forms:
                     admin_group = models.AdminGroup.objects.get(
                         pk=admin_group_form.cleaned_data['group_id'])
-                    admin_group.ldap_dn=admin_group_form.cleaned_data['ldap_dn']
+                    admin_group.user_group_id=admin_group_form.cleaned_data['user_group_id']
                     admin_group.save()
                     group = Group.objects.get(
                         pk=admin_group_form.cleaned_data['group_id'])
@@ -199,7 +201,7 @@ def admin_groups(request, api, account_info, config, username, saved=False):
                         group.permissions.add(Permission.objects.get(pk=permission_id))
                     group.save()
                     args = (admin_group_form.cleaned_data['name'], 
-                            admin_group_form.cleaned_data['ldap_dn'],
+                            admin_group_form.cleaned_data['user_group_id'],
                         )
                     msg = 'Modified admin group: %s %s' % args
                     log_admin_action(request, msg)
@@ -211,7 +213,7 @@ def admin_groups(request, api, account_info, config, username, saved=False):
                     admin_group.delete()
                     group.delete()
                     args = (group.name, 
-                            admin_group.ldap_dn,
+                            admin_group.user_group_id,
                         )
                     msg = 'Deleted admin group: %s %s' % args
                     log_admin_action(request, msg)

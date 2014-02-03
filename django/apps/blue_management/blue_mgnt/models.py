@@ -31,7 +31,8 @@ class AdminSetupTokens(models.Model):
 
 class AdminGroup(models.Model):
     group_id = models.IntegerField(primary_key=True)
-    ldap_dn = models.TextField()
+    ldap_dn = models.TextField(blank=True)
+    user_group_id = models.IntegerField()
     date_created = models.DateTimeField(auto_now_add=True)
 
     class Meta:

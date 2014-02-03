@@ -121,7 +121,7 @@ INSTALLED_APPS = (
 )
 
 AUTHENTICATION_BACKENDS = (
-    'blue_mgnt.views.views.LdapBackend',
+    'blue_mgnt.views.views.NetkesBackend',
 )
 
 LOG_DIR = '/var/log/admin_console/'

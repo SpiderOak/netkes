@@ -4,6 +4,7 @@ from django.conf import settings as django_settings
 from views.views import *
 from views.users import *
 from views.managementvm import *
+from views.settings import *
 
 urlpatterns = patterns('',
     (r'^$', index, {}, 'index'),
@@ -26,8 +27,6 @@ urlpatterns = patterns('',
     (r'^settings/saved/$', settings, {'saved': True}, 'settings_saved'),
     (r'^settings/password/$', password, {}, 'password'),
     (r'^settings/password/saved/$', password, {'saved': True}, 'password_saved'),
-    (r'^features/$', features, {}, 'features'),
-    (r'^features/saved/$', features, {'saved': True}, 'features_saved'),
     (r'^admingroups/$', admin_groups, {}, 'admin_groups'),
     (r'^admingroups/saved/$', admin_groups, {'saved': True}, 'admin_groups_saved'),
     (r'^logs/$', logs, {}, 'logs'),

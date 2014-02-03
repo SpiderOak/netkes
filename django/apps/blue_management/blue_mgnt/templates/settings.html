@@ -102,11 +102,14 @@ $(function(){
         <input type='hidden' value='reboot' name='form'>
         <input type='submit' value="Reboot Virtual Appliance" class="btn btn-primary btn-large">
     </form>
-    <form method="posst" action="${reverse('blue_mgnt:settings')}">
+    <div>
+        ${command_output}
+    </div>
+    <form method="post" action="${reverse('blue_mgnt:settings')}">
         <input type='hidden' value='sync' name='form'>
         <input type='submit' value="Sync Virtual Appliance" class="btn btn-primary btn-large">
     </form>
-    <form method="posst" action="${reverse('blue_mgnt:settings')}">
+    <form method="post" action="${reverse('blue_mgnt:settings')}">
         <input type='hidden' value='rebuild_db' name='form'>
         <input type='submit' value="Rebuild DB" class="btn btn-primary btn-large">
     </form>

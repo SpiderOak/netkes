@@ -7,7 +7,6 @@ from base64 import b32encode
 import urlparse
 import ldap
 import logging
-import pytz
 
 from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import redirect
@@ -42,6 +41,7 @@ from netkes.account_mgr.accounts_api import Api
 from netkes.netkes_agent import config_mgr 
 from netkes.common import read_config_file
 from netkes.account_mgr.user_source import ldap_source, local_source
+from netkes import account_mgr
 
 LOG = logging.getLogger('admin_actions')
 
@@ -101,11 +101,16 @@ def log_admin_action(request, message):
         group_name = request.user.groups.all()[0].name  
     LOG.info('%s (%s): %s' % (request.user.username, group_name, message))
 
-class LdapBackend(ModelBackend):
+class NetkesBackend(ModelBackend):
     def authenticate_superuser(self, username, password):
+        log = logging.getLogger('admin_actions.authenticate_superuser')
+        log.info('Attempting to log "%s" in as a superuser' % username) 
+
         config = read_config_file()
         if username != config['api_user']:
+            log.info('Username "%s" does not match superuser username' % username)
             return None
+
         api = Api.create(
             django_settings.ACCOUNT_API_URL,
             username, 
@@ -115,7 +120,7 @@ class LdapBackend(ModelBackend):
             api.ping()
             try:
                 user = User.objects.get(username=username)
-            except User.DoesNotExist:
+            except ObjectDoesNotExist:
                 user = User(username=username, password='not used')
                 user.is_staff = True
                 user.is_superuser = True
@@ -124,9 +129,18 @@ class LdapBackend(ModelBackend):
                 content_type__app_label='blue_mgnt',
                 content_type__model='AccountsApi'
             )
+            if not config['api_password']:
+                config_mgr_ = config_mgr.ConfigManager(config_mgr.default_config())
+                config_mgr_.config['api_password'] = password
+                config_mgr_.apply_config()
+
 
             return user
         except urllib2.HTTPError:
+            log.info('''Failed to log in "%s" as a superuser. 
+                        Password incorrect or unable to contact 
+                        accounts api''' % username) 
+            
             return None
 
     def authenticate_ldap(self, username, password):
@@ -167,18 +181,45 @@ class LdapBackend(ModelBackend):
         except Exception, e:
             return None
 
+    def authenticate_netkes(self, username, password):
+        log = logging.getLogger('admin_actions.authenticate_netkes')
+        log.info('Attempting to log in "%s" through netkes' % username) 
+
+        config = read_config_file()
+        api = get_api(config)
+        if account_mgr.authenticator(config, username, password, False):
+            api_user = api.get_user(username)
+            try:
+                admin_group = models.AdminGroup.objects.get(user_group_id=api_user['group_id'])
+            except models.AdminGroup.DoesNotExist:
+                log.info('Username "%s" is not in an admin group' % username)
+                return None
+            group = Group.objects.get(pk=admin_group.group_id)
+            try:
+                user = User.objects.get(username=username)
+            except User.DoesNotExist:
+                user = User(username=username, password='not used')
+                user.save()
+            user.groups.add(group)
+            return user
+        else:
+            log.info('''Failed to authenticate "%s". Username or password 
+                        incorrect.''' % username) 
+
     def authenticate(self, username=None, password=None):
         user = self.authenticate_superuser(username, password)
         if user:
             return user
 
-        return self.authenticate_ldap(username, password)
+        return self.authenticate_netkes(username, password)
 
     def get_user(self, user_id):
             try:
                 return User.objects.get(pk=user_id)
             except User.DoesNotExist:
                 return None
+
+LdapBackend = NetkesBackend
 
 
 class LoginForm(forms.Form):
@@ -196,16 +237,10 @@ def login_user(request):
             if user and user.is_active:
                 login(request, user)
                 remote_addr = request.META['REMOTE_ADDR']
-                log_admin_action(request, 'logged in from ip: %s' % remote_addr)
+                log_admin_action(request, 'logged in')# from ip: %s' % remote_addr)
                 config = read_config_file()
 
-                if not config['api_password']:
-                    config_mgr_ = config_mgr.ConfigManager(config_mgr.default_config())
-                    config_mgr_.config['api_password'] = password
-                    config_mgr_.apply_config()
-
-                request.session['username'] = config['api_user']
-                request.session['password'] = password
+                request.session['username'] = form.cleaned_data['username']
                 return redirect('blue_mgnt:index')
             else:
                 errors = form._errors.setdefault(NON_FIELD_ERRORS , ErrorList())
@@ -219,8 +254,6 @@ def login_user(request):
 def logout(request):
     if 'username' in request.session:
         del request.session['username']
-    if 'password' in request.session:
-        del request.session['password']
 
     return redirect('blue_mgnt:login')
 
@@ -245,16 +278,21 @@ def validate(request):
             return redirect('blue_mgnt:index')
     return HttpResponseForbidden("Enterprise management link is expired or invalid.", mimetype="text/plain")
 
+def get_api(config):
+    api = Api.create(
+        django_settings.ACCOUNT_API_URL,
+        config['api_user'], 
+        config['api_password'], 
+    )
+    return api
+
 def enterprise_required(fun):
     def new_fun(request, *args, **kwargs):
-        if not (request.session.get('username', False) and request.session.get('password', False)):
+        if not request.session.get('username', False): 
             return redirect('blue_mgnt:login')
 
-        api = Api.create(
-            django_settings.ACCOUNT_API_URL,
-            request.session['username'], 
-            request.session['password'],
-        )
+        config = read_config_file()
+        api = get_api(config)
         account_info = dict()
         quota = api.quota()
         account_info['space_used'] = (quota['bytes_used'] or 0) / (10.0 ** 9)
@@ -265,7 +303,6 @@ def enterprise_required(fun):
             account_info['show_available'] = False
             account_info['space_available'] = account_info['space_allocated']
         account_info['total_users'] = api.get_user_count()
-        config = read_config_file()
         return fun(request, api, account_info, config, 
                    request.session['username'], *args, **kwargs)
     return new_fun
@@ -417,10 +454,9 @@ def get_group_form(config, plans, features, show_user_source):
             label='Plan'
         )
         webapi_enable = forms.BooleanField(required=False, initial=True)
-        if features['ldap']:
-            check_domain = forms.BooleanField(required=False)
-            ldap_dn = forms.CharField(required=False, 
-                                      widget=forms.Textarea(attrs={'rows':'1', 'cols':'60'}))
+        check_domain = forms.BooleanField(required=False)
+        ldap_dn = forms.CharField(required=False, 
+                                    widget=forms.Textarea(attrs={'rows':'1', 'cols':'60'}))
         priority = forms.IntegerField(initial=0, required=False)
         group_id = forms.IntegerField(widget=forms.HiddenInput, required=False)
     return GroupForm
@@ -531,13 +567,13 @@ def groups(request, api, account_info, config, username, saved=False):
     else:
         initial = groups_list
     
-    if features['ldap'] and MANAGEMENT_VM:
-        for i in initial:
-            for g in config['groups']:
-                if i['group_id'] == g['group_id']:
-                    i['ldap_dn'] = g['ldap_id']
-                    i['priority'] = g['priority']
-                    i['user_source'] = g['user_source']
+    for i in initial:
+        for g in config['groups']:
+            if i['group_id'] == g['group_id']:
+                i['ldap_dn'] = g['ldap_id']
+                i['priority'] = g['priority']
+                i['user_source'] = g['user_source']
+
     groups = GroupFormSet(initial=initial, prefix='groups')
     group_csv = GroupCSVForm()
     new_group = GroupForm()
@@ -649,201 +685,6 @@ def shares(request, api, account_info, config, username, saved=False):
     ),
     RequestContext(request))
 
-def save_settings(request, api, options):
-    cleaned_data = options.cleaned_data
-    data = dict()
-    data.update(cleaned_data)
-    del data['timezone']
-    if 'enable_local_users' in data: 
-        del data['enable_local_users']
-    if 'share_link_ttl' in data: 
-        data['share_link_ttl'] = data['share_link_ttl'].days * 1440
-    if 'autopurge_interval' in data:
-        data['autopurge_interval'] = data['autopurge_interval'].days
-    if 'versionpurge_interval' in data:
-        data['versionpurge_interval'] = data['versionpurge_interval'].days
-
-    log_admin_action(request, 'update settings with data: %s' % data)
-    api.update_enterprise_settings(data)
-
-    config_mgr_ = config_mgr.ConfigManager(config_mgr.default_config())
-    local_users = cleaned_data['enable_local_users']
-    config_mgr_.config['enable_local_users'] = local_users
-    config_mgr_.apply_config()
-
-    with open('/etc/timezone', 'w') as f:
-        f.write(cleaned_data['timezone'])
-    call(['dpkg-reconfigure', '-f', 'noninteractive', 'tzdata'])
-
-
-class IPBlockForm(forms.Form):
-    ip_block = forms.CharField(max_length=43, label='IP Block:')
-
-    def clean_ip_block(self):
-        data = self.cleaned_data['ip_block']
-        try:
-            ip = IP(data)
-        except ValueError, e:
-            raise forms.ValidationError('Invalid IP Block')
-        return data
-
-
-@enterprise_required
-@permission_required('blue_mgnt.can_view_settings')
-def settings(request, api, account_info, config, username, saved=False):
-    opts = api.enterprise_settings()
-    features = api.enterprise_features()
-
-    class OpenmanageOptsForm(forms.Form):
-        share_link_ttl = IntervalFormField(
-            'D', 
-            label='Share Link Time-to-Live', 
-            initial=datetime.timedelta(minutes=opts['share_link_ttl'])
-        )
-        if features['ldap']:
-            ad_domain = forms.CharField(
-                required=False, 
-                label='Restrict client installs to domain', 
-                initial=opts['ad_domain']
-            )
-        autopurge_interval = IntervalFormField(
-            'D', 
-            label='Deleted Items Automatic Purge', 
-            initial=datetime.timedelta(days=opts['autopurge_interval'])
-        )
-        versionpurge_interval = IntervalFormField(
-            'D', 
-            label='Historical Version Automatic Purge', 
-            initial=datetime.timedelta(days=opts['versionpurge_interval'])
-        )
-        support_email = forms.EmailField(initial=opts['support_email'])
-        enable_local_users = forms.BooleanField(
-            initial=config.get('enable_local_users', False),
-            required=False
-        )
-        timezone = forms.ChoiceField(
-            choices=[(x, x) for x in pytz.common_timezones],
-            initial=file('/etc/timezone').read().strip(),
-        )
-
-        def __init__(self, *args, **kwargs):
-            super(OpenmanageOptsForm, self).__init__(*args, **kwargs)
-            
-            if features['netkes']:
-                self.fields['omva_url'] = forms.URLField(
-                    label='OpenManage Virtual Appliance URL', 
-                    initial=opts['omva_url'], 
-                    help_text='This address must be accessible from SpiderOak. Please refer to the OpenManage documentation.'
-                )
-
-    options = OpenmanageOptsForm()
-
-    class BaseIPBlockFormSet(forms.formsets.BaseFormSet):
-        def clean(self):
-            if any(self.errors):
-                return
-            blocks = [a.cleaned_data['ip_block'] for a in self.forms \
-                      if a.cleaned_data.get('ip_block') and not a.cleaned_data.get('DELETE')]
-            log_admin_action(request, 'update signup network restrictions: %s' % blocks)
-            api.update_enterprise_settings(dict(signup_network_restriction=blocks))
-
-    IPBlockFormSet = formset_factory(IPBlockForm, 
-                                     can_delete=True,
-                                     formset=BaseIPBlockFormSet)
-
-    ip_blocks = IPBlockFormSet(initial=[dict(ip_block=x) for x in opts['signup_network_restriction']], 
-                               prefix='ip_blocks')
-    error = False
-
-    if request.method == 'POST' and request.user.has_perm('blue_mgnt.can_manage_settings'):
-        if request.POST.get('form', '') == 'ip_block':
-            ip_blocks = IPBlockFormSet(request.POST, prefix='ip_blocks')
-            if ip_blocks.is_valid():
-                return redirect('blue_mgnt:settings_saved')
-            else:
-                error = True
-        elif request.POST.get('form', '') == 'reboot':
-            log_admin_action(request, 'reboot management vm')
-            call(['shutdown', '-r', 'now'])
-            return redirect('blue_mgnt:settings_saved')
-        elif request.POST.get('form', '') == 'sync':
-            log_admin_action(request, 'sync management vm')
-            return redirect('blue_mgnt:settings_saved')
-        elif request.POST.get('form', '') == 'rebuild_db':
-            log_admin_action(request, 'Rebuild DB')
-            return redirect('blue_mgnt:settings_saved')
-        elif request.POST.get('form', '') == 'restart_directory':
-            log_admin_action(request, 'restart directory')
-            config_mgr_ = config_mgr.ConfigManager(config_mgr.default_config())
-            config_mgr_._kick_services()
-            return redirect('blue_mgnt:settings_saved')
-        else:
-            options = OpenmanageOptsForm(request.POST)
-
-            if options.is_valid():
-                save_settings(request, api, options)
-                return redirect('blue_mgnt:settings_saved')
-
-    return render_to_response('settings.html', dict(
-        user=request.user,
-        username=username,
-        features=features,
-        ip_blocks=ip_blocks,
-        options=options,
-        saved=saved,
-        error=error,
-        account_info=account_info,
-    ),
-    RequestContext(request))
-
-@enterprise_required
-def features(request, api, account_info, config, username, saved=False):
-    if username not in django_settings.TEST_ACCOUNTS:
-        return HttpResponseForbidden()
-        
-    opts = api.enterprise_settings()
-    features = api.enterprise_features()
-
-    class FeaturesForm(forms.Form):
-        email_as_username = forms.BooleanField(required=False)
-        netkes = forms.BooleanField(required=False)
-        ldap = forms.BooleanField(required=False)
-        group_permissions = forms.BooleanField(required=False)
-        signup_restrictions = forms.BooleanField(required=False)
-
-    if request.method == 'POST':
-        form = FeaturesForm(request.POST)
-        if form.is_valid():
-            from django.db import connection, transaction
-            cursor = connection.cursor()
-            cursor.execute(
-                'update enterprise set email_as_username=%s where brand_identifier=%s',
-                [form.cleaned_data['email_as_username'], username])
-
-            cursor.execute(
-                'update enterprise_management_features '
-                'set netkes=%s, ldap=%s, group_permissions=%s, signup_restrictions=%s '
-                'where enterprise_id=(select enterprise_id from enterprise where brand_identifier=%s)',
-                [form.cleaned_data['netkes'],
-                 form.cleaned_data['ldap'],
-                 form.cleaned_data['group_permissions'],
-                 form.cleaned_data['signup_restrictions'],
-                 username,
-                ])
-            transaction.commit_unless_managed()
-            return redirect('blue_mgnt:features_saved')
-    else:
-        form = FeaturesForm(features)
-
-    return render_to_response('features.html', dict(
-        user=request.user,
-        form=form,
-        username=username,
-        saved=saved,
-        account_info=account_info,
-    ),
-    RequestContext(request))
-
 @enterprise_required
 @permission_required('blue_mgnt.can_manage_settings')
 def password(request, api, account_info, config, username, saved=False):
@@ -859,7 +700,6 @@ def password(request, api, account_info, config, username, saved=False):
                 config_mgr_ = config_mgr.ConfigManager(config_mgr.default_config())
                 config_mgr_.config['api_password'] = new_password
                 config_mgr_.apply_config()
-                request.session['password'] = new_password
                 return redirect('blue_mgnt:password_saved')
 
     return render_to_response('password.html', dict(

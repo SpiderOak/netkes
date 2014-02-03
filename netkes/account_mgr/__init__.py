@@ -31,14 +31,19 @@ select * from passwords where email=%s;
 '''
 
 @contextmanager
-def get_cursor(config):
+def get_cursor(config, use_password=True):
     try:
-        conn = psycopg2.connect(database=config['db_db'],
-                                user=config['db_user'],
-                                password=config['db_pass'],
-                                host=config['db_host'])
+        if use_password:
+            conn = psycopg2.connect(database=config['db_db'],
+                                    user=config['db_user'],
+                                    password=config['db_pass'],
+                                    host=config['db_host'])
+        else:
+            conn = psycopg2.connect(database=config['db_db'],
+                                    user=config['db_user'],)
         yield conn.cursor()
     except:
+        raise
         conn.rollback()
         raise
     else:
@@ -72,7 +77,7 @@ def admin_token_auth(config, username, password):
 
     return True
 
-def authenticator(config, username, password):
+def authenticator(config, username, password, use_admin_tokens=True):
     """Authenticates users against OpenManage.
 
     This calls the correct authentication source to auth users.
@@ -91,7 +96,7 @@ def authenticator(config, username, password):
     auth_method = config.get('auth_method', None)
     auth_source = None
 
-    if admin_token_auth(config, username, password):
+    if use_admin_tokens and admin_token_auth(config, username, password):
         return True
 
     if auth_method == 'ldap':

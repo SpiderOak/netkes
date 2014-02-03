@@ -83,7 +83,7 @@ def get_user_csv_form(api):
             return data
     return UserCSVForm
 
-def get_new_user_form(api, features, config, local_groups):
+def get_new_user_form(api, features, config, local_groups, groups, request):
     class NewUserForm(forms.Form):
         if not features['email_as_username']:
             username = forms.CharField(max_length=45)
@@ -167,7 +167,7 @@ def users(request, api, account_info, config, username, saved=False):
         search = request.POST.get('search', '')
 
     UserCSVForm = get_user_csv_form(api)
-    NewUserForm = get_new_user_form(api, features, config, local_groups)
+    NewUserForm = get_new_user_form(api, features, config, local_groups, groups, request)
 
     class LocalUserForm(forms.Form):
         pass
