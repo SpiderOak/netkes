@@ -27,6 +27,17 @@
 
 @ZEBRA_STRIPE: #fafafa;
 
+
+/* MIXINS */
+
+.gradient(@col1; @col2) {
+    background-color: @col1;
+    background: -moz-linear-gradient(@col1, @col2);
+    background: -webkit-linear-gradient(@col1, @col2);
+    background: -o-linear-gradient(@col1, @col2);
+    background: linear-gradient(@col1, @col2);
+}
+
 /* apply a natural box layout model to all elements */
 *, *:before, *:after {
     -moz-box-sizing: border-box;
@@ -227,6 +238,12 @@ h1.page-header {
         form {
             display: inline-block;
             position: relative;
+        }
+
+        &:after {
+            display: block;
+            clear: both;
+            content:"";
         }
 
         .widget-search-input {
@@ -576,6 +593,74 @@ body.admin_groups {
     }
 }
 
+/* Usage Info Bar */
+.widget-usage-info {
+    width: 520px;
+    position: relative;
+    top: -30px;
+    
+    .digits {
+        text-align: center;
+        width: 270px;
+        margin: 0 auto;
+        p {
+            width: 100px;
+            display: inline;
+            font-size: 12px;
+
+            &.space-used {
+                color: @NAVTAB_BGCOLOR_USERS;
+                font-family: @FONTFAMILY_B;
+
+                span {
+                    font-family: @FONTFAMILY_R;
+                }
+            }
+            &.space-allocated {
+                color: @NAVTAB_BGCOLOR_REPORTS;
+                font-family: @FONTFAMILY_B;
+
+                span {
+                    font-family: @FONTFAMILY_R;
+                }
+            }
+        }
+    }
+    .usage-bar-wrapper {
+        position: relative;
+        overflow: hidden;
+        height: 24px;
+        width: 518px;
+        .gradient(@NAVTAB_BGCOLOR_REPORTS; @NAVTAB_BGCOLOR_MANAGE);
+        border-radius: 4px;
+        border: 1px solid @NAVTAB_BORDER_COLOR;
+
+        .usage-bar-space-used {
+            position: absolute;
+            height: 26px;
+            width: 519px;
+            top: -1px;
+            .gradient(@NAVTAB_BGCOLOR_SHARES; @NAVTAB_BGCOLOR_USERS);
+
+            &.usage-warning {
+                .gradient(#FCDC3B; darken(#FCDC3B, 14%));
+            }
+
+            &.usage-danger {
+                .gradient(#FF0000; darken(#FF0000, 14%));
+                span {
+                    color: #ffffff;
+                    font: 14px~'/'16px @FONTFAMILY_R;
+                    float: right;
+                    padding: 4px;
+                    margin-right: 10px;
+                    text-shadow: #5E2612 1px 1px 4px;
+                }
+            }
+        }
+    }
+}
+
 /* tags */
 .tag {
 	padding: 8px 10px;
@@ -617,5 +702,4 @@ body.admin_groups {
 .space-20none {
     margin: 20px 0;
 }
-/* inputs */
 

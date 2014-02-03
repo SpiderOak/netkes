@@ -119,7 +119,7 @@ def log_admin_action(request, message):
 class NetkesBackend(ModelBackend):
     def authenticate_superuser(self, username, password):
         log = logging.getLogger('admin_actions.authenticate_superuser')
-        log.info('Attempting to log "%s" in as a superuser' % username) 
+        log.info('Attempting to log "%s" in as a superuser' % username)
 
         config = read_config_file()
         if username != config['api_user']:
@@ -152,10 +152,10 @@ class NetkesBackend(ModelBackend):
 
             return user
         except urllib2.HTTPError:
-            log.info('''Failed to log in "%s" as a superuser. 
-                        Password incorrect or unable to contact 
-                        accounts api''' % username) 
-            
+            log.info('''Failed to log in "%s" as a superuser.
+                        Password incorrect or unable to contact
+                        accounts api''' % username)
+
             return None
 
     def authenticate_ldap(self, username, password):
@@ -198,7 +198,7 @@ class NetkesBackend(ModelBackend):
 
     def authenticate_netkes(self, username, password):
         log = logging.getLogger('admin_actions.authenticate_netkes')
-        log.info('Attempting to log in "%s" through netkes' % username) 
+        log.info('Attempting to log in "%s" through netkes' % username)
 
         config = read_config_file()
         api = get_api(config)
@@ -218,8 +218,8 @@ class NetkesBackend(ModelBackend):
             user.groups.add(group)
             return user
         else:
-            log.info('''Failed to authenticate "%s". Username or password 
-                        incorrect.''' % username) 
+            log.info('''Failed to authenticate "%s". Username or password
+                        incorrect.''' % username)
 
     def authenticate(self, username=None, password=None):
         user = self.authenticate_superuser(username, password)
@@ -295,29 +295,31 @@ def validate(request):
 def get_api(config):
     api = Api.create(
         django_settings.ACCOUNT_API_URL,
-        config['api_user'], 
-        config['api_password'], 
+        config['api_user'],
+        config['api_password'],
     )
     return api
 
 def enterprise_required(fun):
     def new_fun(request, *args, **kwargs):
-        if not request.session.get('username', False): 
+        if not request.session.get('username', False):
             return redirect('blue_mgnt:login')
 
         config = read_config_file()
         api = get_api(config)
         account_info = dict()
         quota = api.quota()
-        account_info['space_used'] = (quota['bytes_used'] or 0) / (10.0 ** 9)
-        account_info['space_allocated'] = (quota['bytes_allocated'] or 0) / (10.0 ** 9)
+        #account_info['space_used'] = (quota['bytes_used'] or 0) / (10.0 ** 9)
+        #account_info['space_allocated'] = (quota['bytes_allocated'] or 0) / (10.0 ** 9)
+        account_info['space_used'] = quota['bytes_used']
+        account_info['space_allocated'] = quota['bytes_allocated']
         account_info['space_available'] = (quota['bytes_available'] or 0) / (10.0 ** 9)
         account_info['show_available'] = True
         if not account_info['space_available']:
             account_info['show_available'] = False
             account_info['space_available'] = account_info['space_allocated']
         account_info['total_users'] = api.get_user_count()
-        return fun(request, api, account_info, config, 
+        return fun(request, api, account_info, config,
                    request.session['username'], *args, **kwargs)
     return new_fun
 
@@ -467,7 +469,7 @@ def get_group_form(config, plans, features, show_user_source):
         )
         webapi_enable = forms.BooleanField(required=False, initial=True)
         check_domain = forms.BooleanField(required=False)
-        ldap_dn = forms.CharField(required=False, 
+        ldap_dn = forms.CharField(required=False,
                                     widget=forms.Textarea(attrs={'rows':'1', 'cols':'60'}))
         if config['enable_local_users'] and show_user_source:
             user_source = forms.ChoiceField([('ldap', 'ldap'), ('local', 'local')])
@@ -581,7 +583,7 @@ def groups(request, api, account_info, config, username, saved=False):
         initial = api.search_groups(search)
     else:
         initial = groups_list
-    
+
     for i in initial:
         for g in config['groups']:
             if i['group_id'] == g['group_id']:
@@ -749,9 +751,16 @@ def password(request, api, account_info, config, username, saved=False):
 @enterprise_required
 @permission_required('blue_mgnt.can_manage_settings')
 def manage(request, api, account_info, config, username):
+    group_count = len(api.list_groups())
+    codes = models.AdminSetupTokensUse.objects.all()
+    codes_count = codes.count()
+    account_name = config['api_user'].replace("_", " ")
     return render_to_response('manage.html', dict(
         user=request.user,
         username=username,
         account_info=account_info,
+        group_count=group_count,
+        codes_count=codes_count,
+        account_name=account_name,
     ),
     RequestContext(request))

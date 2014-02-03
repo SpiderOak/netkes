@@ -1,51 +1,35 @@
 {% extends "base.html" %}
 {% block title %}Management Console - {{ block.super }}{% endblock %}
 {% block body_classes %}manage {{ block.super }}{% endblock body_classes %}
-{% block breadcrumb %}<a href="#">Back to Something</a>{% endblock breadcrumb %}
+{% block breadcrumb %}{% endblock breadcrumb %}
 {% block modal_options %}{% include "partials/add-user-widget.html" with active="manage" %}{% endblock modal_options %}
 {% block navtab %}{% include "partials/navtab-widget.html" with active="manage" %}{% endblock navtab %}
 {% block content %}
 <h1 class="page-header">
-	<i class="ss-icon">&#x1F464;</i> Users
+    <i class="ss-icon">&#x1F464;</i> {{ account_name|title }}
     <div class="actions">
-        <p>Space bar goes here</p>
+        {% block usage-info %}{% include "partials/usage-info-widget.html" %}{% endblock usage-info %}
 	</div>
 </h1>
 <div class="left-col">
     <div class="widget-manage-blocks">
         <span class="manage-icon"><i class="ss-icon">&#x1F465;</i></span>
         <div>
-            <h3>Groups<span>N Groups</span></h3>
+            <h3>Groups<span>{{ group_count }} Groups</span></h3>
             <p>Description of the section. Nullam id do lor id nibh ultricies vehicula ut id elit.</p>
             <a href="{% url 'blue_mgnt:groups' %}" class="button button-primary">Manage Groups</a>
         </div>
     </div>
     <div class="widget-manage-blocks">
-        <span class="manage-icon"><i class="ss-icon">&#x1F512;</i></span>
-        <div>
-            <h3>Admin Groups<span>N Admin Groups</span></h3>
-            <p>Description of the section. Nullam id do lor id nibh ultricies vehicula ut id elit.</p>
-            <a href="{% url 'blue_mgnt:admin_groups' %}" class="button button-primary">Manage Admin Groups</a>
-        </div>
-    </div>
-    <div class="widget-manage-blocks">
-        <span class="manage-icon"><i class="ss-icon">&#x1F4D5;</i></span>
-        <div>
-            <h3>Policy</h3>
-            <p>Description of the section. Nullam id do lor id nibh ultricies vehicula ut id elit.</p>
-            <a href="" class="button button-primary">Manage Policy</a>
-        </div>
-    </div>
-</div>
-<div class="right-col">
-    <div class="widget-manage-blocks">
         <span class="manage-icon"><i class="ss-icon">&#x1F511;</i></span>
         <div>
-            <h3>Auth Codes<span>N Auth Codes</span></h3>
+            <h3>Auth Codes<span>{{ codes_count }} Auth Codes</span></h3>
             <p>Description of the section. Nullam id do lor id nibh ultricies vehicula ut id elit.</p>
             <a href="{% url 'blue_mgnt:auth_codes' %}" class="button button-primary">Manage Auth Codes</a>
         </div>
     </div>
+</div>
+<div class="right-col">
     <div class="widget-manage-blocks">
         <span class="manage-icon"><i class="ss-icon">&#xED50;</i></span>
         <div>
@@ -57,7 +41,7 @@
     <div class="widget-manage-blocks">
         <span class="manage-icon"><i class="ss-icon">&#x1F464;</i></span>
         <div>
-            <h3>Account<span>(Account Name)</span></h3>
+            <h3>Account<span>{{ account_name|title }}</span></h3>
             <p>Description of the section. Nullam id do lor id nibh ultricies vehicula ut id elit.</p>
             <a href="{% url 'blue_mgnt:settings' %}" class="button button-primary">Edit Account</a>
         </div>

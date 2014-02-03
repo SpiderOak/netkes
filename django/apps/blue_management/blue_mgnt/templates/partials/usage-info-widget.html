@@ -1,0 +1,15 @@
+{% block usage-info %}
+    <div class="widget-usage-info">
+        <div class="digits">
+            <p class="space-used">Space Used: <span class="num">{{ account_info.space_used|filesizeformat }}</span></p>
+            <p class="space-allocated">Space Allocated: <span class="num">{{ account_info.space_allocated|filesizeformat }}</span></p>
+        </div>
+        <div class="usage-bar-wrapper">
+            <div class="usage-bar-space-used"></div>
+        </div>
+    </div>
+    <script>
+        allocated_num = {{ account_info.space_allocated }};
+        used_num = {{ account_info.space_used }};
+    </script>
+{% endblock usage-info %}
