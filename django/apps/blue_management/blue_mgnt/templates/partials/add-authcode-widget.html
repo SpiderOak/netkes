@@ -1,10 +1,17 @@
-<h2>Create New Setup Code</h2>
+<div class="modal-wrapper">
+    <div class="modal-content">
+        <h2 class="page-header"><i class="ss-icon">&#x1F511;</i>Create New Setup Code
+            <span class="actions"><i class="ss-icon">&#x2421;</i></span>
+        </h2>
+            <div class="spacer"><!--ZXP--></div>
 <form action="{% url 'blue_mgnt:auth_codes' %}?show_inactive={{ show_inactive }}" enctype="multipart/form-data" method="post">
-    <table class="table" style="max-width:100%">
-        <tr>
+    <table class="widget-table">
         {% for field in new_code.visible_fields %}
-            <td>
+        <tr>
+            <td class="modal-table-label">
                 {{ field.label_tag }}
+            </td>
+            <td>
                 {{ field }}
             {% if field.errors %}
                 <br />
@@ -15,16 +22,34 @@
                 {% endfor %}
             {% endif %}
             </td>
-
+        </tr>
         {% endfor %}
-            <td style="padding-top:30px">
-            <input type='submit' value="+ Create Code" class="button button-primary">
+        <!-- MOCKUP -->
+        <tr>
+            <td>
+                <label>Actions</label>
+            </td>
+            <td>
+                <input type="radio">Global
+                <input type="radio">By Group:
+                <select>
+                    <option>Select Group</option>
+                    <option value="a">a</option>
+                    <option value="b">b</option>
+                    <option value="c">c</option>
+                    <option value="d">d</option>
+                </select>
             </td>
         </tr>
+        <!-- END MOCKUP -->
     </table>
+    <div class="widget-actions">
+        <input type='submit' value="Create Auth Code" class="rhs button button-primary">
+    </div>
     <input type='hidden' value='new_code' name='form'>
     {% for hidden in new_code.hidden_fields %}
         {{ hidden }}
     {% endfor %}
 </form>
-
+</div>
+</div>

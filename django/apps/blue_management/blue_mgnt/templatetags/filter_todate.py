@@ -9,7 +9,17 @@ import datetime
 
 register = template.Library()
 
+def isFloat(string):
+    try:
+        float(string)
+    except Exception:
+        return False
+    return True
+
 @register.filter
 def todate(obj):
-    return datetime.datetime.fromtimestamp(obj)
+    if isFloat(obj):
+        return datetime.datetime.fromtimestamp(obj)
+    else:
+        return obj
 

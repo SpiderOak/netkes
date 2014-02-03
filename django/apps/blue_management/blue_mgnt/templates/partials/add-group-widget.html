@@ -1,6 +1,6 @@
 <div class="modal-wrapper">
     <div class="modal-content">
-        <h2 class="page-header"><i class="ss-icon">&#x1F464;</i>Add User
+        <h2 class="page-header"><i class="ss-icon">&#x1F465;</i>Add Group
             <span class="actions"><i class="ss-icon">&#x2421;</i></span>
         </h2>
             <div class="spacer"><!--ZXP--></div>
@@ -9,7 +9,7 @@
                 <table class="widget-table">
                     {% for field in new_group.visible_fields %}
                     <tr>
-                        <td>
+                        <td class="modal-table-label">
                             {{ field.label_tag }}
                         </td>
                         <td>
@@ -25,12 +25,10 @@
                         </td>
                     </tr> 
                     {% endfor %}
-                <tr>
-                    <td style="padding-top:30px">
-                        <input type='submit' value="Add Group" class="button button-primary">
-                    </td>
-                </tr>
             </table>
+            <div class="widget-actions">
+                <input type='submit' value="Create Group" class="button button-primary">
+            </div>
             <input type='hidden' value='new_group' name='form'>
             {% for hidden in new_group.hidden_fields %}
                 {{ hidden }}

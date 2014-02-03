@@ -315,12 +315,26 @@ h1.page-header {
 	&>tbody>tr>td {
 		padding: 14px 4px 14px 8px;
 		border-bottom: 1px solid #dddddd;
-        overflow:hidden;
-        text-overflow:ellipsis;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
 	}
 	&>tbody>tr:nth-child(odd) {
 		background-color: @ZEBRA_STRIPE;
 	}
+
+    input[type='text'],
+    select,
+    textarea,
+    input[type='password'] {
+        width: 88%;
+        height: 30px;
+        border-radius: 5px;
+        border: 1px solid @NAVTAB_BORDER_COLOR;
+        text-indent: 12px;
+        color: darken(@NAVTAB_BORDER_COLOR, 10%);
+        font: 13px~"/"23px @FONTFAMILY_R;
+    }
 }
 
 .widget-manage-blocks {
@@ -369,7 +383,7 @@ h1.page-header {
 
 .modal-wrapper {
     background-color:rgba(0,0,0,.5);
-    position:absolute;
+    position: absolute;
     top: 0;
     left: 0;
     right: 0;
@@ -392,8 +406,14 @@ h1.page-header {
     label {
         font-family: @FONTFAMILY_SB;
     }
+    input#expiry_interval_days {
+        width: 100px;
+        display: inline;
+    }
 
     input[type='text'],
+    select,
+    textarea,
     input[type='password'] {
         width: 275px;
         height: 30px;
@@ -405,11 +425,17 @@ h1.page-header {
         display: block;
     }
 
+    select {
+        max-width: 135px;
+        display: inline-block;
+    }
+
     input[type='submit'] {
         float: right;
         position: relative;
         right: 20px;
     }
+
 
     .modal-table-label {
         width: 30%;
@@ -442,7 +468,6 @@ h1.page-header {
 
     .option-box {
         position: relative;
-        width: 130px;
         display: inline-block;
         margin: 10px;
         border-radius: 4px;
@@ -473,6 +498,18 @@ h1.page-header {
 			color: #fff;
 		}
 	}
+}
+
+.widget-actions {
+    margin: 20px 0;
+    .rhs {
+        float: right;
+    }
+    &:after {
+        clear: both;
+        display: block;
+        content: ""
+    }
 }
 
 .widget-splitactions {
@@ -523,6 +560,22 @@ button, .button {
 	.buttonate(#afafaf, #a0a0a0, #8b8b8b, #7e7e7e);
 }
 
+/* Special case */
+body.admin_groups {
+    th {
+        width: 22%;
+        &#perms {
+            width: 38%;
+        }
+        &:last-child {
+            width: 90px;
+        }
+    }
+    td {
+        vertical-align: top;
+    }
+}
+
 /* tags */
 .tag {
 	padding: 8px 10px;
@@ -550,3 +603,19 @@ button, .button {
     display: inline-block;
     margin-left: 10px;
 }
+
+.set-top {
+    vertical-align: top;
+}
+
+.permissions-options {
+    max-width: 180px;
+    display: inline-block;
+    font-size: 12px;
+}
+
+.space-20none {
+    margin: 20px 0;
+}
+/* inputs */
+

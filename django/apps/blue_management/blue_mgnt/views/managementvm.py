@@ -42,14 +42,18 @@ def escrow_login(request, api, account_info, config, username,
     return redirect(get_login_link(escrow_username, data['token']))
 
 class CodeForm(forms.Form):
-    expiry_interval = IntervalFormField('D', 
-                                        label='Expiry', 
+    expiry_interval = IntervalFormField('D',
+                                        label='Expiry',
                                         initial=datetime.timedelta(days=1))
-    no_devices_only = forms.BooleanField(required=False, 
+    no_devices_only = forms.BooleanField(required=False,
                                          initial=True,
+                                         label='No Devices Only?',
                                          help_text='testing it out'
                                         )
-    single_use_only = forms.BooleanField(required=False, initial=True)
+    single_use_only = forms.BooleanField(required=False,
+                                         initial=True,
+                                         label='Single Use Only?',
+                                         )
 
 @enterprise_required
 @permission_required('blue_mgnt.can_manage_auth_codes')
@@ -74,19 +78,19 @@ def auth_codes(request, api, account_info, config, username, saved=False):
             if new_code.is_valid():
                 data = dict(
                     token=setup_token.new_token(),
-                    expiry=new_code.cleaned_data['expiry_interval'] + datetime.datetime.now(), 
-                    no_devices_only=new_code.cleaned_data['no_devices_only'], 
+                    expiry=new_code.cleaned_data['expiry_interval'] + datetime.datetime.now(),
+                    no_devices_only=new_code.cleaned_data['no_devices_only'],
                     single_use_only=new_code.cleaned_data['single_use_only']
                 )
                 models.AdminSetupTokens.objects.create(**data)
                 log_admin_action(request, 'Created code: %s' % data)
-                return redirect(reverse('blue_mgnt:auth_codes_saved') + 
+                return redirect(reverse('blue_mgnt:auth_codes_saved') +
                                 '?show_inactive=%s' % show_inactive)
         if request.POST.get('form', '') == 'disable_code':
             code = models.AdminSetupTokens.objects.get(token=request.POST['token'])
             code.expiry = datetime.datetime.now()
             code.save()
-            return redirect(reverse('blue_mgnt:auth_codes_saved') + 
+            return redirect(reverse('blue_mgnt:auth_codes_saved') +
                             '?show_inactive=%s' % show_inactive)
 
     return render_to_response('authcodes.html', dict(
@@ -117,9 +121,9 @@ def admin_groups(request, api, account_info, config, username, saved=False):
         user_group_id = forms.ChoiceField([(g['group_id'], g['name']) for g in groups_list],
                                           label='Group')
         permissions = forms.MultipleChoiceField(
-                        required=False, 
-                        choices=[(p.id, p.name) for p in 
-                                 request.user.user_permissions.all()], 
+                        required=False,
+                        choices=[(p.id, p.name) for p in
+                                 request.user.user_permissions.all()],
                         widget=forms.CheckboxSelectMultiple)
         group_id = forms.IntegerField(widget=forms.HiddenInput, required=False)
 
@@ -162,9 +166,9 @@ def admin_groups(request, api, account_info, config, username, saved=False):
 
 
     new_admin_group = AdminGroupForm()
-    AdminGroupFormSet = formset_factory(AdminGroupForm, 
-                                        extra=0, 
-                                        formset=BaseAdminGroupFormSet, 
+    AdminGroupFormSet = formset_factory(AdminGroupForm,
+                                        extra=0,
+                                        formset=BaseAdminGroupFormSet,
                                         can_delete=True)
     admin_groups = AdminGroupFormSet(initial=initial, prefix='admin_groups')
 
@@ -172,7 +176,7 @@ def admin_groups(request, api, account_info, config, username, saved=False):
         if request.POST.get('form', '') == 'new_admin_group':
             new_admin_group = AdminGroupForm(request.POST)
             if new_admin_group.is_valid():
-                group = Group.objects.create(name=new_admin_group.cleaned_data['name']) 
+                group = Group.objects.create(name=new_admin_group.cleaned_data['name'])
                 for permission_id in new_admin_group.cleaned_data['permissions']:
                     group.permissions.add(Permission.objects.get(pk=permission_id))
                 group.save()
@@ -242,7 +246,7 @@ def logs(request, api, account_info, config, username, saved=False):
 
     user_offset = RESULTS_PER_PAGE * (page - 1)
 
-    log_search = os.path.join(django_settings.LOG_DIR, 
+    log_search = os.path.join(django_settings.LOG_DIR,
                               '%s*' % django_settings.ADMIN_ACTIONS_LOG_FILENAME)
     log_entries = [open(x).readlines() for x in glob.glob(log_search)]
     log_entries = sorted(reduce(list.__add__, log_entries), reverse=True)

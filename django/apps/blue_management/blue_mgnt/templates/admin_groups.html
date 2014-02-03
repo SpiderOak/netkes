@@ -1,17 +1,20 @@
 {% extends "base.html" %}
 {% block title %}Management Console - {{ block.super }}{% endblock %}
-{% block body_classes %}home {{ block.super }}{% endblock body_classes %}
+{% block body_classes %}admin_groups {{ block.super }}{% endblock body_classes %}
 {% block breadcrumb %}<a href="#">Back to Something</a>{% endblock breadcrumb %}
-{% block modal_options %}{% endblock modal_options %}
+{% block modal_options %}{% include "partials/add-admin-group-widget.html" with active="manage"%}{% endblock modal_options %}
 {% block navtab %}{% include "partials/navtab-widget.html" with active="manage" %}{% endblock navtab %}
 {% block content %}
+{% if saved %}
+<p id="saved" class="bigger" style="display:none">Changes saved successfully!</p>
+{% endif %}
 <h1 class="page-header">
-	<i class="ss-icon">&#x1F464;</i> Admin Groups
+	<i class="ss-icon">&#x1F512;</i> Admin Groups
     <div class="actions">
-		<button id="add-user" class="button button-primary">Add user</button>
+		<button id="add-widget" class="button button-primary">Add Admin Group</button>
         <form action="{% url 'blue_mgnt:admin_groups' %}" method="GET">
             <input name="show_disabled" type="hidden" value="{{ show_disabled }}">
-            <input type="text" class="widget-search-input" value="{{ search }}" placeholder="Find Users by Name or Email">
+            <input type="text" class="widget-search-input" value="{{ search }}" placeholder="Find Admin Groups">
             <input type="submit" class="search-button ss-icon" value="&#x1F50E;">
         </form>
 	</div>
@@ -23,7 +26,8 @@
         <tr class="bigger">
             <th>Name</th>
             <th>LDAP DN</th>
-            <th>Permissions</th>
+            <th id="perms">Permissions</th>
+            <th></th>
         </tr>
     </thead>
     <tbody>
@@ -57,9 +61,35 @@
         </tr>
         {% endfor %}
     </tbody>
+    <!-- MOCKUP -->
+    <tbody>
+        <tr>
+            <td><input type="text" value="test"></td>
+            <td><input type="text" value="Test2 with a longer box of random"></td>
+            <td>
+                <div class="permissions-options">
+                    <input type="checkbox"> Can edit bonus GB's
+                    <br /><input type="checkbox"> Can manage groups
+                    <br /><input type="checkbox"> Can manage settings
+                    <br /><input type="checkbox"> Can manage users
+                    <br /><input type="checkbox"> Can view settings
+                </div>
+                <div class="permissions-options">
+                    <input type="checkbox"> Can manage admins
+                    <br /><input type="checkbox"> Can manage auth codes
+                    <br /><input type="checkbox"> Can enable/disable shares
+                    <br /><input type="checkbox"> Can view groups
+                    <br /><input type="checkbox"> Can view user data
+                </div>
+            </td>
+            <td><span class="button button-muted">Delete</span></td>
+        </tr>
+    </tbody>
+    <!-- END MOCKUP -->
+
 </table>
-<div style="text-align:center">
-    <input type='submit' value="Save Changes" class="button button-primary">
+<div class="widget-actions">
+    <input type='submit' value="Save Changes" class="rhs button button-primary">
     <input type='hidden' value='management' name='form'>
 </div>
 </form>

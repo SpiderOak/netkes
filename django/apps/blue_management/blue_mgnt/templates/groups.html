@@ -8,7 +8,7 @@
 <h1 class="page-header">
 	<i class="ss-icon">&#x1F465;</i> Groups
     <div class="actions">
-		<button id="add-group" class="button button-primary">Add Group</button>
+		<button id="add-widget" class="button button-primary">Add Group</button>
         <form action="{{% url 'blue_mgnt:groups' %}" method="GET">
             <input name="show_disabled" type="hidden" value="{{ show_disabled }}">
             <input type="text" class="widget-search-input" value="{{ search }}" placeholder="Find Groups">
@@ -39,20 +39,20 @@
         {% if groups.non_form_errors %}
         <tr><td colspan="5">{{ groups.non_form_errors }}</td></tr>
         {% endif %}
-        {% for form in groups.forms %}
+        {% for item in groups %}
         <tr>
-            <td>{{ form.name }}</td>
-            <td>{{ form.plan_id }}</td>
-            <td>{{ form.users_in_group|length }}</td>
-            <td>{{ forms.space_used|filesizeformat }}</td>
-            <td><a href="">Details</a></td>
+            <td>{{ item.name }}</td>
+            <td>{{ item.plan_id }}</td>
+            <td>{{ item.users_in_group|length }}</td>
+            <td>{{ item.space_used|filesizeformat }}</td>
+            <td><a href="{% url 'blue_mgnt:groups_detail' item.name %}">Details</a></td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
-<div>
-    {% if user.has_perm.blue_mgnt.can_manage_groups %}
-    <input type='submit' value="Save Changes" class="button button-primary">
+<div class="widget-splitactions space-20none">
+    {% if perms.blue_mgnt.can_manage_groups %}
+    <input type='submit' value="Save Changes" class="rhs button button-primary">
     {% if show_force %}
     <input type='submit' value="Force Plan Change" class="button button-warning" name="force_plan_change">
     {% endif %}
@@ -61,9 +61,6 @@
     {% endif %}
 </div>
 </form>
-
-        {% else %}
-        <p>CAN'T FIND NUTHIN'!!!</p>
 {% endif %}
 </div>
 {% endblock content %}

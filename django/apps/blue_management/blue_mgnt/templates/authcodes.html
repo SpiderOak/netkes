@@ -1,18 +1,18 @@
 {% extends "base.html" %}
 {% load filter_todate %}
 {% block title %}Management Console - {{ block.super }}{% endblock %}
-{% block body_classes %}home {{ block.super }}{% endblock body_classes %}
-{% block breadcrumb %}<a href="#">Back to Something</a>{% endblock breadcrumb %}
-{% block modal_options %}{% endblock modal_options %}
+{% block body_classes %}authcodes {{ block.super }}{% endblock body_classes %}
+{% block breadcrumb %}<a href="{{ block.super }}">Back to Something</a>{% endblock breadcrumb %}
+{% block modal_options %}{% include "partials/add-authcode-widget.html" with active="manage" %}{% endblock modal_options %}
 {% block navtab %}{% include "partials/navtab-widget.html" with active="manage" %}{% endblock navtab %}
 {% block content %}
 <h1 class="page-header">
 	<i class="ss-icon">&#x1F511;</i> Auth Codes
     <div class="actions">
-		<button id="add-user" class="button button-primary">Add user</button>
+		<button id="add-widget" class="button button-primary">Create Code</button>
         <form action="{% url 'blue_mgnt:users' %}" method="GET">
             <input name="show_disabled" type="hidden" value="{{ show_disabled }}">
-            <input type="text" class="widget-search-input" value="{{ search }}" placeholder="Find Users by Name or Email">
+            <input type="text" class="widget-search-input" value="{{ search }}" placeholder="Find Auth Codes">
             <input type="submit" class="search-button ss-icon" value="&#x1F50E;">
         </form>
 	</div>
@@ -23,8 +23,8 @@
                 <th>Token</th>
                 <th>Created</th>
                 <th>Expires</th>
-                <th>Single Use Only</th>
-                <th>No Devices Only</th>
+                <th>Single Use?</th>
+                <th>No Devices?</th>
                 <th>Used</th>
                 <th></th>
             </tr>
@@ -33,8 +33,8 @@
             {% for code in codes %}
             <tr{% if code.new_token %} class="success"{% endif %}>
                     <td>{{ code.token }}</td>
-                    <td>{{ code.date_created|todate}}</td>
-                    <td>{{ code.expiry|todate}}</td>
+                    <td>{{ code.date_created|todate }}</td>
+                    <td>{{ code.expiry|todate }}</td>
                     <td>{{ code.no_devices_only }}</td>
                     <td>{{ code.single_use_only }}</td>
                     <td>{{ code.used }}</td>
@@ -42,24 +42,27 @@
                         {% if code.active %}
                         <form method="post" action="{% url 'blue_mgnt:auth_codes' %}?show_inactive={{show_inactive }}">
                             <input type='submit' 
-                                value="Disable Code" 
-                                class="button button-primary" 
+                                value="Disable" 
+                                class="button button-muted" 
                                 id="edit_share" 
                                 style="display: inline-block">
                             <input type='hidden' value='disable_code' name='form'>
                             <input type='hidden' value='{{ code.token }}' name='token'>
                         </form>
+                        {% else %}
+                            <span style="color:#ff0000">Disabled</span>
                         {% endif %}
                     </td>
                 </tr>
             {% endfor %}
         </tbody>
     </table>
-    <a href="{% url 'blue_mgnt:auth_codes' %}?show_inactive={{ show_inactive|yesno:"0, 1" }}" 
-        class="button button-primary">
-        <i class="{{ show_inactive|yesno:"icon-eye-close, icon-eye-open" }} icon-white"></i>
-        {{ show_inactive|yesno:"Hide Inactive, Show Inactive" }}
-    </a>
+    <div class="widget-actions">
+        <a href="{% url 'blue_mgnt:auth_codes' %}?show_inactive={{ show_inactive|yesno:"0, 1" }}" 
+            class="button button-muted">
+            {{ show_inactive|yesno:"Hide Disabled, Show Disabled" }} Auth Codes
+        </a>
+    </div>
     <div id="pagination" class="bigger" style="text-align:center">
         {% if page > 1 %}
         <a href="{% url 'blue_mgnt:auth_codes' %}?page={{ page|add:"-1" }}">previous</a>
