@@ -16,6 +16,9 @@
         </form>
 	</div>
 </h1>
+{% if saved and not search_back %}
+<p id="saved" class="bigger" style="display:none">Changes saved successfully!</p>
+{% endif %}
 <form action="{% url 'blue_mgnt:users' %}" method="POST" action="">
     {{ users.management_form }}
     {{ delete_user_formset.management_form }}
