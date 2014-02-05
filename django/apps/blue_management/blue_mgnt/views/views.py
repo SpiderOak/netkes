@@ -718,6 +718,16 @@ def share_detail(request, api, account_info, config, username, email,
                  room_key, saved=False):
     api_user = api.get_user(email)
     share = api.get_share(email, room_key)
+
+    if request.method == 'POST':
+        if request.POST.get('form', '') == 'edit_share':
+            enable = request.POST['enabled'] == 'False'
+            msg = 'edit share %s for user %s. Action %s share' % \
+                    (room_key, email, 'enable' if enable else 'disable')
+            log_admin_action(request, msg)
+            api.edit_share(email, room_key, enable)
+            return redirect('blue_mgnt:share_detail', email, room_key)
+
     return render_to_response('share_detail.html', dict(
         share_url=get_base_url(),
         share=share,
