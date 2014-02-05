@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% load filter_todate %}
+
+{% block title %}Management Console - {{ block.super }}{% endblock %}
+
+{% block body_classes %}shares_detail {{ block.super }}{% endblock body_classes %}
+{% block breadcrumb %}<a href="#">Back to Something</a>{% endblock breadcrumb %}
+{% block modal_options %}{% endblock modal_options %}
+{% block navtab %}{% include "partials/navtab-widget.html" with active="shares" %}{% endblock navtab %}
+{% block content %}
+<h1 class="page-header">
+	<i class="ss-icon">&#xEE00;</i> ShareRoom Details
+</h1>
+<table id="share" class="widget-table">
+    <tbody>
+        <tr>
+            <td><label>Name</label></td>
+            <td>
+            {% if share.name %}
+                {{ share.name }}
+            {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <td><label>Room Key</label></td>
+            <td>{{ share.room_key }}</td>
+        </tr>
+        <tr>
+            <td><label>URL</label></td>
+            <td>
+                <a href="{{ share_url }}/browse/share/{{ api_user.share_identifier }}/{{ share.room_key }}">{{ share_url }}/browse/share/{{ api_user.share_identifier }}/{{ share.room_key }}</a>
+            </td>
+        </tr>
+        <tr>
+            <td><label>Description</label></td>
+            <td>{{ share.description }}</td>
+        </tr>
+        <tr>
+            <td><label>Creation Time</label></td>
+            <td>
+            {% if share.creation_time %}
+                {{ share.creation_time|todate }}
+            {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <td><label>Update Time</label></td>
+            <td>
+            {% if share.update_time %}
+                {{ share.update_time|todate }}
+            {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <form method="post" action="{% url 'blue_mgnt:share_detail' api_user.email share.room_key %}">
+                    <input type='submit' 
+                    value="{{ share.enabled|yesno:'Disable, Enable' }} Share" 
+                            class="button button-primary" 
+                            id="edit_share" 
+                            >
+                    <input type='hidden' value='edit_share' name='form'>
+                    <input type='hidden' value='{{ share.room_key }}' name='room_key'>
+                    <input type='hidden' value='{{ share.enabled }}' name='enabled'>
+                </form>
+            </td>
+        </tr>
+        <tr>
+            <td><label>Password Required</label></td>
+            <td>{{ share.password_required }}</td>
+        </tr>
+    </tbody>
+</table>
+{% endblock content %}
+
