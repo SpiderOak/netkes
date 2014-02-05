@@ -1,0 +1,17 @@
+.ropeproject
+*~
+semantic.cache
+*.pyc
+*.pyo
+*.swp
+deploy/openmanage*
+docs/_build*
+*.key*
+*.crt*
+*.csr*
+*.tar.bz2
+
+#Added to protect propriarity fonts
+django/apps/blue_management/blue_mgnt/fonts*
+django/apps/blue_management/blue_mgnt/fonts/*
+django/omva/settings.py
