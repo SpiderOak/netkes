@@ -15,3 +15,4 @@ docs/_build*
 django/apps/blue_management/blue_mgnt/fonts*
 django/apps/blue_management/blue_mgnt/fonts/*
 django/omva/settings.py
+*.pyc

@@ -43,9 +43,10 @@
                     {% else %}
                     <td>{{ user.username }}</td>
                     {% endif %}
-                    <td>{{ share.creation_time|todate  }}</td>
-                    <!-- Need to fix link below -->
-                    <td><a href="">Details</a></td>
+                    <td>{{ share.creation_time|todate }}</td>
+                    <td><a href="{% url 'blue_mgnt:share_detail' user.email share.room_key %}">
+                            Details
+                    </a></td>
                 </tr>
                 {% endfor %}
             {% endfor %}

@@ -715,11 +715,18 @@ def shares(request, api, account_info, config, username, saved=False):
     ),
     RequestContext(request))
 
-# Added shares_detail as a copy of shares() -- benny
 @enterprise_required
 @permission_required('blue_mgnt.can_manage_shares')
-def shares_detail(request):
-    return render_to_response('shares_detail.html',
+def share_detail(request, api, account_info, config, username, email, 
+                 room_key, saved=False):
+    api_user = api.get_user(email)
+    share = api.get_share(email, room_key)
+    return render_to_response('share_detail.html', dict(
+        share_url=get_base_url(),
+        share=share,
+        api_user=api_user,
+        account_info=account_info,
+    ),
     RequestContext(request))
 
 @enterprise_required
