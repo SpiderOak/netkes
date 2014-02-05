@@ -262,6 +262,7 @@ def login_user(request):
 
     return render_to_response('login.html', dict(
         form=form,
+        request_login=True,
     ),
     RequestContext(request))
 

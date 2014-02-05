@@ -28,6 +28,7 @@
 	<![endif]--> 
 </head>
 <body class="{% block body_classes %}{% endblock body_classes %}">
+{% if not request_login %}
     {% block modal_options %}{% endblock modal_options %}
 	<div id="bg-gradient">
 		<div><!--ZKP--></div>
@@ -68,6 +69,7 @@
 		<div class="spacer"><!--ZKP--></div>
 		<div class="breadcrumb">{% block breadcrumb %}{% endblock breadcrumb%}</div>
 		<div class="spacer"><!--ZKP--></div>
+{% endif %} 
 		<div class="content">{% block content %}{% endblock content %}</div>
 		<div class="spacer"><!--ZKP--></div>
 		<div class="footer">

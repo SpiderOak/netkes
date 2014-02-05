@@ -9,11 +9,12 @@
             <p class="description">You can either import users via a CSV file or manually add them.
             If you are using LDAP for user management, users will be added automatically.</p>
 
+        {% if not features.ldap %}
             <div class="option-box" id="option-upload-csv">
                 <p>Upload from<br />a CSV file.</p>
                 <button class="button button-primary">Upload CSV</button>
             </div>
-
+        {% endif %}
             <div class="option-box" id="option-add-user">
                 <p>Manually<br />add users.</p>
                 <button class="button button-primary">Create User</button>
@@ -21,6 +22,7 @@
             </div>
         </div>
 
+{% if config.enable_local_users %}
         <div class="widget-add-user" style="display:none">
             <table class="widget-table">
             <form action="{% url 'blue_mgnt:users' %}" enctype="multipart/form-data" method="POST">
@@ -58,3 +60,4 @@
         </div>
     </div>
 </div>
+{% endif %}
