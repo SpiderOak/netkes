@@ -155,11 +155,15 @@ def get_login_link(username):
     return reverse('blue_mgnt:escrow_login', args=[username])
 
 @enterprise_required
-def users(request, api, account_info, config, username, saved=False):
+def users(request, api, account_info, config, username, saved=False, is_reverse=False):
     page = int(request.GET.get('page', 1))
     show_disabled = int(request.GET.get('show_disabled', 1))
     search_back = request.GET.get('search_back', '')
     groups = api.list_groups()
+
+    if is_reverse:
+        groups = reversed(groups)
+
     features = api.enterprise_features()
     search = request.GET.get('search', '')
     local_groups = get_local_groups(config, groups)
@@ -234,7 +238,10 @@ def users(request, api, account_info, config, username, saved=False):
 
     next_page = len(all_users) == user_limit
 
-    all_users.sort(key=lambda x: x['creation_time'], reverse=True)
+    if is_reverse:
+        all_users.sort(key=lambda x: x['creation_time'], reverse=True)
+    else:
+        all_users.sort(key=lambda x: x['email'], reverse=False)
 
     if not show_disabled:
         all_users = [x for x in all_users if x['enabled']]
@@ -314,6 +321,7 @@ def users(request, api, account_info, config, username, saved=False):
         search=search,
         search_back=search_back,
         users_and_delete=zip(all_users, delete_user_formset),
+        is_reverse=is_reverse,
     ),
     RequestContext(request))
 
@@ -327,16 +335,17 @@ def user_detail(request, api, account_info, config, username, email, saved=False
 
     class UserForm(forms.Form):
         if local_user:
-            enabled = forms.BooleanField(required=False)
+            #enabled = forms.BooleanField(required=False)
             name = forms.CharField(max_length=45)
             email = forms.EmailField()
-            group_id = forms.ChoiceField(local_groups, label='Group')
+            group_id = forms.ChoiceField(local_groups, label='Group ID')
         else:
-            enabled = forms.BooleanField(widget=ReadOnlyWidget, required=False)
+            #enabled = forms.BooleanField(widget=ReadOnlyWidget, required=False)
             name = forms.CharField(widget=ReadOnlyWidget, required=False, max_length=45)
             email = forms.EmailField(widget=ReadOnlyWidget, required=False)
             group_id = forms.ChoiceField(
                 local_groups,
+                label='Group ID',
                 widget=ReadOnlyWidget, required=False
             )
         bonus_gigs = forms.IntegerField(label="Bonus GBs", min_value=0)

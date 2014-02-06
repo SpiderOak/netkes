@@ -58,6 +58,18 @@ $(function() {
         $('#log_in').submit();
     });
 
+
+    // Controller for hide/show in details
+    if($('toggle-controller')){
+        $('.widget-overview').hide()
+        $('.toggle-controller > span').html('<i class="ss-icon">&#x002B;</i> See');
+        $('.toggle-controller').click(function(){
+            var curr_widget = $(this).parent().next('.widget-overview');
+            curr_widget.toggle();
+            $('span', this).html(curr_widget.is(':visible') ? '<i class="ss-icon">&#x002D;</i> Hide' : '<i class="ss-icon">&#x002B;</i> See');
+        });
+    }
+
 function getCookie(name) {
     var cookieValue = null;
     if (document.cookie && document.cookie != '') {

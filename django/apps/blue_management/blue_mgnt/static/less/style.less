@@ -77,6 +77,16 @@
     }
 }
 
+.widget-table-details {
+    tr {
+        td:first-of-type {
+            label {
+                font-family: @FONTFAMILY_SB;
+            }
+        }
+    }
+}
+
 
 /* apply a natural box layout model to all elements */
 *, *:before, *:after {
@@ -672,7 +682,6 @@ body.login {
     }
 }
 
-
 /* Usage Info Bar */
 .widget-usage-info {
     width: 520px;
@@ -783,3 +792,28 @@ body.login {
     margin: 20px 0;
 }
 
+#hint {
+    white-space: normal;
+    overflow: visible;
+    span {
+        font-size: 12px;
+    }
+}
+.link-primary {
+    font-family: @FONTFAMILY_B;
+    color: @NAVTAB_BGCOLOR_SHARES;
+    &:visited {
+        color: @NAVTAB_BGCOLOR_SHARES;
+    }
+}
+
+.toggle-controller {
+    cursor: pointer;
+    font-size: 14px;
+    i {
+        font-size: 8px;
+    }
+    &:hover {
+        text-decoration: underline;
+    }
+}

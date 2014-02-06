@@ -5,17 +5,14 @@
 
 {% block body_classes %}home {{ block.super }}{% endblock body_classes %}
 {% block breadcrumb %}<a href="#">Back to Something</a>{% endblock breadcrumb %}
-{% block modal_options %}{% include "partials/add-user-widget.html" with active="users" %}{% endblock modal_options %}
+{% block modal_options %}{% endblock modal_options %}
 {% block navtab %}{% include "partials/navtab-widget.html" with active="users" %}{% endblock navtab %}
 {% block content %}
 <h1 class="page-header">
 	<i class="ss-icon">&#x1F464;</i> User Detials
     <div class="actions">
-		<button id="add-user" class="button button-primary">Add user</button>
         <form action="{% url 'blue_mgnt:users' %}" method="GET">
             <input name="show_disabled" type="hidden" value="{{ show_disabled }}">
-            <input type="text" class="widget-search-input" value="{{ search }}" placeholder="Find Users by Name or Email">
-            <input type="submit" class="search-button ss-icon" value="&#x1F50E;">
         </form>
 	</div>
 </h1>
@@ -28,51 +25,131 @@
 <form method="POST" action="{% url 'blue_mgnt:user_detail' email %}">
     <div class="" id="options">
         <fieldset>
-            <table class="widget-table">
+            <table class="widget-table widget-table-details">
+                <tbody>
             {% if not features.email_as_username %}
             <tr>
                 <td><label>Username</label></td>
                 <td>{{ api_user.username }}</td>
             </tr>
+            <td></td>
             {% endif %}
             {% for field in user_form %}
             <tr>
                 <td>
-                    <div class="{{ field.errors|yesno:"error, ''" }}">
-                        {{ field.label_tag }}
-                    </div>
+                    {{ field.label_tag }}
                 </td>
                 <td>
                     {{ field }}
-                    {% if field.errors %}
-                        <br />
-                        {% for error in field.errors %}
-                        <span class="table_errors">
-                            {{ error }}
-                        </span>
-                        {% endfor %}
-                    {% else %}
-                        <label for="id_{{ field.name }}">
-                        </label>
-                    {% endif %}
                 </td>
+                {% if field.html_name == 'group_id' %}
+                <td id="hint">
+                    <span>To change this users group, click on the
+                        Manage Groups button on the 
+                        <a href="{% url 'blue_mgnt:manage' %}">Manage page</a>.
+                    </span>
+                </td>
+                {% elif field.html_name == 'bonus_gigs' %}
+                <td id="hint">
+                    <span>Add extra space for this specific user.</span>
+                </td>
+                {% else %}
+                <td></td>
+                {% endif %}
             </tr>
             {% endfor %}
             <tr>
                 <td><label>Devices</label></td>
-                <td>{{ api_user.num_devices }}</td>
+                <td>{{ devices|length }}</td>
+                {% if devices|length > 0 %}
+                <td class="toggle-controller link-primary"><span></span> all devices</td>
             </tr>
+            <tr class="widget-overview">
+                <td></td>
+                <td colspan="2">
+                    <table class="widget-table">
+                        <thead>
+                            <th>Name</th>
+                            <th>Creation Time</th>
+                            <th>Last Logged In</th>
+                        </thead>
+                        <tbody>
+                            {% for device in devices %}
+                            <tr>
+                                <td>{{ device.name }}</td>
+                                <td>{{ device.creation_time|todate }}</td>
+                                <td>{% if device.last_login %}
+                                        {{ device.last_login|todate }}
+                                    {% else %}
+                                        No login recorded
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </td>
+            </tr>
+            {% else %}
+                <td></td>
+            </tr>
+            {% endif %}
+            <tr>
+                <td><label>Shares</label></td>
+                <td>{{ shares|length }}</td>
+            {% if shares|length > 0 %}
+                <td class="toggle-controller link-primary"><span></span> all ShareRooms</td>
+            </tr>
+            <tr class="widget-overview">
+                <td></td>
+                <td colspan="2">
+                    <table class="widget-table">
+                        <thead>
+                            <th>Name</th>
+                            <th>Creation Time</th>
+                            <th>Last Logged In</th>
+                        </thead>
+                        <tbody>
+                            {% for share in shares %}
+                            <tr>
+                                <td>
+                                    <a class="link-primary" 
+                                        href="{{ share_url }}/browse/share/
+                                        {{ api_user.share_identifier }}/
+                                        {{ share.room_key }}">{{ share.name }}
+                                    </a>
+                                </td>
+                                <td>{{ share.creation_time|todate }}</td>
+                                <td>{% if share.last_login %}
+                                        {{ share.last_login|todate }}
+                                    {% else %}
+                                        No login recorded
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </td>
+            </tr>
+            {% else %}
+                <td></td>
+            </tr>
+            {% endif %}
             <tr>
                 <td><label>GBs Stored</label></td>
                 <td>{{ api_user.bytes_stored|filesizeformat }}</td>
+                <td></td>
             </tr>
             <tr>
                 <td><label>Storage GBs</label></td>
                 <td>{{ api_user.storage_bytes|filesizeformat }}</td>
+                <td></td>
             </tr>
             <tr>
                 <td><label>Creation Time</label></td>
                 <td>{{ api_user.creation_time|todate }}</td>
+                <td></td>
             </tr>
             <tr>
                 <td><label>Last Login</label></td>
@@ -82,125 +159,30 @@
                     No login recorded
                 {% endif %}
                 </td>
+                <td></td>
             </tr>
             <tr>
                 <td><label>Enabled</label></td>
                 <td>{{ api_user.enabled }}</td>
+                <td></td>
             </tr>
-            <tr><td colspan="2">
-                <input type='submit' value="Save Changes" class="button button-primary" id="edit_user">
+            <tr>
+                <td><label>Storage Login</label></td>
+                <td>{{ storage_login }}</td>
+                <td></td>
+            </tr>
+        </tbody>
+    </table>
+            <div class="widget-actions">
+                <input type='submit' value="Delete User" class="button button-secondary">
+                <input type='submit' value="{{ api_user.enabled|yesno:'Disable, Enable' }} User" class="button button-muted">
+
+                <input type='submit' value="Save Changes" class="rhs button button-primary" id="edit_user">
                 <input type='hidden' value='edit_user' name='form'>
-</form>
-            </td></tr>
-            {% if devices %}
-            <tr><td colspan="2"><h2>Devices</h2></td></tr>
-            {% endif %}
-            {% for device in devices %}
-            <tr>
-                <td><label>Device ID</label></td>
-                <td>{{ device.device_id }}</td>
-            </tr>
-            <tr>
-                <td><label>Name</label></td>
-                <td>{{ device.name }}</td>
-            </tr>
-            <tr>
-                <td><label>Creation Time</label></td>
-                <td>{{ device.creation_time|todate }}</td>
-            </tr>
-            <tr>
-                <td><label>Reinstalled</label></td>
-                <td>
-                    {% if device.reinstalled %}
-                        {{ device.reinstalled|todate }}
-                    {% else %}
-                        No recorded reinstall
-                    {% endif %}
-                </td>
-            </tr>
-            <tr>
-                <td><label>Last Login</label></td>
-                <td>
-                {% if device.last_login %}
-                    {{ device.last_login|todate }}
-                {% else %}
-                    No login recorded
-                {% endif %}
-                </td>
-            </tr>
-            <tr>
-                <td><label>Last Backup Complete</label></td>
-                <td>
-                {% if device.last_backup_complete %}
-                    {{ device.last_backup_complete|todate }}
-                {% else %}
-                    No backup recorded
-                {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-            {% if shares %}
-            <tr><td colspan="2"><h2>Shares</h2></td></tr>
-            {% for share in shares %}
-            <tr>
-                <td><label>Room Key</label></td>
-                <td>{{ share.room_key }}</td>
-            </tr>
-            <tr>
-                <td><label>URL</label></td>
-                <td>
-                    <a href="{{ share_url }}/browse/share/{{ api_user.share_identifier }}/{{ share.room_key }}">{{ share_url }}/browse/share/{{ api_user.share_identifier }}/{{ share.room_key }}</a>
-                </td>
-            </tr>
-            <tr>
-                <td><label>Description</label></td>
-                <td>{{ share.description }}</td>
-            </tr>
-            <tr>
-                <td><label>Password Required</label></td>
-                <td>{{ share.password_required }}</td>
-            </tr>
-            <tr>
-                <td><label>Creation Time</label></td>
-                <td>
-                {% if share.creation_time %}
-                    {{ share.creation_time|todate }}
-                {% endif %}
-                </td>
-            </tr>
-            <tr>
-                <td><label>Update Time</label></td>
-                <td>
-                {% if share.update_time %}
-                    {{ share.update_time|todate }}
-                {% endif %}
-                </td>
-            </tr>
-            <tr>
-                <td><label>Status</label></td>
-                <td>{{ share.enabled|yesno:"Enabled, Disabled" }}</td>
-            </tr>
-            <tr>
-                <td colspan="2">
-                    <form method="post" action="{% url 'blue_mgnt:user_detail' email %}">
-                        <input type='submit' 
-                        value="{{ share.enabled|yesno:'Disable, Enable' }} Share" 
-                               class="button button-primary" 
-                               id="edit_share" 
-                              >
-                        <input type='hidden' value='edit_share' name='form'>
-                        <input type='hidden' value='{{ share.room_key }}' name='room_key'>
-                        <input type='hidden' value='{{ share.enabled }}' name='enabled'>
-                    </form>
-                </td>
-            </tr>
-            {% endfor %}
-            {% endif %}
-            </table>
+            </div>
         </fieldset>
-        <div>
         </div>
-    </div>
+    </form>
 {% if not features.ldap %}
     {% if not api_user.num_devices %}
         <form method="post" action="{% url 'blue_mgnt:user_detail' email %}">
@@ -209,7 +191,4 @@
         </form>
     {% endif %}
 {% endif %}
-</div>
-</div>
-
 {% endblock content %}
