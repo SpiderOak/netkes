@@ -3,6 +3,7 @@ from base64 import b32encode
 
 from views import enterprise_required, render_to_response, log_admin_action
 from views import ReadOnlyWidget, get_base_url, SIZE_OF_GIGABYTE
+from views import pageit
 
 from django import forms
 from django.core.urlresolvers import reverse
@@ -155,18 +156,15 @@ def get_login_link(username):
     return reverse('blue_mgnt:escrow_login', args=[username])
 
 @enterprise_required
-def users(request, api, account_info, config, username, saved=False, is_reverse=False):
+def users(request, api, account_info, config, username, saved=False):
     page = int(request.GET.get('page', 1))
     show_disabled = int(request.GET.get('show_disabled', 1))
     search_back = request.GET.get('search_back', '')
     groups = api.list_groups()
-
-    if is_reverse:
-        groups = reversed(groups)
-
     features = api.enterprise_features()
     search = request.GET.get('search', '')
     local_groups = get_local_groups(config, groups)
+    all_pages=pageit('users', api, page)
     if not search:
         search = request.POST.get('search', '')
 
@@ -238,10 +236,7 @@ def users(request, api, account_info, config, username, saved=False, is_reverse=
 
     next_page = len(all_users) == user_limit
 
-    if is_reverse:
-        all_users.sort(key=lambda x: x['creation_time'], reverse=True)
-    else:
-        all_users.sort(key=lambda x: x['email'], reverse=False)
+    all_users.sort(key=lambda x: x['creation_time'], reverse=True)
 
     if not show_disabled:
         all_users = [x for x in all_users if x['enabled']]
@@ -321,7 +316,7 @@ def users(request, api, account_info, config, username, saved=False, is_reverse=
         search=search,
         search_back=search_back,
         users_and_delete=zip(all_users, delete_user_formset),
-        is_reverse=is_reverse,
+        all_pages=all_pages,
     ),
     RequestContext(request))
 

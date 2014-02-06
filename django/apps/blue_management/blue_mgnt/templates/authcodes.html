@@ -57,19 +57,14 @@
             {% endfor %}
         </tbody>
     </table>
+
+    {% if page > 1 %}
+    {% block pagination %}{% include "partials/pagination-widget.html" %}{% endblock pagination %}
+    {% endif %}
     <div class="widget-actions">
         <a href="{% url 'blue_mgnt:auth_codes' %}?show_inactive={{ show_inactive|yesno:"0, 1" }}" 
             class="button button-muted">
             {{ show_inactive|yesno:"Hide Disabled, Show Disabled" }} Auth Codes
         </a>
-    </div>
-    <div id="pagination" class="bigger" style="text-align:center">
-        {% if page > 1 %}
-        <a href="{% url 'blue_mgnt:auth_codes' %}?page={{ page|add:"-1" }}">previous</a>
-        {% endif %}
-        Page {{ page }}
-        {% if next_page %}
-        <a href="{% url 'blue_mgnt:auth_codes' %}?page={{ page|add:"1" }}">next</a>
-        {% endif %}
     </div>
 {% endblock content %}

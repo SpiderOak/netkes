@@ -11,7 +11,7 @@
 <h1 class="page-header">
 	<i class="ss-icon">&#xEE00;</i> ShareRoom Details
 </h1>
-<table id="share" class="widget-table">
+<table id="share" class="widget-table widget-table-details">
     <tbody>
         <tr>
             <td><label>Name</label></td>
@@ -28,12 +28,15 @@
         <tr>
             <td><label>URL</label></td>
             <td>
-                <a href="{{ share_url }}/browse/share/{{ api_user.share_identifier }}/{{ share.room_key }}">{{ share_url }}/browse/share/{{ api_user.share_identifier }}/{{ share.room_key }}</a>
+                <a href="{{ share_url }}/browse/share/{{ api_user.share_identifier }}/
+                    {{ share.room_key }}" target="_blank">
+                    {{ share_url }}/browse/share/{{ api_user.share_identifier }}/{{ share.room_key }}
+                </a>
             </td>
         </tr>
         <tr>
             <td><label>Description</label></td>
-            <td>{{ share.description }}</td>
+            <td id="hint">{{ share.description }}</td>
         </tr>
         <tr>
             <td><label>Creation Time</label></td>
@@ -52,16 +55,24 @@
             </td>
         </tr>
         <tr>
-            <td colspan="2">
-                <form method="post" action="{% url 'blue_mgnt:share_detail' api_user.email share.room_key %}">
-                    <input type='submit' 
-                    value="{{ share.enabled|yesno:'Disable, Enable' }} Share" 
-                            class="button button-primary" 
-                            id="edit_share" 
-                            >
+            <td><label>Active?</label>
+            <td>
+                <form method="post" id="share_state" action="{% url 'blue_mgnt:share_detail' api_user.email share.room_key %}">
+                    <div class="processor">
+                    {% if share.enabled %}
+                    <input type="radio" class="radio-submit" checked="checked">
+                    <span class="enabled"> Enabled</span>
+                    <input type="radio" class="radio-submit" onclick="this.form.submit()"> Disable
+                    {% else %}
+                    <input type="radio" class="radio-submit" onclick="this.form.submit()"> Enable
+                    <input type="radio" class="radio-submit" checked="checked">
+                    <span class="enabled"> Disabled</span>
+                    {% endif %}
+                    </div>
                     <input type='hidden' value='edit_share' name='form'>
                     <input type='hidden' value='{{ share.room_key }}' name='room_key'>
                     <input type='hidden' value='{{ share.enabled }}' name='enabled'>
+                    <input type='hidden' value='{{ user.email }}' name='email'>
                 </form>
             </td>
         </tr>

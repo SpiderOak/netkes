@@ -27,37 +27,35 @@
             <table class="widget-table">
             <form action="{% url 'blue_mgnt:users' %}" enctype="multipart/form-data" method="POST">
             {% for field in new_user.visible_fields %}
-            <tr>
-                <td class="modal-table-label">
-                    {{ field.label_tag }}
-                </td>
-                <td>
-                    {{ field }}
-                </td>
-                {% if field.errors %}
-                    <br />
-                    <span class="errors">
-                    {% for error in field.errors %}
-                        {{ error }}
-                    {% endfor %}
-                    </span>
-                </td>
-                {% else %}
-                </td>
-                {% endif %}
-            </tr>
+                <tr>
+                    <td class="modal-table-label">
+                        {{ field.label_tag }}
+                    </td>
+                    <td>
+                        {{ field }}
+                    </td>
+                    {% if field.errors %}
+                        <br />
+                        <span class="errors">
+                        {% for error in field.errors %}
+                            {{ error }}
+                        {% endfor %}
+                        </span>
+                    </td>
+                    {% else %}
+                    </td>
+                    {% endif %}
+                </tr>
             {% endfor %}
             <tr>
-            <td colspan="2">
-            </td>
-        </tr>
-
+                <td colspan="2"></td>
+            </tr>
         </form>
-    </table>
-    <div class="widget-actions">
-        <input type="submit" value="Create User" class="rhs button button-primary">
-    </div>
+        </table>
+        <div class="widget-actions">
+            <input type="submit" value="Create User" class="rhs button button-primary">
         </div>
     </div>
-</div>
 {% endif %}
+    </div>
+</div>

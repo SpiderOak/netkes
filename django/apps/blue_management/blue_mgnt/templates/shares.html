@@ -53,21 +53,17 @@
         </tbody>
     </table>
 </form>
-    <div id="pagination" class="bigger" style="text-align:center">
-        {% if page > 1 %}
-        <a href="{% url 'blue_mgnt:shares' page=page|add:'-1' %}">previous</a>
-        {% endif %}
-        Page {{ page }}
-        {% if next_page %}
-        <a href="{% url 'blue_mgnt:shares' page=page|add:'1' %}">next</a>
-        {% endif %}
-    </div>
+{% if page > 1 %}
+{% block pagination %}{% include "partials/pagination-widget.html" %}{% endblock pagination %}
+{% endif %}
+<div class="widget-actions">
 <form action="{% url 'blue_mgnt:shares' %}" method="post" action="" style="clear:both">
-    <div style="text-align:center">
-        <input type='submit' value="{{ sharing_enabled|yesno:"Disable, Enable" }} Shares" class="button button-primary" id="edit_shares">
+    <div>
+        <input type='submit' value="{{ sharing_enabled|yesno:"Disable, Enable" }} All ShareRooms" class="button button-muted" id="edit_shares">
         <input type='hidden' value='{{ sharing_enabled }}' name='sharing_enabled'>
         <input type='hidden' value='edit_shares' name='form'>
     </div>
 </form>
+</div>
 </div>
 {% endblock content %}

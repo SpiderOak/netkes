@@ -16,7 +16,6 @@
         </form>
 	</div>
 </h1>
-{{ is_reverse }}
 {% if saved and not search_back %}
 <p id="saved" class="bigger" style="display:none">Changes saved successfully!</p>
 {% endif %}
@@ -96,23 +95,9 @@
             {% endfor %}
 	</tbody>
 </table>
-
-<div class="widget-pagination">
-	<ul>
-        {% if page > 1 %}
-            <li><a href="{% url 'blue_mgnt:users' page=page|add:"-1" %}">Previous</a></li>
-        {% endif %}
-		<li class="active">1</li>
-		<li>2</li>
-		<li>3</li>
-		<li>4</li>
-		<li>5</li>
-        {% if page < 1 %}
-            <li><a href="{% url 'blue_mgnt:users' page=page|add:"1" %}">Next</a></li>
-        {% endif %}
-	</ul>
-</div>
-
+{% if page > 1 %}
+{% block pagination %}{% include "partials/pagination-widget.html" %}{% endblock pagination %}
+{% endif %}
 <div class="widget-splitactions">
 	<div class="rhs">
         <input type="hidden" value="{{ search }}" name="search">

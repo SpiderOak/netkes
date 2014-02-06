@@ -717,7 +717,7 @@ def shares(request, api, account_info, config, username, saved=False):
 
 @enterprise_required
 @permission_required('blue_mgnt.can_manage_shares')
-def share_detail(request, api, account_info, config, username, email, 
+def share_detail(request, api, account_info, config, username, email,
                  room_key, saved=False):
     api_user = api.get_user(email)
     share = api.get_share(email, room_key)
@@ -782,3 +782,34 @@ def manage(request, api, account_info, config, username):
         account_name=account_name,
     ),
     RequestContext(request))
+
+
+# Benny's da_paginator
+def pageit(sub, api, page):
+    funcmap = {
+            'users':len(api.list_users()),
+            'groups':len(api.list_groups()),
+            'shares':len(api.list_shares_for_brand()),
+            }
+    try:
+        all_items = funcmap[sub]
+    except LookupError:
+        return False
+
+    if all_items:
+        limit = 25
+        item_count = all_items / limit
+        if page > item_count:
+            page = item_count
+        elif page < 1:
+            page = 1
+
+        ref='%d:%d' %(page, page+6)
+        req='blue_mgnt:%s' % sub
+
+    return dict(
+            item_count=range(item_count),
+            ref=ref,
+            req=req,
+            page=page,
+            )

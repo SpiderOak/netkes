@@ -1,0 +1,34 @@
+<div class="widget-pagination">
+{% load url from future %}
+{% if page %}
+	<ul>
+        {% if page > 1 %}
+        <li><a href="{% url all_pages.req %}?page={{ page|add:'-1' }}">Previous</a></li>
+        {% endif %}
+
+        {% if page > 2 %}
+        <li><a href="{% url all_pages.req %}?page=1">1</a></li>
+        <li>...</li>
+        {% endif %}
+
+        {% for p in all_pages.item_count|slice:all_pages.ref %}
+            {% ifequal p page %}
+                <li class="active">{{ p }}</li>
+            {% else %}
+            <li><a href="{% url all_pages.req %}?page={{ p }}">{{ p }}</a></li>
+            {% endifequal %}
+            {% if p >= page|add:"5" %}
+            <li>...</li>
+            <li><a href="{% url all_pages.req %}?page={{ all_pages.item_count|length }}">{{ all_pages.item_count|length }}</a></li>
+            {% endif %}
+        {% endfor %}
+
+        {% if all_pages.item_count|length > 1 %}
+        <li><a href="{% url all_pages.req %}?page={{ page|add:'1' }}">Next</a></li>
+        {% endif %}
+    </ul>
+{% else %}
+    <p>No pages found</p>
+{% endif %}
+</div>
+
