@@ -3,7 +3,6 @@
 {% block title %}Management Console - {{ block.super }}{% endblock %}
 
 {% block body_classes %}shares {{ block.super }}{% endblock body_classes %}
-{% block breadcrumb %}<a href="{% url 'blue_mgnt:shares' %}">Back to Shares</a>{% endblock breadcrumb %}
 {% block modal_options %}{% endblock modal_options %}
 {% block navtab %}{% include "partials/navtab-widget.html" with active="shares" %}{% endblock navtab %}
 {% block content %}
