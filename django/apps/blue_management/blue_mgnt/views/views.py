@@ -506,7 +506,7 @@ def pageit(sub, api, page, extra):
         extra=()
 
     funcmap = {
-            'users':len(api.list_users()),
+            'users':api.get_user_count(),
             'groups':len(api.list_groups()),
             'shares':len(api.list_shares_for_brand()),
             'logs':len(extra),
