@@ -49,7 +49,7 @@
     {% endfor %}
 </form>
 </div>
-<!--
+{% comment %}
 <div class="section">
 <h2>Upload CSV</h2>
 <form action="{% url 'blue_mgnt:groups' %}" enctype="multipart/form-data" method="post">
@@ -80,9 +80,10 @@
         </table>
 </form>
 </div>
--->
+
  <!-- not features['ldap'] -->
-{% endif %}
+ {% endcomment %} 
+ {% endif %}
 {% endif %}
 <form action="{% url 'blue_mgnt:groups' %}" method="post" action="">
 {{ groups.management_form }}

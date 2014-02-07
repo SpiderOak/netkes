@@ -53,9 +53,49 @@
         </table>
             <div class="widget-actions">
                 <input type="submit" value="Create User" class="rhs button button-primary">
+                <input type='hidden' value='new_user' name='form'>
+                {% for hidden in new_user.hidden_fields %}
+                    {{ hidden }}
+                {% endfor %}
             </div>
         </form>
     </div>
+{% endif %}
+{% if not features.ldap %}
+<div class="widget-add-user" style="display: none">
+    <form action="{% url 'blue_mgnt:users' %}" enctype="multipart/form-data" method="post">
+        <fieldset>
+            {% for field in user_csv %}
+            <table class="widget-table">
+                <tr>
+                    <td class="modal-table-label">
+                        {{ field.label_tag }}
+                    </td>
+                    <td>
+                        {{ field }}
+                        {% if field.errors %}
+                        <br />
+                        <span class="errors">
+                            {% for error in field.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </span>
+                    </td>
+                        {% else %}
+                        <label for="id_{{ field.name }}">
+                        </label>
+                    </td>
+                        {% endif %}
+                    
+            {% endfor %}
+            </table>
+        </fieldset>
+        <div class="widget-actions">
+            <input type='submit' value="Upload CSV" class="rhs button button-primary">
+            <input type='hidden' value='csv' name='form'>
+        </div>
+    </form>
+</div>
 {% endif %}
     </div>
 </div>

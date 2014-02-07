@@ -1,5 +1,4 @@
 $(function() {
-
     // Workings for the modal wrapper and widgets
 
     $('#add-widget').click(function(){
