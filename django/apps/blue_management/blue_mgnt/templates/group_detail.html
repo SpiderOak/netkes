@@ -3,10 +3,10 @@
 
 {% block title %}Management Console - {{ block.super }}{% endblock %}
 
-{% block body_classes %}shares_detail {{ block.super }}{% endblock body_classes %}
+{% block body_classes %}group_detail {{ block.super }}{% endblock body_classes %}
 {% block breadcrumb %}<a href="#">Back to Something</a>{% endblock breadcrumb %}
 {% block modal_options %}{% endblock modal_options %}
-{% block navtab %}{% include "partials/navtab-widget.html" with active="shares" %}{% endblock navtab %}
+{% block navtab %}{% include "partials/navtab-widget.html" with active="groups" %}{% endblock navtab %}
 {% block content %}
 <h1 class="page-header">
 	<i class="ss-icon">&#xEE00;</i> Group Details
@@ -15,13 +15,13 @@
 <table id="group" class="widget-table">
     <tbody>
         {% for field in group_form %}
-        <tr>
+        <tr {% if field.html_name == 'permissions' %}class="permissions"{% endif %}>
             <td>
-                <div class="{{ field.errors|yesno:"error, ''" }}">
+                <div class="widget-table-label {{ field.errors|yesno:"error, ''" }}">
                     {{ field.label_tag }}
                 </div>
             </td>
-            <td>
+            <td {% if field.html_name == 'permissions' %}colspan="2"{% endif %}>
                 {{ field }}
                 {% if field.errors %}
                     <br />
@@ -35,6 +35,10 @@
                     </label>
                 {% endif %}
             </td>
+            {% if field.html_name == 'permissions' %}
+            {% else %}
+                <td></td>
+            {% endif %}
         </tr>
         {% endfor %}
     </tbody>

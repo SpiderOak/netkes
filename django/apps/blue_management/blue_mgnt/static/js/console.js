@@ -43,6 +43,16 @@ $(function() {
         });
     }
 
+    // Toggle permissions in group_detail and add-group-widget
+    if($('#id_admin_group').prop('checked')) {
+        $('.permissions').show();
+    } else {
+        $('.permissions').hide();
+    }
+    $('#id_admin_group').click(function() {
+        $('.permissions').toggle(this.checked);
+    });
+
 function getCookie(name) {
     var cookieValue = null;
     if (document.cookie && document.cookie != '') {

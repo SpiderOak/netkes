@@ -8,7 +8,7 @@
             <form action="{% url 'blue_mgnt:groups' %}" enctype="multipart/form-data" method="post">
                 <table class="widget-table">
                     {% for field in new_group.visible_fields %}
-                    <tr>
+                    <tr {% if field.html_name == 'permissions' %}class="permissions"{% endif %}>
                         <td class="modal-table-label">
                             {{ field.label_tag }}
                         </td>

@@ -79,7 +79,7 @@
 
 .widget-table-details {
     tr {
-        td:first-of-type {
+        td:first-of-type > label {
             label {
                 font-family: @FONTFAMILY_SB;
             }
@@ -402,6 +402,15 @@ h1.page-header {
         color: darken(@NAVTAB_BORDER_COLOR, 10%);
         font: 13px~"/"23px @FONTFAMILY_R;
     }
+    
+    td > label,
+    td > div > label {
+        font-family: @FONTFAMILY_B;
+    }
+
+    li > label {
+        font-family: @FONTFAMILY_R;
+    }
 }
 
 .widget-manage-blocks {
@@ -521,6 +530,23 @@ h1.page-header {
             margin-bottom: 20px;
         }
     }
+    .permissions {
+        ul {
+            height: 120px;
+            column-fill: auto;
+            column-width: 140px;
+            column-gap: 0px;
+            -moz-column-fill: auto;
+            -moz-column-width: 140px;
+            -moz-column-gap: 0px;
+            -webkit-column-fill: auto;
+            -webkit-column-width: 140px;
+            -webkit-column-gap: 0px;
+            label {
+                font-size: 12px;
+            }
+        }
+    }
 }
 
 .widget-pagination {
@@ -615,6 +641,33 @@ button, .button {
 }
 
 /* Special case */
+.permissions {
+    td {
+        vertical-align: top;
+    }
+    ul {
+        height: 120px;
+        column-fill: auto;
+        column-width: 180px;
+        column-gap: 0px;
+        -moz-column-fill: auto;
+        -moz-column-width: 180px;
+        -moz-column-gap: 0px;
+        -webkit-column-fill: auto;
+        -webkit-column-width: 180px;
+        -webkit-column-gap: 0px;
+    }
+}
+
+.group_detail {
+    .widget-table {
+        tr > td:last-of-type,
+        tr > td:first-of-type {
+            width: 25%;
+        }
+    }
+}
+
 #add_ip_block {
     margin-left: 20px;
 }
