@@ -169,6 +169,16 @@ def _run_disabled_users_for_repair(ldap_conn, config, desc, resultslist):
     return list(ldap_source.get_user_guids(ldap_conn, config, userlist))
     
 
+def list_users_paged(api, user_count):
+    all_users = []
+    user_limit = 1000
+    for page in range((user_count / user_limit) + 1):
+        user_offset = user_limit * page
+        if user_offset < user_count:
+            all_users = all_users + api.list_users(user_limit, user_offset)
+    return all_users
+
+
 def run_db_repair(config, db_conn):
     """Repairs the current user DB and billing API versus LDAP."""
     # TODO: figure out what to do when email addresses *don't* match.
@@ -194,7 +204,9 @@ def run_db_repair(config, db_conn):
 
     api = account_mgr.get_api(config)
 
-    spider_users = api.list_users()
+    user_count = api.get_user_count()
+
+    spider_users = list_users_paged(api, user_count)
     
     for spider_user in spider_users:
         first_name, sep, last_name = spider_user['name'].strip().partition(' ')
