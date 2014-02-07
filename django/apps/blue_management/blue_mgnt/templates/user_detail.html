@@ -4,7 +4,7 @@
 {% block title %}Management Console - {{ block.super }}{% endblock %}
 
 {% block body_classes %}home {{ block.super }}{% endblock body_classes %}
-{% block breadcrumb %}<a href="#">Back to Something</a>{% endblock breadcrumb %}
+{% block breadcrumb %}<a href="{% url 'blue_mgnt:users' %}">Back to Users</a>{% endblock breadcrumb %}
 {% block modal_options %}{% endblock modal_options %}
 {% block navtab %}{% include "partials/navtab-widget.html" with active="users" %}{% endblock navtab %}
 {% block content %}
