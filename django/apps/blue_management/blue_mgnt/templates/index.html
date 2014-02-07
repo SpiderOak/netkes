@@ -11,7 +11,7 @@
 		<button id="add-widget" class="button button-primary">Add user</button>
         <form action="{% url 'blue_mgnt:users' %}" method="GET">
             <input name="show_disabled" type="hidden" value="{{ show_disabled }}">
-            <input type="text" class="widget-search-input" value="{{ search }}" placeholder="Find Users by Name or Email">
+            <input type="text" class="widget-search-input"  id="input_search" name="search" value="{{ search }}" placeholder="Find Users by Name or Email">
             <input type="submit" class="search-button ss-icon" value="&#x1F50E;">
         </form>
 	</div>
@@ -104,8 +104,11 @@
 		<button class="button button-primary">Save Changes</button>
 	</div>
 	<div class="lhs">
-		<button class="button button-muted">Hide Disabled Users</button>
-		<button class="button button-muted">Download CSV</button>
+        <a href="{% url 'blue_mgnt:users' %}?show_disabled={{ show_disabled|yesno:"0,1" }}&search={{ search }}#user_table" class="button button-muted">
+            {{ show_disabled|yesno:"Show,Hide" }} Disabled Uesers
+        </a>
+        <a href="{% url 'blue_mgnt:users_csv_download' %}" class="button button-muted">Download CSV</a>
+        <input type='hidden' value='csv' name='form'>
 	</div>
 </div>
 </form>
