@@ -24,8 +24,10 @@
 
 {% if config.enable_local_users %}
         <div class="widget-add-user" style="display:none">
-            <table class="widget-table">
             <form action="{% url 'blue_mgnt:users' %}" enctype="multipart/form-data" method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="form" value="new_user">
+            <table class="widget-table">
             {% for field in new_user.visible_fields %}
                 <tr>
                     <td class="modal-table-label">
