@@ -1,0 +1,89 @@
+<div class="modal-wrapper">
+{% if not private_cloud %}
+<div class="modal-content">
+<form method="post" action="{% url 'blue_mgnt:settings' %}">
+    {{ ip_blocks.management_form }}
+    <h2 class="page-header"><i class="ss-icon">&#x1F464;</i>CSR Netblocks
+        <span class="actions"><i class="ss-icon">&#x2421;</i></span>
+    </h2>
+        <div class="spacer"><!--ZXP--></div>
+    <div class="ip_input">
+    <table id="ip_blocks" class="widget-table">
+        <thead>
+            <tr>
+                <th>IP Block</th>
+                <th>Delete IP Block</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for form in ip_blocks.forms %}
+            <tr>
+                {% for field in form.visible_fields %}
+                <td>
+                    {% if forloop.first %}
+                        {% for hidden in form.hidden_fields %}
+                            {{ hidden }}
+                        {% endfor %}
+                    {% endif %}
+                    {{ field }}
+                    {% if field.errors %}
+                    <br />
+                        {% for error in field.errors %}
+                        <span class="table_errors">
+                            {{ error }}
+                        </span>
+                        {% endfor %}
+                    {% endif %}
+                </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <input type='hidden' value='ip_block' name='form'>
+    <div class="widget-actions">
+        <input type="button" value="Add IP Block" id="add_ip_block" class="button button-muted">
+        {% if perms.blue_mgnt.can_manage_settings %}
+        <input type='submit' value="Save Changes" class="rhs button button-primary">
+        {% endif %}
+    </div>
+    </div>
+</div>
+</form>
+</div>
+{% endif %}
+</div>
+{% block extrajs %}
+<script src="/static/blue_common/scripts/jquery.form.js"></script>
+<script type="text/javascript"> 
+    var error = {{ error|yesno:'true, false' }};
+var empty_ip_block_form = '';
+function update_form(new_form, total){
+    new_form.find(':input').each(function() {
+        var name = $(this).attr('name').replace('-' + (total-1) + '-','-' + total + '-');
+        var id = 'id_' + name;
+        $(this).attr({'name': name, 'id': id});
+    });
+}
+
+function add_ip_block_form(){
+    var new_form = empty_ip_block_form.clone(true);
+    var total = parseInt($('#id_ip_blocks-TOTAL_FORMS').val());
+    update_form(new_form);
+    $('#id_ip_blocks-TOTAL_FORMS').val(1 + total);
+    $('#ip_blocks > tbody').append(new_form);
+}
+
+$(function(){
+    empty_ip_block_form = $('#ip_blocks > tbody > tr:last').clone();
+    if(!error){
+        $('#ip_blocks > tbody > tr:last').remove();
+        $('#id_ip_blocks-TOTAL_FORMS').val($('#id_ip_blocks-TOTAL_FORMS').val() - 1);
+    }else{
+        empty_ip_block_form.clearForm();
+        $('ul', empty_ip_block_form).remove()
+    }
+    $('#add_ip_block').click(add_ip_block_form);
+});
+</script>
+{% endblock extrajs %}

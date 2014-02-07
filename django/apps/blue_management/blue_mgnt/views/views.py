@@ -662,8 +662,7 @@ def groups(request, api, account_info, config, username, saved=False):
 
 @enterprise_required
 @permission_required('blue_mgnt.can_manage_groups')
-def groups_detail(request, g_name, api, account_info, config, username, saved=False):
-    group = g_name
+def groups_detail(request, api, account_info, config, username, saved=False):
     detail = api.list_groups(group)
     return render_to_response('groups_detail.html', dict(
         detail=detail,
@@ -785,11 +784,15 @@ def manage(request, api, account_info, config, username):
 
 
 # Benny's da_paginator
-def pageit(sub, api, page):
+def pageit(sub, api, page, extra):
+    if not extra:
+        extra=()
+
     funcmap = {
             'users':len(api.list_users()),
             'groups':len(api.list_groups()),
             'shares':len(api.list_shares_for_brand()),
+            'logs':len(extra),
             }
     try:
         all_items = funcmap[sub]

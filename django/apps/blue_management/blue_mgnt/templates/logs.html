@@ -31,15 +31,12 @@
         {% endfor %}
     </tbody>
 </table>
-    <a class="button button-primary" href="/logs/download/">Download Logs</a>
-<div id="pagination" class="bigger" style="text-align:center">
-    {% if page > 1 %}
-    <a href="{% url 'blue_mgnt:logs' %}?page={{ page|add:"-1" }}&search={{ search }}">previous</a>
-    {% endif %}
-    Page {{ page }}
-    {% if next_page %}
-    <a href="{% url 'blue_mgnt:logs' %}?page={{ page|add:"1" }}&search={{ search }}">next</a>
-    {% endif %}
+{% if page >= 1 %}
+{% block pagination %}{% include "partials/pagination-widget.html" %}{% endblock pagination %}
+{% endif %}
+
+<div class="widget-actions">
+    <a class="rhs button button-primary" href="/logs/download/">Download Logs</a>
 </div>
 </div>
 {% endblock content %}

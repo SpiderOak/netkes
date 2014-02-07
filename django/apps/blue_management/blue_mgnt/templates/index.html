@@ -95,7 +95,7 @@
             {% endfor %}
 	</tbody>
 </table>
-{% if page > 1 %}
+{% if page >= 1 %}
 {% block pagination %}{% include "partials/pagination-widget.html" %}{% endblock pagination %}
 {% endif %}
 <div class="widget-splitactions">

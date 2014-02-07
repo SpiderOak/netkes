@@ -19,23 +19,24 @@ from interval.forms import IntervalFormField
 
 from blue_mgnt import models
 from netkes.account_mgr import setup_token
+from views import pageit
 
 RESULTS_PER_PAGE = 25
 
 def get_login_link(username, auth_token):
     b32_username = b32encode(username).rstrip('=')
-    return '%s/storage/%s/escrowlogin?auth_token=%s' % (get_base_url(), 
+    return '%s/storage/%s/escrowlogin?auth_token=%s' % (get_base_url(),
                                                         b32_username,
                                                         auth_token
                                                        )
 @enterprise_required
 @permission_required('blue_mgnt.can_view_user_data')
-def escrow_login(request, api, account_info, config, username, 
+def escrow_login(request, api, account_info, config, username,
                  escrow_username, saved=False):
     data = dict(
         token=setup_token.new_token(),
-        expiry=datetime.datetime.now() + datetime.timedelta(minutes=1), 
-        no_devices_only=False, 
+        expiry=datetime.datetime.now() + datetime.timedelta(minutes=1),
+        no_devices_only=False,
         single_use_only=False,
     )
     models.AdminSetupTokens.objects.create(**data)
@@ -116,7 +117,7 @@ def admin_groups(request, api, account_info, config, username, saved=False):
 
     class AdminGroupForm(forms.Form):
         name = forms.CharField()
-        #ldap_dn = forms.CharField(required=True, 
+        #ldap_dn = forms.CharField(required=True,
         #                          widget=forms.Textarea(attrs={'rows':'1', 'cols':'60'}))
         user_group_id = forms.ChoiceField([(g['group_id'], g['name']) for g in groups_list],
                                           label='Group')
@@ -180,10 +181,10 @@ def admin_groups(request, api, account_info, config, username, saved=False):
                 for permission_id in new_admin_group.cleaned_data['permissions']:
                     group.permissions.add(Permission.objects.get(pk=permission_id))
                 group.save()
-                admin_group = models.AdminGroup.objects.create( 
-                    group_id=group.id, 
+                admin_group = models.AdminGroup.objects.create(
+                    group_id=group.id,
                     user_group_id=new_admin_group.cleaned_data['user_group_id'])
-                args = (new_admin_group.cleaned_data['name'], 
+                args = (new_admin_group.cleaned_data['name'],
                         new_admin_group.cleaned_data['user_group_id'],
                        )
                 msg = 'Created admin group: %s %s' % args
@@ -204,7 +205,7 @@ def admin_groups(request, api, account_info, config, username, saved=False):
                     for permission_id in admin_group_form.cleaned_data['permissions']:
                         group.permissions.add(Permission.objects.get(pk=permission_id))
                     group.save()
-                    args = (admin_group_form.cleaned_data['name'], 
+                    args = (admin_group_form.cleaned_data['name'],
                             admin_group_form.cleaned_data['user_group_id'],
                         )
                     msg = 'Modified admin group: %s %s' % args
@@ -216,7 +217,7 @@ def admin_groups(request, api, account_info, config, username, saved=False):
                         pk=admin_group_form.cleaned_data['group_id'])
                     admin_group.delete()
                     group.delete()
-                    args = (group.name, 
+                    args = (group.name,
                             admin_group.user_group_id,
                         )
                     msg = 'Deleted admin group: %s %s' % args
@@ -255,6 +256,7 @@ def logs(request, api, account_info, config, username, saved=False):
     count = len(log_entries)
     log_entries = log_entries[user_offset:user_offset + RESULTS_PER_PAGE]
     next_page = count > (user_offset + RESULTS_PER_PAGE)
+    all_pages = pageit('logs', api, page, log_entries)
 
     return render_to_response('logs.html', dict(
         page=page,
@@ -266,6 +268,7 @@ def logs(request, api, account_info, config, username, saved=False):
         features=features,
         log_entries=log_entries,
         account_info=account_info,
+        all_pages=all_pages,
     ),
     RequestContext(request))
 

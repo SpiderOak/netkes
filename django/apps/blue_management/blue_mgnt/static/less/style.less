@@ -543,6 +543,10 @@ h1.page-header {
 
 .widget-actions {
     margin: 20px 0;
+    &.short-right {
+        float: right;
+        width: 250px;
+    }
     .rhs {
         float: right;
     }
@@ -550,6 +554,14 @@ h1.page-header {
 }
 
 .widget-splitactions {
+    &.float {
+        width: 600px;
+        float: left;
+        margin: 20px 0;
+    }
+    form {
+        display: inline-block;
+    }
 	.rhs {
 		float: right;
 	}
@@ -598,6 +610,11 @@ button, .button {
 }
 
 /* Special case */
+#add_ip_block {
+    margin-left: 20px;
+}
+
+
 body.admin_groups {
     th {
         width: 22%;
@@ -621,7 +638,7 @@ body.admin_groups {
     margin:0 1px;
 }
 
-/* login */
+/* login & password*/
     .error {
         color: #ff0000;
     }
@@ -633,13 +650,34 @@ body.login {
     .login-wrapper {
         margin: 3% auto;
         .gradient(@NAVTAB_BGCOLOR_REPORTS; @NAVTAB_BGCOLOR_MANAGE);
+        .background {
+            background-position: 0 -33px;
+        }
+    }
+}
+
+body.password {
+    .login-wrapper {
+        .login-form-wrapper {
+            border: 1px solid @NAVTAB_BORDER_COLOR;
+        }
+        .background {
+            background-position: 0 -10px;;
+            opacity: 0.6;
+        }
+    }
+}
+
+body.login,
+body.password {
+    .login-wrapper {
+        margin: 0 auto;
         position: relative;
         padding: 20px 0;
         .clear();
         .background {
             background-image: url(/static/blue_mgnt/img/login_bg.png);
             background-repeat: repeat;
-            background-position: 0 -33px;
             height: 100%;
             width: 100%;
             position: absolute;

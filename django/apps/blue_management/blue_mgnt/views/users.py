@@ -164,7 +164,7 @@ def users(request, api, account_info, config, username, saved=False):
     features = api.enterprise_features()
     search = request.GET.get('search', '')
     local_groups = get_local_groups(config, groups)
-    all_pages=pageit('users', api, page)
+    all_pages=pageit('users', api, page, None)
     if not search:
         search = request.POST.get('search', '')
 
