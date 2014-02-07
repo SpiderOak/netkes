@@ -195,3 +195,30 @@ def settings(request, api, account_info, config, username, saved=False):
         account_info=account_info,
     ),
     RequestContext(request))
+
+@enterprise_required
+@permission_required('blue_mgnt.can_manage_settings')
+def password(request, api, account_info, config, username, saved=False):
+    features = api.enterprise_features()
+    password_form = PasswordForm()
+    if request.method == 'POST':
+        if request.POST.get('form', '') == 'password':
+            password_form = PasswordForm(request.POST)
+            if password_form.is_valid():
+                new_password = password_form.cleaned_data['password']
+                log_admin_action(request, 'change password')
+                api.update_enterprise_password(new_password)
+                config_mgr_ = config_mgr.ConfigManager(config_mgr.default_config())
+                config_mgr_.config['api_password'] = new_password
+                config_mgr_.apply_config()
+                return redirect('blue_mgnt:password_saved')
+
+    return render_to_response('password.html', dict(
+        user=request.user,
+        username=username,
+        features=features,
+        password_form=password_form,
+        saved=saved,
+        account_info=account_info,
+    ),
+    RequestContext(request))

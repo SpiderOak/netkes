@@ -39,13 +39,13 @@
         {% if groups.non_form_errors %}
         <tr><td colspan="5">{{ groups.non_form_errors }}</td></tr>
         {% endif %}
-        {% for item in groups %}
+        {% for group, data in groups_and_data %}
         <tr>
-            <td>{{ item.name }}</td>
-            <td>{{ item.plan_id }}</td>
-            <td>{{ item.users_in_group|length }}</td>
-            <td>{{ item.space_used|filesizeformat }}</td>
-            <td><a href="{% url 'blue_mgnt:groups_detail' item.name %}">Details</a></td>
+            <td>{{ group.name }}</td>
+            <td>{{ group.plan_id }}</td>
+            <td>{{ data.users_in_group|length }}</td>
+            <td>{{ data.space_used|filesizeformat }}</td>
+            <td><a href="{% url 'blue_mgnt:group_detail' data.group_id %}">Details</a></td>
         </tr>
         {% endfor %}
     </tbody>
