@@ -54,7 +54,6 @@
                 {% for hidden in curr_user.form.hidden_fields %}
                     {{ hidden }}
                 {% endfor %}
-
                 {% for field in curr_user.form.visible_fields %}
                     <td>{{ field }}
                     {% if field.errors %}
@@ -65,6 +64,7 @@
                             {% endfor %}
                         </span>
                     {% endif %} 
+                </td>
                 {% endfor %}
             {% else %}
                 <td>{{ curr_user.name }}</td>
