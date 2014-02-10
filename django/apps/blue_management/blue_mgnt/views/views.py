@@ -320,6 +320,7 @@ def enterprise_required(fun):
             account_info['show_available'] = False
             account_info['space_available'] = account_info['space_allocated']
         account_info['total_users'] = api.get_user_count()
+        account_info['total_groups'] = len(config['groups'])
         return fun(request, api, account_info, config,
                    request.session['username'], *args, **kwargs)
     return new_fun
