@@ -310,8 +310,6 @@ def enterprise_required(fun):
         api = get_api(config)
         account_info = dict()
         quota = api.quota()
-        #account_info['space_used'] = (quota['bytes_used'] or 0) / (10.0 ** 9)
-        #account_info['space_allocated'] = (quota['bytes_allocated'] or 0) / (10.0 ** 9)
         account_info['space_used'] = quota['bytes_used']
         account_info['space_allocated'] = quota['bytes_allocated']
         account_info['space_available'] = (quota['bytes_available'] or 0) / (10.0 ** 9)
@@ -321,6 +319,8 @@ def enterprise_required(fun):
             account_info['space_available'] = account_info['space_allocated']
         account_info['total_users'] = api.get_user_count()
         account_info['total_groups'] = len(config['groups'])
+        account_info['total_sharerooms'] = len(api.list_shares_for_brand())
+        account_info['total_auth_codes'] = models.AdminSetupTokensUse.objects.count()
         return fun(request, api, account_info, config,
                    request.session['username'], *args, **kwargs)
     return new_fun

@@ -57,15 +57,27 @@
         <div class="widget-splitactions float">
         <a class="button button-secondary" href="{% url 'blue_mgnt:password' %}">Change Password</a>
         {% if features.ldap and perms.blue_mgnt.can_manage_settings %}
-        <form method="posst" action="{% url 'blue_mgnt:settings' %}">
-                <input type='hidden' value='reboot' name='form'>
-                <input type='submit' value="Reboot Virtual Appliance" class="button button-muted">
-            </form>
-            <form method="post" action="{% url 'blue_mgnt:settings' %}">
-                {% csrf_token %}
-                <input type='hidden' value='restart_directory' name='form'>
-                <input type='submit' value="Restart Directory / Services" class="button button-muted">
-            </form>
+        <form method="post" action="{% url 'blue_mgnt:settings' %}">
+            {% csrf_token %}
+            <input type='hidden' value='reboot' name='form'>
+            <input type='submit' value="Reboot Virtual Appliance" class="button button-muted">
+        </form>
+        <form method="post" action="{% url 'blue_mgnt:settings' %}">
+            {% csrf_token %}
+            <input type='hidden' value='restart_directory' name='form'>
+            <input type='submit' value="Restart Directory / Services" class="button button-muted">
+        </form>
+        <form method="post" action="{% url 'blue_mgnt:settings' %}">
+            {% csrf_token %}
+            <input type='hidden' value='sync' name='form'>
+            <input type='submit' value="Sync Virtual Appliance" class="button button-muted">
+        </form>
+        <form method="post" action="{% url 'blue_mgnt:settings' %}">
+            {% csrf_token %}
+            <input type='hidden' value='rebuild_db' name='form'>
+            <input type='submit' value="Rebuild DB" class="button button-muted">
+        </form>
+        {{ command_output }}
         {% endif %}
         </div>
     </div>
