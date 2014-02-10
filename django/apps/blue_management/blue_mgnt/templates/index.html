@@ -9,6 +9,7 @@
     <div class="actions">
 		<button id="add-widget" class="button button-primary">Add user</button>
         <form action="{% url 'blue_mgnt:users' %}" method="GET">
+            {% csrf_token %}
             <input name="show_disabled" type="hidden" value="{{ show_disabled }}">
             <input type="text" class="widget-search-input"  id="input_search" name="search" value="{{ search }}" placeholder="Find Users by Name or Email">
             <input type="submit" class="search-button ss-icon" value="&#x1F50E;">
@@ -18,33 +19,27 @@
 {% if saved and not search_back %}
 <p id="saved" class="bigger" style="display:none">Changes saved successfully!</p>
 {% endif %}
-<form action="{% url 'blue_mgnt:users' %}" method="POST" action="">
+<form action="{% url 'blue_mgnt:users' %}" method="POST">
+    {% csrf_token %}
     {{ users.management_form }}
     {{ delete_user_formset.management_form }}
-    {{ tmp_users_formset.management_form }}
+    {{ tmp_user_formset.management_form }}
 <table class="widget-table">
-	<thead>
-		<th>
-			Full Name
-		</th>
-		<th>
-			Email
-		</th>
-		<th>
-			Group
-		</th>
-		<th>
-			Storage Size
-		</th>
-		<th>
-			User Detail
-		</th>
-		<th>
-			Delete?
+    <thead>
+        {% if not features.email_as_username %}
+        <th>Username</th>
+        {% endif %}
+        <th>Full Name</th>
+        <th>Email</th>
+        <th>Group</th>
+        <th>Storage Size</th>
+        <th>User Detail</th>
+        <th>
+            Delete?
             <input id="sel_all" type="checkbox">
-		</th>
-	</thead>
-	<tbody>
+        </th>
+    </thead>
+<tbody>
     {% for curr_user, delete_form in users_and_delete %}
         <tr>
             {% for hidden in delete_form.hidden_fields %}
@@ -56,11 +51,11 @@
             {% endif %}
 
             {% if curr_user.is_local_user %}
-                {% for hidden in tmp_user_formset.local_index.hidden_fields %}
+                {% for hidden in curr_user.form.hidden_fields %}
                     {{ hidden }}
                 {% endfor %}
 
-                {% for field in tmp_user_formset.local_index.visible_fields %}
+                {% for field in curr_user.form.visible_fields %}
                     <td>{{ field }}
                     {% if field.errors %}
                         <br />
@@ -74,13 +69,14 @@
             {% else %}
                 <td>{{ curr_user.name }}</td>
                 <td>{{ curr_user.email }}</td>
+                <td>{{ curr_user.group_name }}</td>
             {% endif %}
-            <td>{{ curr_user.group_name }}</td>
-            <td>{{ curr_user.gigs_stored|filesizeformat }}</td>
+            <td>{{ curr_user.bytes_stored|filesizeformat }}</td>
             <td>
                 <a href="{% url 'blue_mgnt:user_detail' curr_user.email %}">Detail</a>
             </td>
             <td>
+                {{ curr_user.gigs_stored }}
                 {% if not curr_user.enabled or curr_user.is_local_user and perms.blue_mgnt.can_manage_users %}
                     <span class="del_box">{{ delete_form.DELETE }}</span>
                 {% endif %}
@@ -107,7 +103,6 @@
             {{ show_disabled|yesno:"Show,Hide" }} Disabled Uesers
         </a>
         <a href="{% url 'blue_mgnt:users_csv_download' %}" class="button button-muted">Download CSV</a>
-        <input type='hidden' value='csv' name='form'>
 	</div>
 </div>
 </form>

@@ -12,6 +12,7 @@
 	<i class="ss-icon">&#xEE00;</i> Group Details
 </h1>
 <form method="POST" action="{% url 'blue_mgnt:group_detail' group_id %}">
+{% csrf_token %}
 <table id="group" class="widget-table">
     <tbody>
         {% for field in group_form %}

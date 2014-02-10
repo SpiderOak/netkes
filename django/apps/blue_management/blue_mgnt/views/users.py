@@ -41,7 +41,6 @@ def get_user_form(local_groups):
         name = forms.CharField(max_length=45)
         email = forms.CharField()
         group_id = forms.ChoiceField(local_groups)
-        enabled = forms.BooleanField(required=False)
         orig_email = forms.CharField(widget=forms.HiddenInput)
     return UserForm
 
@@ -208,7 +207,6 @@ def users(request, api, account_info, config, username, saved=False):
                 data = dict(name=form.cleaned_data['name'],
                             group_id=form.cleaned_data['group_id'],
                             email=form.cleaned_data['email'],
-                            enabled=form.cleaned_data['enabled'],
                            )
                 if request.user.has_perm('blue_mgnt.can_manage_users'):
                     log_admin_action(request,
@@ -249,7 +247,8 @@ def users(request, api, account_info, config, username, saved=False):
                      orig_email=x['email'],
                      user_detail=x['email'],
                      name=x['name'],
-                     gigs_stored=round(x['bytes_stored'] / (10.0 ** 9), 2),
+                     bytes_stored=x['bytes_stored'],
+                     #gigs_stored=round(x['bytes_stored'] / (10.0 ** 9), 2),
                      creation_time=datetime.datetime.fromtimestamp(x['creation_time']),
                      last_login=datetime.datetime.fromtimestamp(x['last_login']) if x['last_login'] else None,
                      group_id=x['group_id'] if 'group_id' in x else '',
@@ -295,6 +294,12 @@ def users(request, api, account_info, config, username, saved=False):
                     log_admin_action(request, 'delete user "%s"' % orig_email)
                 return redirect(reverse('blue_mgnt:users_saved') + '?search=%s' % search)
 
+    index = 0
+    for user in initial:
+        if user['is_local_user']:
+            user['form'] = tmp_user_formset[index]
+            index += 1
+
     return render_to_response('index.html', dict(
         all_users=initial,
         user=request.user,
@@ -315,7 +320,7 @@ def users(request, api, account_info, config, username, saved=False):
         show_disabled=show_disabled,
         search=search,
         search_back=search_back,
-        users_and_delete=zip(all_users, delete_user_formset),
+        users_and_delete=zip(initial, delete_user_formset),
         all_pages=all_pages,
     ),
     RequestContext(request))
