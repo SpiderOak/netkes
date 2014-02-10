@@ -82,9 +82,6 @@
                 {% endif %}
             </td>
         </tr>
-                {% if curr_user.is_local_user %}
-                    {{ local_index|add:"1" }}
-                {% endif %}
             {% empty %}
                 <p>Nothing to show</p>
             {% endfor %}
