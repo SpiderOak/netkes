@@ -16,6 +16,12 @@ $(function() {
         $('.modal-wrapper').hide();
     });
 
+
+    // Status
+    $('.status-message .actions').click(function() {
+        $('.status-message').css('display', 'none');
+    });
+
     //Auto Tooltips
     $('td').each(function(){
         if($(this).text()){

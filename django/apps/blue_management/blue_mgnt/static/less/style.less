@@ -933,3 +933,33 @@ body.password {
         text-decoration: underline;
     }
 }
+
+.status-message {
+    background-color: #fff;
+    border-radius: 4px;
+    border: 1px solid @NAVTAB_BORDER_COLOR;
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 10px;
+    display: inline-block;
+    .actions {
+        float: right;
+        cursor: pointer;
+        &:hover { 
+            color: lighten(@NAVTAB_BORDER_COLOR, 2%);
+        }
+    }
+    .status-content {
+        code {
+            font-size: 12px;
+        }
+    }
+    i {
+        vertical-align: middle;
+        margin-right: 12px;
+    }
+
+    h2 {
+        border-bottom: 1px solid @NAVTAB_BORDER_COLOR;
+    }
+}

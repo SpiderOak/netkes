@@ -5,6 +5,17 @@
 {% block modal_options %}{% include "partials/add-ip-blocks-widget.html" with active="manage" %}{% endblock modal_options %}
 {% block navtab %}{% include "partials/navtab-widget.html" with active="manage" %}{% endblock navtab %}
 {% block content %}
+{% if command_output %}
+<div class="status-message">
+    <div class="status-content">
+        <h2 class="page-header"><i class="ss-icon">&#x2699;</i>Status
+            <span class="actions"><i class="ss-icon">&#x2421;</i></span>
+        </h2>
+            <div class="spacer"><!--ZXP--></div>
+        <code>{{ command_output }}</code>
+    </div>
+</div>
+{% endif %}
 <h1 class="page-header">
 	<i class="ss-icon">&#x1F464;</i> Accounts
     <div class="actions">
@@ -67,17 +78,18 @@
             <input type='hidden' value='restart_directory' name='form'>
             <input type='submit' value="Restart Directory / Services" class="button button-muted">
         </form>
-        <form method="post" action="{% url 'blue_mgnt:settings' %}">
-            {% csrf_token %}
-            <input type='hidden' value='sync' name='form'>
-            <input type='submit' value="Sync Virtual Appliance" class="button button-muted">
-        </form>
-        <form method="post" action="{% url 'blue_mgnt:settings' %}">
-            {% csrf_token %}
-            <input type='hidden' value='rebuild_db' name='form'>
-            <input type='submit' value="Rebuild DB" class="button button-muted">
-        </form>
-        {{ command_output }}
+        <div class="space-20none">
+            <form method="post" action="{% url 'blue_mgnt:settings' %}">
+                {% csrf_token %}
+                <input type='hidden' value='sync' name='form'>
+                <input type='submit' value="Sync Virtual Appliance" class="button button-muted">
+            </form>
+            <form method="post" action="{% url 'blue_mgnt:settings' %}">
+                {% csrf_token %}
+                <input type='hidden' value='rebuild_db' name='form'>
+                <input type='submit' value="Rebuild DB" class="button button-muted">
+            </form>
+        </div>
         {% endif %}
         </div>
     </div>
