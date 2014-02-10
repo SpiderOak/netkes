@@ -144,7 +144,8 @@ def settings(request, api, account_info, config, username, saved=False):
     ip_blocks = IPBlockFormSet(initial=[dict(ip_block=x) for x in opts['signup_network_restriction']], 
                                prefix='ip_blocks')
     error = False
-    command_output = ''
+    sync_output = ''
+    rebuild_output = ''
 
     if request.method == 'POST' and request.user.has_perm('blue_mgnt.can_manage_settings'):
         if request.POST.get('form', '') == 'ip_block':
@@ -163,14 +164,14 @@ def settings(request, api, account_info, config, username, saved=False):
                                  stdout=subprocess.PIPE,
                                  stderr=subprocess.STDOUT
                                 )
-            command_output = p.communicate()[0]
+            sync_output = p.communicate()[0]
         elif request.POST.get('form', '') == 'rebuild_db':
             log_admin_action(request, 'Rebuild DB')
             p = subprocess.Popen('/opt/openmanage/bin/rebuild_db.sh', 
                                  stdout=subprocess.PIPE,
                                  stderr=subprocess.STDOUT
                                 )
-            command_output = p.communicate()[0]
+            rebuild_output = p.communicate()[0]
         elif request.POST.get('form', '') == 'restart_directory':
             log_admin_action(request, 'restart directory')
             config_mgr_ = config_mgr.ConfigManager(config_mgr.default_config())
@@ -188,13 +189,26 @@ def settings(request, api, account_info, config, username, saved=False):
         username=username,
         features=features,
         ip_blocks=ip_blocks,
-        command_output=command_output,
+        sync_output=sync_output,
+        rebuild_output=rebuild_output,
         options=options,
         saved=saved,
         error=error,
         account_info=account_info,
     ),
     RequestContext(request))
+
+
+class PasswordForm(forms.Form):
+    password = forms.CharField(widget=forms.PasswordInput)
+    password_again = forms.CharField(label="Repeat Password", widget=forms.PasswordInput)
+
+    def clean_password_again(self):
+        password = self.cleaned_data['password_again']
+        if self.cleaned_data.get('password') != password:
+            raise forms.ValidationError('Passwords do not match.')
+        return password
+
 
 @enterprise_required
 @permission_required('blue_mgnt.can_manage_settings')

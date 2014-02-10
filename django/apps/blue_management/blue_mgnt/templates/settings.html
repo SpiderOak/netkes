@@ -5,14 +5,15 @@
 {% block modal_options %}{% include "partials/add-ip-blocks-widget.html" with active="manage" %}{% endblock modal_options %}
 {% block navtab %}{% include "partials/navtab-widget.html" with active="manage" %}{% endblock navtab %}
 {% block content %}
-{% if command_output %}
+{% if sync_output or rebuild_output %}
 <div class="status-message">
     <div class="status-content">
         <h2 class="page-header"><i class="ss-icon">&#x2699;</i>Status
             <span class="actions"><i class="ss-icon">&#x2421;</i></span>
         </h2>
             <div class="spacer"><!--ZXP--></div>
-        <code>{{ command_output }}</code>
+            <code>{{ sync_output }}</code>
+            <code>{{ rebuild_output }}</code>
     </div>
 </div>
 {% endif %}
