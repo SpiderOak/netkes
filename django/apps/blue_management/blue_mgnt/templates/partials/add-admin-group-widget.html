@@ -5,6 +5,7 @@
         </h2>
             <div class="spacer"><!--ZXP--></div>
 <form action="{% url 'blue_mgnt:admin_groups' %}" enctype="multipart/form-data" method="post">
+    {% csrf_token %}
     <table class="widget-table">
         {% for field in new_admin_group.visible_fields %}
         <tr>

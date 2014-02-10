@@ -41,6 +41,7 @@
                     <td>
                         {% if code.active %}
                         <form method="post" action="{% url 'blue_mgnt:auth_codes' %}?show_inactive={{show_inactive }}">
+                            {% csrf_token %}
                             <input type='submit' 
                                 value="Disable" 
                                 class="button button-muted" 

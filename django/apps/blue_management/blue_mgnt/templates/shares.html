@@ -17,6 +17,7 @@
 	</div>
 </h1>
 <form action="{% url 'blue_mgnt:shares' %}" method="POST" action="">
+    {% csrf_token %}
     <table id="groups" class="widget-table">
         <thead>
             <tr class="bigger">
@@ -57,6 +58,7 @@
 {% endif %}
 <div class="widget-actions">
 <form action="{% url 'blue_mgnt:shares' %}" method="post" action="" style="clear:both">
+    {% csrf_token %}
     <div>
         <input type='submit' value="{{ sharing_enabled|yesno:"Disable, Enable" }} All ShareRooms" class="button button-muted" id="edit_shares">
         <input type='hidden' value='{{ sharing_enabled }}' name='sharing_enabled'>

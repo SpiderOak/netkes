@@ -9,7 +9,6 @@
     <div class="actions">
 		<button id="add-widget" class="button button-primary">Add user</button>
         <form action="{% url 'blue_mgnt:users' %}" method="GET">
-            {% csrf_token %}
             <input name="show_disabled" type="hidden" value="{{ show_disabled }}">
             <input type="text" class="widget-search-input"  id="input_search" name="search" value="{{ search }}" placeholder="Find Users by Name or Email">
             <input type="submit" class="search-button ss-icon" value="&#x1F50E;">

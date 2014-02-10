@@ -66,6 +66,7 @@
 {% if not features.ldap %}
 <div class="widget-add-user" style="display: none">
     <form action="{% url 'blue_mgnt:users' %}" enctype="multipart/form-data" method="post">
+    {% csrf_token %}
         <fieldset>
             {% for field in user_csv %}
             <table class="widget-table">

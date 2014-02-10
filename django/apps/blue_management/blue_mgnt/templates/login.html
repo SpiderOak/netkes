@@ -9,6 +9,7 @@
     <div class="background"></div>
     <div class="login-form-wrapper">
     <form method="post" action="" id="log_in">
+        {% csrf_token %}
         <fieldset>
             {% if form.non_field_errors %}
             <div class="error">{{ form.non_field_errors }}</div>

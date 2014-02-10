@@ -58,6 +58,7 @@
             <td><label>Active?</label>
             <td>
                 <form method="post" id="share_state" action="{% url 'blue_mgnt:share_detail' api_user.email share.room_key %}">
+                    {% csrf_token %}
                     <div class="processor">
                     {% if share.enabled %}
                     <input type="radio" class="radio-submit" checked="checked">

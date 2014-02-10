@@ -2,6 +2,7 @@
 {% if not private_cloud %}
 <div class="modal-content">
 <form method="post" action="{% url 'blue_mgnt:settings' %}">
+    {% csrf_token %}
     {{ ip_blocks.management_form }}
     <h2 class="page-header"><i class="ss-icon">&#x1F464;</i>CSR Netblocks
         <span class="actions"><i class="ss-icon">&#x2421;</i></span>

@@ -21,6 +21,7 @@
     <div id="s1" class="section">
     {% endif %}
         <form method="post" action="{% url 'blue_mgnt:settings' %}">
+            {% csrf_token %}
             <div class="" id="options">
                 <fieldset>
                     <table class="widget-table">
@@ -61,6 +62,7 @@
                 <input type='submit' value="Reboot Virtual Appliance" class="button button-muted">
             </form>
             <form method="post" action="{% url 'blue_mgnt:settings' %}">
+                {% csrf_token %}
                 <input type='hidden' value='restart_directory' name='form'>
                 <input type='submit' value="Restart Directory / Services" class="button button-muted">
             </form>

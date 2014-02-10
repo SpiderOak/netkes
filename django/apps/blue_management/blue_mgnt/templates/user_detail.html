@@ -23,6 +23,7 @@
 {% endif %}
 
 <form method="POST" action="{% url 'blue_mgnt:user_detail' email %}">
+    {% csrf_token %}
     <div class="" id="options">
         <fieldset>
             <table class="widget-table widget-table-details">
@@ -186,6 +187,7 @@
 {% if not features.ldap %}
     {% if not api_user.num_devices %}
         <form method="post" action="{% url 'blue_mgnt:user_detail' email %}">
+            {% csrf_token %}
             <input type='hidden' value='resend_email' name='form'>
             <input type='submit' value="Re-send Activation Email" class="button button-primary">
         </form>
