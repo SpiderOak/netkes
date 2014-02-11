@@ -587,6 +587,8 @@ h1.page-header {
     }
     form {
         display: inline-block;
+        position: relative;
+        z-index: 1;
     }
 	.rhs {
 		float: right;
@@ -962,4 +964,16 @@ body.password {
     h2 {
         border-bottom: 1px solid @NAVTAB_BORDER_COLOR;
     }
+}
+
+.shield {
+    position: absolute;
+    z-index: 10000;
+    height: 100%;
+    width: 100%;
+    background-color: rgba(240, 240, 240, .2);
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
 }

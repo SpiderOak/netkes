@@ -31,10 +31,22 @@ $(function() {
         }
     });
 
-    //Loader for the login page
-    $('#login').mouseup(function() {
-        $(this).replaceWith("<img src='/static/blue_mgnt/img/loader.gif' style='float:right; margin-right:40px'/>");
-        $('#log_in').submit();
+    //Loading shield for submit buttons
+    $('.shield').hide();
+    
+    $('input[type=submit]').click(function(e) {
+        e.preventDefault();
+        $('body').css({
+            'position' : 'relative',
+            'z-index' : '1',
+            'cursor' : 'wait'
+        });
+        $('.shield').css({
+            'position' : 'absolute',
+            'z-index' : '10000'
+        }).toggle();
+        
+        $(this).parent('form').submit();
     });
 
 
