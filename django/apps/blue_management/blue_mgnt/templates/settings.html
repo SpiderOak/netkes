@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Management Console - {{ block.super }}{% endblock %}
+{% block title %}Account - Management Console{{ block.super }}{% endblock %}
 {% block body_classes %}home {{ block.super }}{% endblock body_classes %}
 {% block breadcrumb %}<a href="{% url 'blue_mgnt:manage' %}">Back to Manage</a>{% endblock breadcrumb %}
 {% block modal_options %}{% include "partials/add-ip-blocks-widget.html" with active="manage" %}{% endblock modal_options %}

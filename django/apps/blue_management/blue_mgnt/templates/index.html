@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Management Console - {{ block.super }}{% endblock %}
+{% block title %}Users - Management Console{{ block.super }}{% endblock %}
 {% block body_classes %}home {{ block.super }}{% endblock body_classes %}
 {% block modal_options %}{% include "partials/add-user-widget.html" with active="users" %}{% endblock modal_options %}
 {% block navtab %}{% include "partials/navtab-widget.html" with active="users" %}{% endblock navtab %}
@@ -7,7 +7,7 @@
 <h1 class="page-header">
 	<i class="ss-icon">&#x1F464;</i> Users
     <div class="actions">
-		<button id="add-widget" class="button button-primary">Add user</button>
+		<button id="add-widget" class="button button-primary">Add User</button>
         <form action="{% url 'blue_mgnt:users' %}" method="GET">
             <input name="show_disabled" type="hidden" value="{{ show_disabled }}">
             <input type="text" class="widget-search-input"  id="input_search" name="search" value="{{ search }}" placeholder="Find Users by Name or Email">
