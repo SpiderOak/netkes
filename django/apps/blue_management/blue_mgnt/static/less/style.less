@@ -23,6 +23,8 @@
 @NAVTAB_BGCOLOR_MANAGE: #21B1E6;
 @NAVTAB_BGCOLOR_REPORTS: #5AC5F1;
 
+@INPUT_EDIT_COLOR: #767677;
+
 @LINK_COLOR: #268BC9;
 
 @ZEBRA_STRIPE: #fafafa;
@@ -60,7 +62,7 @@
         border-radius: 5px;
         border: 1px solid @NAVTAB_BORDER_COLOR;
         text-indent: 12px;
-        color: darken(@NAVTAB_BORDER_COLOR, 10%);
+        color: @INPUT_EDIT_COLOR;
         font: 13px~"/"23px @FONTFAMILY_R;
         display: block;
     }
@@ -114,6 +116,11 @@ a {
 strong, .strong, table thead th {
     font-family: @FONTFAMILY_SB;
 }
+
+::-webkit-input-placeholder { color: lighten(@INPUT_EDIT_COLOR, 32%) }
+::-moz-placeholder { color: lighten(@INPUT_EDIT_COLOR, 32%) }
+:-moz-placeholder { color: lighten(@INPUT_EDIT_COLOR, 32%) }
+::-ms-input-placeholder { color: lighten(@INPUT_EDIT_COLOR, 32%) }
 
 .overlord {
 	width: @PAGE_WIDTH;
@@ -301,7 +308,7 @@ h1.page-header {
             border-radius: 5px;
             border: 1px solid @NAVTAB_BORDER_COLOR;
             text-indent: 12px;
-            color: darken(@NAVTAB_BORDER_COLOR, 10%);
+            color: @INPUT_EDIT_COLOR;
             font: 13px~"/"23px @FONTFAMILY_R;
         }
         .search-button {
@@ -398,7 +405,7 @@ h1.page-header {
         border-radius: 5px;
         border: 1px solid @NAVTAB_BORDER_COLOR;
         text-indent: 12px;
-        color: darken(@NAVTAB_BORDER_COLOR, 10%);
+        color: @INPUT_EDIT_COLOR;
         font: 13px~"/"23px @FONTFAMILY_R;
     }
     
