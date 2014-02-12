@@ -50,6 +50,13 @@ $(function() {
     });
 
 
+    // Adjust table widths
+    $('td').each(function(){
+    $th = $('td').closest('table').find('th').eq($(this).index());
+    
+    $th.css('width',$(this).width() );
+    });
+
     // Controller for hide/show in details
     if($('toggle-controller')){
         $('.widget-overview').hide()
