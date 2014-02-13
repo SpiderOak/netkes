@@ -13,16 +13,16 @@
 </h1>
 <div class="left-col">
     <div class="widget-manage-blocks">
-        <span class="manage-icon"><i class="ss-icon">&#x1F465;</i></span>
-        <div>
+        <div class="manage-icon"><i class="ss-icon">&#x1F465;</i></div>
+        <div class="manage-content">
             <h3>Groups<span>{{ group_count }} Groups</span></h3>
             <p>Description of the section. Nullam id do lor id nibh ultricies vehicula ut id elit.</p>
             <a href="{% url 'blue_mgnt:groups' %}" class="button button-primary">Manage Groups</a>
         </div>
     </div>
     <div class="widget-manage-blocks">
-        <span class="manage-icon"><i class="ss-icon">&#x1F511;</i></span>
-        <div>
+        <div class="manage-icon"><i class="ss-icon">&#x1F511;</i></div>
+        <div class="manage-content">
             <h3>Auth Codes<span>{{ codes_count }} Auth Codes</span></h3>
             <p>Description of the section. Nullam id do lor id nibh ultricies vehicula ut id elit.</p>
             <a href="{% url 'blue_mgnt:auth_codes' %}" class="button button-primary">Manage Auth Codes</a>
@@ -31,16 +31,16 @@
 </div>
 <div class="right-col">
     <div class="widget-manage-blocks">
-        <span class="manage-icon"><i class="ss-icon">&#xED50;</i></span>
-        <div>
+        <div class="manage-icon"><i class="ss-icon">&#xED50;</i></div>
+        <div class="manage-content">
             <h3>Logs</h3>
             <p>Description of the section. Nullam id do lor id nibh ultricies vehicula ut id elit.</p>
             <a href="{% url 'blue_mgnt:logs' %}" class="button button-primary">Manage Logs</a>
         </div>
     </div>
     <div class="widget-manage-blocks">
-        <span class="manage-icon"><i class="ss-icon">&#x1F464;</i></span>
-        <div>
+        <div class="manage-icon"><i class="ss-icon">&#x1F464;</i></div>
+        <div class="manage-content">
             <h3>Account<span>{{ account_name|title }}</span></h3>
             <p>Description of the section. Nullam id do lor id nibh ultricies vehicula ut id elit.</p>
             <a href="{% url 'blue_mgnt:settings' %}" class="button button-primary">Edit Account</a>

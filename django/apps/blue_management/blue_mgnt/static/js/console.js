@@ -52,9 +52,20 @@ $(function() {
 
     // Adjust table widths
     $('td').each(function(){
-    $th = $('td').closest('table').find('th').eq($(this).index());
-    
-    $th.css('width',$(this).width() );
+        $th = $('td').closest('table').find('th').eq($(this).index() -1);
+        if( $(this).has('input').length ) {
+            $th.css('width', '180px');
+        }
+
+    });
+
+    // Toggle long logs
+    $('body.logs .widget-table tbody tr').each(function() {
+        $last = $(this).prev();
+        if( $last.height() != null && $(this).height() >  $last.height()) {
+            $('td', this).addClass('collapse');
+        }
+        $('td', this).append("<p>[[ " + $(this).height() + ", " + $last.height() + " ]]</p>");
     });
 
     // Controller for hide/show in details

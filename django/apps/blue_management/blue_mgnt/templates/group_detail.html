@@ -4,7 +4,7 @@
 {% block title %}Group Detail - Management Console{{ block.super }}{% endblock %}
 
 {% block body_classes %}group_detail {{ block.super }}{% endblock body_classes %}
-{% block breadcrumb %}<a href="#">Back to Something</a>{% endblock breadcrumb %}
+{% block breadcrumb %}<a href="{% url 'blue_mgnt:groups' %}">Back to Groups</a>{% endblock breadcrumb %}
 {% block modal_options %}{% endblock modal_options %}
 {% block navtab %}{% include "partials/navtab-widget.html" with active="manage" %}{% endblock navtab %}
 {% block content %}
