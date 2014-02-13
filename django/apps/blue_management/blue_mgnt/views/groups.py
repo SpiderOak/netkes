@@ -238,7 +238,7 @@ def get_or_create_admin_group(user_group_id):
         admin_group = models.AdminGroup.objects.get(user_group_id=user_group_id)
         django_group = Group.objects.get(pk=admin_group.group_id)
     except ObjectDoesNotExist:
-        django_group = Group.objects.create()
+        django_group = Group.objects.create(name=user_group_id)
         admin_group = models.AdminGroup.objects.create( 
             group_id=django_group.id, 
             user_group_id=user_group_id)
