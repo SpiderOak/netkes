@@ -9,7 +9,7 @@
 {% block navtab %}{% include "partials/navtab-widget.html" with active="users" %}{% endblock navtab %}
 {% block content %}
 <h1 class="page-header">
-	<i class="ss-icon">&#x1F464;</i> User Detials
+	<i class="ss-icon">&#x1F464;</i> User Details
     <div class="actions">
         <form action="{% url 'blue_mgnt:users' %}" method="GET">
             <input name="show_disabled" type="hidden" value="{{ show_disabled }}">
