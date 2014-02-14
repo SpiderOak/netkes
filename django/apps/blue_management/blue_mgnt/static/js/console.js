@@ -46,19 +46,19 @@ $(function() {
             'z-index' : '10000'
         }).toggle();
         
-        $(this).parent('form').submit();
+        $(this).closest('form').submit();
     });
 
 
     // Adjust table widths
-    $('td').each(function(){
+/*    $('td').each(function(){
         $th = $('td').closest('table').find('th').eq($(this).index() -1);
         if( $(this).has('input').length ) {
             $th.css('width', '180px');
         }
 
     });
-
+*/
     // Toggle long logs
     $('body.logs .widget-table tbody tr').each(function() {
         $last = $(this).prev();

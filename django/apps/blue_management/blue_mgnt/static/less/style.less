@@ -284,6 +284,7 @@ div.breadcrumb {
 h1.page-header {
 	height: @PAGEHEADER_HEIGHT;
 	position: relative;
+    .clear();
 	.ss-icon {
 		font-size: 23px;
 		color: #929292;
@@ -367,10 +368,11 @@ h1.page-header {
 	border-collapse: collapse;
 	border-spacing: 0;
 	width: 100%;
-	table-layout: fixed;
+	table-layout: auto;
 	border: 1px solid #dddddd;
 	background-color: #ffffff;
 	font-size: 15px;
+    .clear();
 	&>thead>tr>th {
 		padding: 16px 8px 4px 8px;
 		border-bottom: 2px solid #dddddd;
@@ -453,6 +455,7 @@ h1.page-header {
         width: 65%;
         position: relative;
         left: 17px;
+        min-height: 125px;
 
         h3 {
             font-size: 16px;
@@ -465,6 +468,7 @@ h1.page-header {
         p {
             font-size: 12px;
             margin: 3px 0 8px;
+            min-height: 32px;
         }
         a.button {
             display: inline-block;
@@ -522,7 +526,10 @@ h1.page-header {
             border-bottom: 1px solid @NAVTAB_BORDER_COLOR;
             text-align: left;
             padding: 10px;
-            i { padding-right: 10px }
+            i {
+                padding-right: 10px;
+                font-size: 18px;
+            }
 
             .actions {
                 float: right;
@@ -679,6 +686,11 @@ button, .button {
 }
 
 /* Special case */
+.user_detail {
+    .widget-table {
+        table-layout: fixed;
+    }
+}
 
 body.logs .widget-table td {
     overflow: visible;
@@ -938,11 +950,13 @@ body.password {
 .left-col {
     display: inline-block;
     margin-right: 9px;
+    vertical-align: top;
 }
 
 .right-col {
     display: inline-block;
     margin-left: 9px;
+    vertical-align: top;
 }
 
 .set-top {
@@ -1008,6 +1022,7 @@ body.password {
     i {
         vertical-align: middle;
         margin-right: 12px;
+        font-size: 18px;
     }
 
     h2 {
