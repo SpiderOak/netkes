@@ -36,7 +36,6 @@ from mako import exceptions
 from IPy import IP
 
 from blue_mgnt import models
-from so_common.regex import new_user_value_re_tests
 from netkes.account_mgr.accounts_api import Api
 from netkes.netkes_agent import config_mgr
 from netkes.common import read_config_file
