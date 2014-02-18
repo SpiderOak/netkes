@@ -17,8 +17,8 @@ python manage.py syncdb --noinput
 python manage.py createsuperuser --noinput --username="console_admin" --email="invalid@email.act"
 popd
 
-$OPENMANAGE_ROOT/netkes/upgrade/apply_sql.sh
-python $OPENMANAGE_ROOT/netkes/upgrade/apply_scripts.py
+$OPENMANAGE_ROOT/upgrade/apply_sql.sh
+python $OPENMANAGE_ROOT/upgrade/apply_scripts.py
 
 if [ -e $OPENMANAGE_ROOT/netkes/account_mgr/user_source ]; then
     sudo ln -s $OPENMANAGE_ROOT/bin/run_openmanage.sh /etc/cron.hourly/run_openmanage || exit 1
