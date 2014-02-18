@@ -661,6 +661,15 @@ button, .button {
 	cursor: pointer;
 }
 
+.button-primary-basic {
+	color: #fff;
+	background-color: #22A2D9;
+    border-radius: 4px;
+    border: 1px solid #22A2D9;
+    &:hover {
+	   background-color: darken(#22A2D9, 2%);
+    }
+}
 .button-primary {
 	color: #fff;
 	.buttonate(#23B2E1, #21A2D9, #068CD3, #057ECF);
@@ -772,68 +781,86 @@ body.admin_groups {
         color: #ff0000;
     }
 body.login {
+    h1 {
+        font-family: ProximaNovaT-Thin;
+        font-size: 42px;
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    h2 {
+        font-family: ProximaNova-Light;
+        text-align: center;
+        font-size: 20px;
+    }
+    h3 {
+        font-family: ProximaNova-Regular;
+        font-weight: 100;
+        font-size: 22px;
+        line-height: 48px;
+    }
     .content {
-        margin: 10% auto;
+        margin: 4% auto;
     }
     .clear();
     .login-wrapper {
         margin: 3% auto;
-        .gradient(@NAVTAB_BGCOLOR_REPORTS; @NAVTAB_BGCOLOR_MANAGE);
-        .background {
-            background-position: 0 -33px;
+        width: 775px;
+        .right-col {
+            width: 385px;
+            margin-left: 75px;
+            div:first-of-type {
+                margin-bottom: 40px;
+            }
+            img {
+                float: left;
+                margin-right: 18px;
+                margin-bottom: 85px;
+                position: relative;
+                top: 18px;
+            }
         }
     }
 }
 
 body.password {
     .login-wrapper {
+        margin-top: 50px;
         .login-form-wrapper {
-            border: 1px solid @NAVTAB_BORDER_COLOR;
+            input:first-of-type {
+                margin-bottom: 20px;
+            }
         }
-        .background {
-            background-position: 0 -10px;;
-            opacity: 0.6;
+        .right-col {
+            h3 {
+                font-family: ProximaNova-Regular;
+                font-weight: 100;
+                font-size: 22px;
+                line-height: 48px;
+            }
+            width: 385px;
+            margin-left: 75px;
+            margin-top: 18px;
+            div:first-of-type {
+                margin-bottom: 40px;
+            }
+            img {
+                float: left;
+                margin-right: 18px;
+                margin-bottom: 85px;
+                position: relative;
+                top: 18px;
+            }
         }
     }
 }
 
 body.login,
 body.password {
-    .login-wrapper {
-        margin: 0 auto;
-        position: relative;
-        padding: 20px 0;
-        .clear();
-        .background {
-            background-image: url(/static/blue_mgnt/img/login_bg.png);
-            background-repeat: repeat;
-            height: 100%;
-            width: 100%;
-            position: absolute;
-            z-index: 1;
-            top: -1px;
-            left: -1px;
-            right: -1px;
-            bottom: -1px;
-        }
-
-        .login-form-wrapper {
-            width: 325px;
-            border-radius: 8px;
-            margin: 0 auto;
-            background-color: #fff;
-            padding: 12px;
-            .clear();
-            position: relative;
-            z-index: 100;
-            overflow: hidden;
-        }
-    }
     .image-wrapper {
-        width: 160px;
-        margin: 3% auto;
+        width: 120px;
+        margin: 2% auto;
         img {
-            width: 160px;
+            width: 120px;
         }
 
     }
@@ -842,7 +869,9 @@ body.password {
     .widget-login {
         label {
             display: inline-block;
-            font-size: 20px;
+            text-transform: uppercase;
+            font-size: 14px;
+            color: darken(@NAVTAB_BORDER_COLOR, 7%);
         }
         input[type='text'],
         input[type='password'] {
@@ -852,7 +881,9 @@ body.password {
         }
     }
     input[type='submit'] {
-        padding: 4px 10px;
+        padding: 6px 22px;
+        float: left;
+        right: 0;
         font-size: 18px;
     }
 }

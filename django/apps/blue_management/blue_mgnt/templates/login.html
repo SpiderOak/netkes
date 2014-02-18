@@ -5,9 +5,10 @@
 <div class="image-wrapper">
     <img src="/static/blue_mgnt/img/logo_large.png" />
 </div>
+<h1>Welcome back.</h1>
+<h2>Login below to access your management console.</h2>
 <div class="login-wrapper">
-    <div class="background"></div>
-    <div class="login-form-wrapper">
+    <div class="left-col">
     <form method="post" action="" id="log_in">
         {% csrf_token %}
         <fieldset>
@@ -32,9 +33,28 @@
                 {% endfor %}
             </div>
         </fieldset>
-        <input type='submit' value="Login" class="button button-primary" id="login">
+        <input type='submit' value="Login" class="button button-primary-basic" id="login">
         <input type='hidden' value='management' name='form'>
     </form>
     </div>
+<div class="right-col">
+    <div>
+        <img src="/static/blue_mgnt/img/login_safe.png" />
+        <h3>Always 'Zero-Knowledge'</h3>
+        <p>SpiderOak retains full 'zero-knowledge' to
+        the data being backed up, synced, and
+        shared through your account.</p>
+    </div>
+    <div>
+        <img src="/static/blue_mgnt/img/login_head.png" />
+        <h3>Powerful User Management</h3>
+        <p>SpiderOak Blue provides a powerful central
+        management console for provisioning and
+        managing accounts, setting group policies
+        &amp; permissions, and accessing and
+        controlling company data.</p>
+    </div>
+</div>
+
 </div>
 {% endblock content %}
