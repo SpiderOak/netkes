@@ -9,7 +9,7 @@
 <h1 class="page-header">
 	<i class="ss-icon">&#x1F511;</i> Auth Codes
     <div class="actions">
-		<button id="add-widget" class="button button-primary">Create Code</button>
+		<button id="add-widget" class="button button-primary-basic">Create Code</button>
         <form action="{% url 'blue_mgnt:users' %}" method="GET">
             <input name="show_disabled" type="hidden" value="{{ show_disabled }}">
             <input type="text" class="widget-search-input" value="{{ search }}" placeholder="Find Auth Codes">

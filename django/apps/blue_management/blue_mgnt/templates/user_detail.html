@@ -178,7 +178,7 @@
                 <input type='submit' value="Delete User" class="button button-secondary">
                 <input type='submit' value="{{ api_user.enabled|yesno:'Disable, Enable' }} User" class="button button-muted">
 
-                <input type='submit' value="Save Changes" class="rhs button button-primary" id="edit_user">
+                <input type='submit' value="Save Changes" class="rhs button button-primary-basic" id="edit_user">
                 <input type='hidden' value='edit_user' name='form'>
             </div>
         </fieldset>
@@ -189,7 +189,7 @@
         <form method="post" action="{% url 'blue_mgnt:user_detail' email %}">
             {% csrf_token %}
             <input type='hidden' value='resend_email' name='form'>
-            <input type='submit' value="Re-send Activation Email" class="button button-primary">
+            <input type='submit' value="Re-send Activation Email" class="button button-primary-basic">
         </form>
     {% endif %}
 {% endif %}

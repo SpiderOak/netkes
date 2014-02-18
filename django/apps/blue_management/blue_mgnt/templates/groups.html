@@ -8,7 +8,7 @@
 <h1 class="page-header">
 	<i class="ss-icon">&#x1F465;</i> Groups
     <div class="actions">
-		<button id="add-widget" class="button button-primary">Add Group</button>
+		<button id="add-widget" class="button button-primary-basic">Add Group</button>
         <form action="{{% url 'blue_mgnt:groups' %}" method="GET">
             <input name="show_disabled" type="hidden" value="{{ show_disabled }}">
             <input type="text" id="input_search" name="search" class="widget-search-input" value="{{ search }}" placeholder="Find Groups">
@@ -52,7 +52,7 @@
 </table>
 <div class="widget-splitactions space-20none">
     {% if perms.blue_mgnt.can_manage_groups %}
-    <input type='submit' value="Save Changes" class="rhs button button-primary">
+    <input type='submit' value="Save Changes" class="rhs button button-primary-basic">
     {% if show_force %}
     <input type='submit' value="Force Plan Change" class="button button-warning" name="force_plan_change">
     {% endif %}

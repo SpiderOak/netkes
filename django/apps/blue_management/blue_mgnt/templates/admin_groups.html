@@ -11,7 +11,7 @@
 <h1 class="page-header">
 	<i class="ss-icon">&#x1F512;</i> Admin Groups
     <div class="actions">
-		<button id="add-widget" class="button button-primary">Add Admin Group</button>
+		<button id="add-widget" class="button button-primary-basic">Add Admin Group</button>
         <form action="{% url 'blue_mgnt:admin_groups' %}" method="GET">
             <input name="show_disabled" type="hidden" value="{{ show_disabled }}">
             <input type="text" class="widget-search-input" value="{{ search }}" placeholder="Find Admin Groups">
@@ -89,7 +89,7 @@
 
 </table>
 <div class="widget-actions">
-    <input type='submit' value="Save Changes" class="rhs button button-primary">
+    <input type='submit' value="Save Changes" class="rhs button button-primary-basic">
     <input type='hidden' value='management' name='form'>
 </div>
 </form>

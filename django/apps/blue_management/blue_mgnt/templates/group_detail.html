@@ -23,7 +23,18 @@
                 </div>
             </td>
             <td {% if field.html_name == 'permissions' %}colspan="2"{% endif %}>
-                {{ field }}
+                {% with perm=field.html_name.permissions %}
+                    {% if perm %}
+                    {% for item in perm %}
+                        {% if forloop.counter == 10 %}
+                            {{ item }}<br />
+                        {% else %}
+                            {{ item }}
+                        {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                        
                 {% if field.errors %}
                     <br />
                     {% for error in field.errors %}
@@ -45,7 +56,7 @@
     </tbody>
 </table>
 <div class="widget-actions">
-    <input type='submit' value="Save Changes" class="rhs button button-primary" id="edit_group">
+    <input type='submit' value="Save Changes" class="rhs button button-primary-basic" id="edit_group">
 </div>
 </form>
 {% endblock content %}

@@ -20,7 +20,7 @@
 <h1 class="page-header">
 	<i class="ss-icon">&#x1F464;</i> Accounts
     <div class="actions">
-		<button id="add-widget" class="button button-primary">Add IP Blocks</button>
+		<button id="add-widget" class="button button-primary-basic">Add IP Blocks</button>
 	</div>
 </h1>
 <div class="spacer"></div>
@@ -54,7 +54,7 @@
         </fieldset>
         <div class="widget-actions short-right">
             {% if perms.blue_mgnt.can_manage_settings %}
-            <input type='submit' value="Save Changes" class="rhs button button-primary" id="">
+            <input type='submit' value="Save Changes" class="rhs button button-primary-basic" id="">
             {% endif %}
         </div>
         <input type='hidden' value='management' name='form'>

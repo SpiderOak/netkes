@@ -503,8 +503,6 @@ h1.page-header {
 .modal-content {
     position: absolute;
     width: 530px;
-    left: 22%;
-    top: 22%;
     border: 1px solid @NAVTAB_BORDER_COLOR;
     border-radius: 8px;
     background-color: #FFF;
@@ -615,7 +613,7 @@ h1.page-header {
 
 .widget-splitactions {
     &.float {
-        width: 600px;
+        width: 625px;
         float: left;
         margin: 20px 0;
     }
@@ -657,40 +655,37 @@ h1.page-header {
 /* buttons */
 button, .button {
 	font-family: @FONTFAMILY_B;
-	font-size: 13px;
+	font-size: 16px;
+    padding: 10px 15px;
+    text-decoration: none;
 	cursor: pointer;
+    border-radius: 4px;
 }
 
 .button-primary-basic {
 	color: #fff;
 	background-color: #22A2D9;
-    border-radius: 4px;
     border: 1px solid #22A2D9;
     &:hover {
 	   background-color: darken(#22A2D9, 2%);
     }
 }
-.button-primary {
-	color: #fff;
-	.buttonate(#23B2E1, #21A2D9, #068CD3, #057ECF);
-    &:hover {
-	    .buttonate(darken(#22B2E2, 2%), darken(#22A2D9, 2%), darken(#068CD2, 2%), darken(#027ECF, 2%));
-    }
-}
 
 .button-secondary {
 	color: #fff;
-	.buttonate(#D44246, #CF3940, #C31E24, #BE1B1E);
+	background-color: #CF3940;
+    border: 1px solid #CF3940;
     &:hover {
-	    .buttonate(darken(#D44246, 2%), darken(#CF3940, 2%), darken(#C31E24, 2%), darken(#BE1B1E, 2%));
+	    background-color: darken(#CF3940, 2%);
     }
 }
 
 .button-muted {
 	color: #fff;
-	.buttonate(#afafaf, #a0a0a0, #8b8b8b, #7e7e7e);
+	background-color: #a0a0a0;
+    border: 1px solid #a0a0a0;
     &:hover {
-        .buttonate(darken(#afafaf, 2%), darken(#a0a0a0, 2%), darken(#8b8b8b, 2%), darken(#7e7e7e, 2%));
+        background-color: darken(#a0a0a0, 2%);
     }
 }
 
@@ -870,8 +865,9 @@ body.password {
         label {
             display: inline-block;
             text-transform: uppercase;
+            font-family: @FONTFAMILY_R;
             font-size: 14px;
-            color: darken(@NAVTAB_BORDER_COLOR, 7%);
+            color: darken(@NAVTAB_BORDER_COLOR, 16%);
         }
         input[type='text'],
         input[type='password'] {
@@ -881,10 +877,10 @@ body.password {
         }
     }
     input[type='submit'] {
-        padding: 6px 22px;
+        padding: 12px 30px;
         float: left;
         right: 0;
-        font-size: 18px;
+        font-size: 16px;
     }
 }
 

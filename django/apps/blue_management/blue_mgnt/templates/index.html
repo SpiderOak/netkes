@@ -7,7 +7,7 @@
 <h1 class="page-header">
 	<i class="ss-icon">&#x1F464;</i> Users
     <div class="actions">
-		<button id="add-widget" class="button button-primary">Add User</button>
+		<button id="add-widget" class="button button-primary-basic">Add User</button>
         <form action="{% url 'blue_mgnt:users' %}" method="GET">
             <input name="show_disabled" type="hidden" value="{{ show_disabled }}">
             <input type="text" class="widget-search-input"  id="input_search" name="search" value="{{ search }}" placeholder="Find Users by Name or Email">
@@ -92,7 +92,7 @@
 <div class="widget-splitactions">
 	<div class="rhs">
         <input type="hidden" value="{{ search }}" name="search">
-		<button class="button button-primary">Save Changes</button>
+		<button class="button button-primary-basic">Save Changes</button>
 	</div>
 	<div class="lhs">
         <a href="{% url 'blue_mgnt:users' %}?show_disabled={{ show_disabled|yesno:"0,1" }}&search={{ search }}#user_table" class="button button-muted">

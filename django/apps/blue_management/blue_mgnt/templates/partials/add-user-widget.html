@@ -12,12 +12,12 @@
         {% if not features.ldap %}
             <div class="option-box" id="option-upload-csv">
                 <p>Upload from<br />a CSV file.</p>
-                <button class="button button-primary">Upload CSV</button>
+                <button class="button button-primary-basic">Upload CSV</button>
             </div>
         {% endif %}
             <div class="option-box" id="option-add-user">
                 <p>Manually<br />add users.</p>
-                <button class="button button-primary">Create User</button>
+                <button class="button button-primary-basic">Create User</button>
             </div>
             </div>
         </div>
@@ -54,7 +54,7 @@
             </tr>
         </table>
             <div class="widget-actions">
-                <input type="submit" value="Create User" class="rhs button button-primary">
+                <input type="submit" value="Create User" class="rhs button button-primary-basic">
                 <input type='hidden' value='new_user' name='form'>
                 {% for hidden in new_user.hidden_fields %}
                     {{ hidden }}
@@ -94,7 +94,7 @@
             </table>
         </fieldset>
         <div class="widget-actions">
-            <input type='submit' value="Upload CSV" class="rhs button button-primary">
+            <input type='submit' value="Upload CSV" class="rhs button button-primary-basic">
             <input type='hidden' value='csv' name='form'>
         </div>
     </form>

@@ -1,8 +1,23 @@
 $(function() {
     // Workings for the modal wrapper and widgets
 
+    function posModal() {
+        $m_content = $('.modal-content');
+        if ( $m_content.is(':visible') ) {
+
+            pos_left = Math.round(($(window).width() - $m_content.outerWidth()) / 2) + ($(document).scrollLeft());
+            pos_top = Math.round(($(window).height() - $m_content.outerHeight()) / 2) + ($(document).scrollTop());
+
+            $m_content.css({
+                'left' : pos_left,
+                'top' : pos_top
+            });
+        }
+    }
+
     $('#add-widget').click(function(){
         $('.modal-wrapper').show().css('height', $(document).height());
+        posModal();
     });
 
     $('#option-add-user button').click(function(){
@@ -15,7 +30,7 @@ $(function() {
         $('.widget-add-user-option').show();
         $('.modal-wrapper').hide();
     });
-
+    
 
     // Status
     $('.status-message .actions').click(function() {
