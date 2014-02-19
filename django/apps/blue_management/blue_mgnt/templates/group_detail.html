@@ -23,18 +23,7 @@
                 </div>
             </td>
             <td {% if field.html_name == 'permissions' %}colspan="2"{% endif %}>
-                {% with perm=field.html_name.permissions %}
-                    {% if perm %}
-                    {% for item in perm %}
-                        {% if forloop.counter == 10 %}
-                            {{ item }}<br />
-                        {% else %}
-                            {{ item }}
-                        {% endif %}
-                        {% endfor %}
-                    {% endif %}
-                {% endwith %}
-                        
+                    {{ field }} 
                 {% if field.errors %}
                     <br />
                     {% for error in field.errors %}
