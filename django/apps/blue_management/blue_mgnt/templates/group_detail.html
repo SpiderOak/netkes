@@ -48,5 +48,13 @@
     <input type='submit' value="Save Changes" class="rhs button button-primary-basic" id="edit_group">
 </div>
 </form>
+<form method="POST" action="{% url 'blue_mgnt:group_detail' group_id %}">
+{% csrf_token %}
+    {{ delete_group }}
+<input type='hidden' value='delete_group' name='form'>
+<div class="widget-actions">
+    <input type='submit' value="Delete Group" class="rhs button button-primary" id="delete_group">
+</div>
+</form>
 {% endblock content %}
 

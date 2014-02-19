@@ -41,13 +41,17 @@ def get_group_form(request, config, plans, show_user_source):
         group_id = forms.IntegerField(widget=forms.HiddenInput, required=False)
     return GroupForm
 
+def get_config_group(config, group_id):
+    for group in config['groups']:
+        if group['group_id'] == group_id:
+            return group
+
 def add_config_items(group, config):
-    for g in config['groups']:
-        if group['group_id'] == g['group_id']:
-            group['ldap_dn'] = g['ldap_id']
-            group['priority'] = g['priority']
-            group['user_source'] = g['user_source']
-            group['admin_group'] = g['admin_group']
+    g = get_config_group(config, group['group_id'])
+    group['ldap_dn'] = g['ldap_id']
+    group['priority'] = g['priority']
+    group['user_source'] = g['user_source']
+    group['admin_group'] = g['admin_group']
 
 @enterprise_required
 @permission_required('blue_mgnt.can_view_groups')
@@ -82,18 +86,6 @@ def groups(request, api, account_info, config, username, saved=False):
             return data
 
 
-    class DeleteGroupForm(forms.Form):
-        deleted_group_id = forms.ChoiceField([(g['group_id'], g['name']) for g in groups_list],
-                                            label='Group to delete')
-        new_group_id = forms.ChoiceField([(g['group_id'], g['name']) for g in groups_list],
-                                          label='Group to move users to')
-
-        def clean(self):
-            cleaned_data = super(DeleteGroupForm, self).clean()
-            if cleaned_data.get('deleted_group_id') == cleaned_data.get('new_group_id'):
-                raise forms.ValidationError("You must choose a different group to move all users of this group to.")
-
-            return cleaned_data
 
 
     class BaseGroupFormSet(forms.formsets.BaseFormSet):
@@ -161,7 +153,6 @@ def groups(request, api, account_info, config, username, saved=False):
     groups = GroupFormSet(initial=initial, prefix='groups')
     group_csv = GroupCSVForm()
     new_group = GroupForm()
-    delete_group = DeleteGroupForm()
     error = False
 
     if request.method == 'POST' and request.user.has_perm('blue_mgnt.can_manage_groups'):
@@ -198,16 +189,6 @@ def groups(request, api, account_info, config, username, saved=False):
             group_csv = GroupCSVForm(request.POST, request.FILES)
             if group_csv.is_valid():
                 return redirect('blue_mgnt:groups_saved')
-        elif request.POST.get('form', '') == 'delete_group':
-            delete_group = DeleteGroupForm(request.POST)
-            if delete_group.is_valid():
-                deleted_group_id = int(delete_group.cleaned_data['deleted_group_id'])
-                new_group_id = int(delete_group.cleaned_data['new_group_id'])
-                data = (deleted_group_id, new_group_id)
-                log_admin_action(request,
-                                 'delete group %s and move users to group %s' % data)
-                api.delete_group(deleted_group_id, new_group_id,)
-                return redirect('blue_mgnt:groups_saved')
         else:
             if features['group_permissions']:
                 groups = GroupFormSet(request.POST, prefix='groups')
@@ -227,7 +208,6 @@ def groups(request, api, account_info, config, username, saved=False):
         error=error,
         account_info=account_info,
         search=search,
-        delete_group=delete_group,
         search_back=search_back,
         show_force=getattr(groups, 'show_force', False),
     ),
@@ -245,46 +225,74 @@ def get_or_create_admin_group(user_group_id):
     return django_group, admin_group
 
 
+def get_delete_group_form(group_id, config, groups_list):
+    group_choices = []
+    current_config_group = get_config_group(config, group_id)
+    for group in groups_list:
+        tmp_group_id = group['group_id']
+        tmp_user_source = get_config_group(config, tmp_group_id)['user_source']
+        if tmp_group_id != group_id and tmp_user_source == current_config_group['user_source']:
+            group_choices.append((group['group_id'], group['name']))
+
+    class DeleteGroupForm(forms.Form):
+        new_group_id = forms.ChoiceField(group_choices, label='Group to move users to')
+
+    return DeleteGroupForm
+
 @enterprise_required
 @permission_required('blue_mgnt.can_manage_groups')
 def group_detail(request, api, account_info, config, username, group_id, saved=False):
     group_id = int(group_id)
     plans = api.list_plans()
+    groups_list = api.list_groups()
     GroupForm = get_group_form(request, config, plans, False)
     django_group, admin_group = get_or_create_admin_group(group_id)
     api_group = api.get_group(group_id)
     add_config_items(api_group, config)
     api_group['permissions'] = [p.id for p in django_group.permissions.all()]
     group_form = GroupForm(data=api_group)
+    DeleteGroupForm = get_delete_group_form(group_id, config, groups_list)
+    delete_group = DeleteGroupForm()
 
     if request.method == 'POST':
-        group_form = GroupForm(request.POST)
-        if group_form.is_valid():
-            data = dict(name=group_form.cleaned_data['name'],
-                        plan_id=group_form.cleaned_data['plan_id'],
-                        webapi_enable=group_form.cleaned_data['webapi_enable'],
-                        check_domain=group_form.cleaned_data.get('check_domain', False),
-                        )
+        if request.POST.get('form', '') == 'delete_group':
+            delete_group = DeleteGroupForm(request.POST)
+            if delete_group.is_valid():
+                new_group_id = int(delete_group.cleaned_data['new_group_id'])
+                data = (group_id, new_group_id)
+                log_admin_action(request,
+                                 'delete group %s and move users to group %s' % data)
+                api.delete_group(group_id, new_group_id,)
+                return redirect('blue_mgnt:groups_saved')
+        else:
+            group_form = GroupForm(request.POST)
+            if group_form.is_valid():
+                data = dict(name=group_form.cleaned_data['name'],
+                            plan_id=group_form.cleaned_data['plan_id'],
+                            webapi_enable=group_form.cleaned_data['webapi_enable'],
+                            check_domain=group_form.cleaned_data.get('check_domain', False),
+                            )
 
-            log_admin_action(request, 'edit group with data: %s' % data)
-            api.edit_group(group_id, data)
+                log_admin_action(request, 'edit group with data: %s' % data)
+                api.edit_group(group_id, data)
 
-            config_mgr_ = config_mgr.ConfigManager(config_mgr.default_config())
-            for g in config_mgr_.config['groups']:
-                if g['group_id'] == group_id:
-                    g['ldap_id'] = group_form.cleaned_data['ldap_dn']
-                    g['priority'] = group_form.cleaned_data['priority']
-                    g['admin_group'] = group_form.cleaned_data['admin_group']
-            config_mgr_.apply_config()
+                config_mgr_ = config_mgr.ConfigManager(config_mgr.default_config())
+                for g in config_mgr_.config['groups']:
+                    if g['group_id'] == group_id:
+                        g['ldap_id'] = group_form.cleaned_data['ldap_dn']
+                        g['priority'] = group_form.cleaned_data['priority']
+                        g['admin_group'] = group_form.cleaned_data['admin_group']
+                config_mgr_.apply_config()
 
-            django_group, admin_group = get_or_create_admin_group(group_id)
-            django_group.permissions.clear()
-            for permission_id in group_form.cleaned_data['permissions']:
-                django_group.permissions.add(Permission.objects.get(pk=permission_id))
-            django_group.save()
-            return redirect('blue_mgnt:group_detail', group_id)
+                django_group, admin_group = get_or_create_admin_group(group_id)
+                django_group.permissions.clear()
+                for permission_id in group_form.cleaned_data['permissions']:
+                    django_group.permissions.add(Permission.objects.get(pk=permission_id))
+                django_group.save()
+                return redirect('blue_mgnt:group_detail', group_id)
 
     return render_to_response('group_detail.html', dict(
+        delete_group=delete_group,
         group_form=group_form,
         group_id=group_id,
     ),
