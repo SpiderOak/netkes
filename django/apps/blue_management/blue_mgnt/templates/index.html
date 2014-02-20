@@ -54,7 +54,8 @@
                     {{ hidden }}
                 {% endfor %}
                 {% for field in curr_user.form.visible_fields %}
-                    <td>{{ field }}
+                <td>{% if field.name == 'name' %}<i class="ss-icon edit-status">&#x270E;</i>{% endif %}
+                    {{ field }}
                     {% if field.errors %}
                         <br />
                         <span class="table_errors">
@@ -66,7 +67,7 @@
                 </td>
                 {% endfor %}
             {% else %}
-                <td>{{ curr_user.name }}</td>
+            <td><i class="ss-icon edit-status">&#xE071;</i>{{ curr_user.name }}</td>
                 <td>{{ curr_user.email }}</td>
                 <td>{{ curr_user.group_name }}</td>
             {% endif %}
