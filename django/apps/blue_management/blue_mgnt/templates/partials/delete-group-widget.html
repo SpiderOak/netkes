@@ -1,0 +1,19 @@
+<div class="modal-wrapper">
+    <div class="modal-content">
+        <form method="POST" action="{% url 'blue_mgnt:group_detail' group_id %}">
+            {% csrf_token %}
+            <input type='hidden' value='delete_group' name='form'>
+            <h2 class="page-header"><i class="ss-icon">&#x1F6AB;</i>Delete Group
+                <span class="actions"><i class="ss-icon">&#x2421;</i></span>
+            </h2>
+            <div class="spacer"><!--ZXP--></div>
+            <table id="delete-group" class="widget-table">
+                {{ delete_group.label_tag }}
+                {{ delete_group }}
+            </table>
+            <div class="widget-actions">
+                <input type='submit' value="Confirm Delete" class="rhs button button-secondary" id="delete_group">
+            </div>
+        </form>
+    </div>
+</div>

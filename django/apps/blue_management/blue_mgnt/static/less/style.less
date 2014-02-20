@@ -564,16 +564,13 @@ h1.page-header {
     }
     .permissions {
         ul {
-            height: 120px;
-            column-count: 2;
+            min-height: 145px;
             column-fill: auto;
             column-width: 140px;
             column-gap: 0px;
-            -moz-column-count: 2;
             -moz-column-fill: auto;
             -moz-column-width: 140px;
             -moz-column-gap: 0px;
-            -webkit-column-count: 2;
             -webkit-column-fill: auto;
             -webkit-column-width: 140px;
             -webkit-column-gap: 0px;
@@ -693,6 +690,13 @@ button, .button {
 }
 
 /* Special case */
+
+#delete-group {
+    th {
+        width: 30%;
+    }
+}
+
 .user_detail {
     .widget-table {
         table-layout: fixed;
@@ -716,7 +720,7 @@ header li>a[href='/logout/']:hover {
         vertical-align: top;
     }
     ul {
-        height: 120px;
+        min-height: 145px;
         column-fill: auto;
         column-width: 180px;
         column-gap: 0px;

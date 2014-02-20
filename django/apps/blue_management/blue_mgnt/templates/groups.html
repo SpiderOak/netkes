@@ -22,9 +22,7 @@
 {% if perms.blue_mgnt.can_manage_groups %}
 <form action="{% url 'blue_mgnt:groups' %}" method="post" action="">
 {% csrf_token %}
-111
 {{ groups.management_form }}
-222
 <table id="groups" class="widget-table">
     <thead>
         <tr>

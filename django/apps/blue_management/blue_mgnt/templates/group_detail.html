@@ -5,7 +5,7 @@
 
 {% block body_classes %}group_detail {{ block.super }}{% endblock body_classes %}
 {% block breadcrumb %}<a href="{% url 'blue_mgnt:groups' %}">Back to Groups</a>{% endblock breadcrumb %}
-{% block modal_options %}{% endblock modal_options %}
+{% block modal_options %}{% include "partials/delete-group-widget.html" %}{% endblock modal_options %}
 {% block navtab %}{% include "partials/navtab-widget.html" with active="manage" %}{% endblock navtab %}
 {% block content %}
 <h1 class="page-header">
@@ -48,17 +48,13 @@
         {% endfor %}
     </tbody>
 </table>
-<div class="widget-actions">
+<div class="spacer"><!--ZXP--></div>
+<div class="widget-actions short-right">
     <input type='submit' value="Save Changes" class="rhs button button-primary-basic" id="edit_group">
 </div>
 </form>
-<form method="POST" action="{% url 'blue_mgnt:group_detail' group_id %}">
-{% csrf_token %}
-    {{ delete_group }}
-<input type='hidden' value='delete_group' name='form'>
-<div class="widget-actions">
-    <input type='submit' value="Delete Group" class="rhs button button-secondary" id="delete_group">
+<div class="widget-splitactions float">
+    <button class="button button-secondary" id="add-widget">Delete Group</button>
 </div>
-</form>
 {% endblock content %}
 
