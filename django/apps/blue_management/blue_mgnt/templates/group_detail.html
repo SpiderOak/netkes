@@ -15,7 +15,11 @@
 {% csrf_token %}
 <table id="group" class="widget-table">
     <tbody>
-        {% for field in group_form %}
+        {% for field in group_form.hidden_fields %}
+            {{ field }}
+        {% endfor %}
+        {% for field in group_form.visible_fields %}
+        {% if field.html_name not in fields_not_to_show %}
         <tr {% if field.html_name == 'permissions' %}class="permissions"{% endif %}>
             <td>
                 <div class="widget-table-label {{ field.errors|yesno:"error, ''" }}">
@@ -23,24 +27,24 @@
                 </div>
             </td>
             <td {% if field.html_name == 'permissions' %}colspan="2"{% endif %}>
-                    {{ field }} 
+                {{ field }} 
                 {% if field.errors %}
-                    <br />
-                    {% for error in field.errors %}
-                    <span class="table_errors">
-                        {{ error }}
-                    </span>
-                    {% endfor %}
+                <br />
+                {% for error in field.errors %}
+                <span class="table_errors">
+                    {{ error }}
+                </span>
+                {% endfor %}
                 {% else %}
-                    <label for="id_{{ field.name }}">
-                    </label>
+                <label for="id_{{ field.name }}">
+                </label>
                 {% endif %}
             </td>
-            {% if field.html_name == 'permissions' %}
-            {% else %}
-                <td></td>
+            {% if field.html_name != 'permissions' %}
+            <td></td>
             {% endif %}
         </tr>
+        {% endif %}
         {% endfor %}
     </tbody>
 </table>

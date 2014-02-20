@@ -22,7 +22,9 @@
 {% if perms.blue_mgnt.can_manage_groups %}
 <form action="{% url 'blue_mgnt:groups' %}" method="post" action="">
 {% csrf_token %}
+111
 {{ groups.management_form }}
+222
 <table id="groups" class="widget-table">
     <thead>
         <tr>
@@ -30,8 +32,6 @@
             <th>Group Name</th>
             {% endif %}
             <th>Plan</th>
-            <th>Users in Group</th>
-            <th>Space Used</th>
             <th>Group Details</th>
         </tr>
     </thead>
@@ -40,11 +40,10 @@
         <tr><td colspan="5">{{ groups.non_form_errors }}</td></tr>
         {% endif %}
         {% for group, data in groups_and_data %}
+        {{ group.group_id }}
         <tr>
             <td>{{ group.name }}</td>
             <td>{{ group.plan_id }}</td>
-            <td>{{ data.users_in_group|length }}</td>
-            <td>{{ data.space_used|filesizeformat }}</td>
             <td><a href="{% url 'blue_mgnt:group_detail' data.group_id %}">Details</a></td>
         </tr>
         {% endfor %}

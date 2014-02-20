@@ -86,8 +86,6 @@ def groups(request, api, account_info, config, username, saved=False):
             return data
 
 
-
-
     class BaseGroupFormSet(forms.formsets.BaseFormSet):
         def clean(self):
             if any(self.errors):
@@ -103,33 +101,19 @@ def groups(request, api, account_info, config, username, saved=False):
                                 check_domain=form.cleaned_data.get('check_domain', False),
                                 force=('force_plan_change' in self.data),
                                 )
-                    if group_id:
-                        try:
-                            log_admin_action(request,
-                                             'edit group %s with data: %s' % (group_id, data))
-                            api.edit_group(group_id, data)
-                        except api.QuotaExceeded:
-                            self.show_force = True
-                            form._errors['plan_id'] = form.error_class([
-                                'Changing the plan of this group will put one '
-                                'or more users over quota. Please choose "Force '
-                                'Plan Change" if you are sure you want to do this.'])
-                    else:
+                    try:
                         log_admin_action(request,
-                                         'create group with data: %s' % data)
-                        group_id = api.create_group(data)
-                    found = False
-                    for g in config_mgr_.config['groups']:
-                        if g['group_id'] == group_id:
-                            g['ldap_id'] = form.cleaned_data['ldap_dn']
-                            g['priority'] = form.cleaned_data['priority']
-                            found = True
-                    if not found:
-                        config_mgr_.config['groups'].append(
-                            dict(group_id=group_id,
-                                    type='dn',
-                                    ldap_id=form.cleaned_data['ldap_dn']
-                                ))
+                                            'edit group %s with data: %s' % (group_id, data))
+                        api.edit_group(group_id, data)
+                    except api.QuotaExceeded:
+                        self.show_force = True
+                        form._errors['plan_id'] = form.error_class([
+                            'Changing the plan of this group will put one '
+                            'or more users over quota. Please choose "Force '
+                            'Plan Change" if you are sure you want to do this.'])
+                    g = get_config_group(config, group_id)
+                    g['ldap_id'] = form.cleaned_data['ldap_dn']
+                    g['priority'] = form.cleaned_data['priority']
                 except api.DuplicateGroupName:
                     raise forms.ValidationError('Duplicate group name')
             config_mgr_.apply_config()
@@ -190,10 +174,9 @@ def groups(request, api, account_info, config, username, saved=False):
             if group_csv.is_valid():
                 return redirect('blue_mgnt:groups_saved')
         else:
-            if features['group_permissions']:
-                groups = GroupFormSet(request.POST, prefix='groups')
-                if groups.is_valid():
-                    return redirect(reverse('blue_mgnt:groups_saved') + '?search=%s' % search)
+            groups = GroupFormSet(request.POST, prefix='groups')
+            if groups.is_valid():
+                return redirect(reverse('blue_mgnt:groups_saved') + '?search=%s' % search)
 
     return render_to_response('groups.html', dict(
         initial=initial,
@@ -203,6 +186,7 @@ def groups(request, api, account_info, config, username, saved=False):
         new_group=new_group,
         group_csv=group_csv,
         features=features,
+        groups=groups,
         groups_and_data=zip(groups, initial),
         saved=saved,
         error=error,
@@ -245,11 +229,16 @@ def group_detail(request, api, account_info, config, username, group_id, saved=F
     group_id = int(group_id)
     plans = api.list_plans()
     groups_list = api.list_groups()
-    GroupForm = get_group_form(request, config, plans, False)
     django_group, admin_group = get_or_create_admin_group(group_id)
     api_group = api.get_group(group_id)
     add_config_items(api_group, config)
     api_group['permissions'] = [p.id for p in django_group.permissions.all()]
+    local_group = get_config_group(config, group_id)['user_source'] == 'local'
+    fields_not_to_show = []
+    if local_group:
+        fields_not_to_show = ['ldap_dn', 'priority']
+
+    GroupForm = get_group_form(request, config, plans, False)
     group_form = GroupForm(data=api_group)
     DeleteGroupForm = get_delete_group_form(group_id, config, groups_list)
     delete_group = DeleteGroupForm()
@@ -263,6 +252,13 @@ def group_detail(request, api, account_info, config, username, group_id, saved=F
                 log_admin_action(request,
                                  'delete group %s and move users to group %s' % data)
                 api.delete_group(group_id, new_group_id,)
+                config_mgr_ = config_mgr.ConfigManager(config_mgr.default_config())
+                for g in config_mgr_.config['groups']:
+                    if g['group_id'] == group_id:
+                        config_mgr_.config['groups'].remove(g)
+                        break
+                config_mgr_.apply_config()
+
                 return redirect('blue_mgnt:groups_saved')
         else:
             group_form = GroupForm(request.POST)
@@ -295,6 +291,8 @@ def group_detail(request, api, account_info, config, username, group_id, saved=F
         delete_group=delete_group,
         group_form=group_form,
         group_id=group_id,
+        fields_not_to_show=fields_not_to_show,
+        account_info=account_info,
     ),
     RequestContext(request))
 
