@@ -75,13 +75,25 @@ $(function() {
     });
 */
     // Toggle long logs
-    $('body.logs .widget-table tbody tr').each(function() {
-        $last = $(this).prev();
-        if( $last.height() != null && $(this).height() >  $last.height()) {
-            $('td', this).addClass('collapse');
-        }
-        $('td', this).append("<p>[[ " + $(this).height() + ", " + $last.height() + " ]]</p>");
-    });
+    if ( $('body').hasClass('logs') ){
+        $('td').each(function() {
+            var start = $('.start-pos', this).position();
+            var end = $('.end-pos', this).position();
+            var $scroll = $(this).text().substr().length;
+            var $width = $(this).get(0).scrollHeight;
+            if( $scroll > $width ) {
+                $(this).prepend('<span class="ss-icon log-toggle">&#x002B;</span>');
+                $(this).addClass('collapse');
+                $(this).closest('table').css('table-layout', 'fixed');
+            }
+            $(this).append("<p>" + start.top + " : " + end.top + "</p>");
+        });
+
+        $('.log-toggle').click(function() {
+            $(this).closest('td').toggleClass('collapse');
+            $(this).html($(this).closest('td').hasClass('collapse') ? '<i class="ss-icon">&#x002B;</i>' : '<i class="ss-icon">&#x002D;</i>');
+        });
+    }
 
     // Controller for hide/show in details
     if($('toggle-controller')){
