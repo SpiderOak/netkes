@@ -515,20 +515,19 @@ def pageit(sub, api, page, extra):
     except LookupError:
         return False
 
-    if all_items:
-        limit = 25
-        item_count = all_items / limit
-        if page > item_count:
-            page = item_count
-        elif page < 1:
-            page = 1
+    limit = 25
+    item_count = all_items / limit
+    if page > item_count:
+        page = item_count
+    elif page < 1:
+        page = 1
 
-        ref='%d:%d' %(page, page+6)
-        req='blue_mgnt:%s' % sub
+    ref='%d:%d' %(page, page+6)
+    req='blue_mgnt:%s' % sub
 
     return dict(
-            item_count=range(item_count),
-            ref=ref,
-            req=req,
-            page=page,
-            )
+        item_count=range(item_count),
+        ref=ref,
+        req=req,
+        page=page,
+    )
