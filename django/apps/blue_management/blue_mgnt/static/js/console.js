@@ -77,16 +77,13 @@ $(function() {
     // Toggle long logs
     if ( $('body').hasClass('logs') ){
         $('td').each(function() {
-            var start = $('.start-pos', this).position();
-            var end = $('.end-pos', this).position();
-            var $scroll = $(this).text().substr().length;
-            var $width = $(this).get(0).scrollHeight;
-            if( $scroll > $width ) {
+            var start = $('.start-pos', this).get(0).getClientRects();
+            var end = $('.end-pos', this).get(0).getClientRects();
+            if( start.length > (end.length + 1) ) {
                 $(this).prepend('<span class="ss-icon log-toggle">&#x002B;</span>');
                 $(this).addClass('collapse');
                 $(this).closest('table').css('table-layout', 'fixed');
             }
-            $(this).append("<p>" + start.top + " : " + end.top + "</p>");
         });
 
         $('.log-toggle').click(function() {
