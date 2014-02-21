@@ -36,6 +36,9 @@ popd #/opt
 cp /opt/openmanage.$CURRENT_DATE/etc/agent_config.json /opt/openmanage/etc
 grep 'DJANGO_SECRET_KEY' /opt/openmanage.$CURRENT_DATE/etc/openmanage_defaults >> /opt/openmanage/etc/openmanage_defaults 
 
+# copy fonts
+cp -r /opt/openmanage.$CURRENT_DATE/django/apps/blue_management/blue_mgnt/static/fonts /opt/openmanage/django/apps/blue_management/blue_mgnt/static/fonts
+
 # Set the brand in the configuration
 echo "OPENMANAGE_BRAND=$BRAND" > /opt/openmanage/etc/brand
 
