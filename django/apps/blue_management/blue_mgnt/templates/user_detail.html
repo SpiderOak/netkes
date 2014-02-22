@@ -5,7 +5,7 @@
 
 {% block body_classes %}user_detail {{ block.super }}{% endblock body_classes %}
 {% block breadcrumb %}<a href="{% url 'blue_mgnt:users' %}">Back to Users</a>{% endblock breadcrumb %}
-{% block modal_options %}{% endblock modal_options %}
+{% block modal_options %}{% include "partials/delete-user-widget.html" %}{% endblock modal_options %}
 {% block navtab %}{% include "partials/navtab-widget.html" with active="users" %}{% endblock navtab %}
 {% block content %}
 <h1 class="page-header">
@@ -174,16 +174,18 @@
             </tr>
         </tbody>
     </table>
-            <div class="widget-actions">
-                <input type='submit' value="Delete User" class="button button-secondary">
-                <input type='submit' value="{{ api_user.enabled|yesno:'Disable, Enable' }} User" class="button button-muted">
-
+        </fieldset>
+        </div>
+            <div class="widget-actions short-right">
                 <input type='submit' value="Save Changes" class="rhs button button-primary-basic" id="edit_user">
                 <input type='hidden' value='edit_user' name='form'>
             </div>
-        </fieldset>
-        </div>
     </form>
+    <div class="widget-splitactions float">
+        <button id="add-widget" class="button button-secondary">Delete User</button>
+        <input type='submit' value="{{ api_user.enabled|yesno:'Disable, Enable' }} User" class="button button-muted">
+    </div>
+
 {% if not features.ldap %}
     {% if not api_user.num_devices %}
         <form method="post" action="{% url 'blue_mgnt:user_detail' email %}">

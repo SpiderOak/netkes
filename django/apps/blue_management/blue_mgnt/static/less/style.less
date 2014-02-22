@@ -507,10 +507,21 @@ h1.page-header {
     border-radius: 8px;
     background-color: #FFF;
 
+    &.confirm {
+        width: 330px;
+        h2 {
+            height: 45px;
+        }
+    }
+
     input#expiry_interval_days {
         width: 100px;
         display: inline;
     }
+    .cancel-action {
+        position: relative;
+        left: 20px;
+    }    
 
     .inline_inputs();
 
@@ -521,22 +532,22 @@ h1.page-header {
     }
 
     h2.page-header {
-            border-bottom: 1px solid @NAVTAB_BORDER_COLOR;
-            text-align: left;
-            padding: 10px;
-            i {
-                padding-right: 10px;
-                font-size: 18px;
-            }
+        border-bottom: 1px solid @NAVTAB_BORDER_COLOR;
+        text-align: left;
+        padding: 10px;
+        i {
+            padding-right: 10px;
+            font-size: 18px;
+        }
 
-            .actions {
-                float: right;
-                cursor: pointer;
-                margin-bottom: 20px;
-                &:hover { 
-                    color: lighten(@NAVTAB_BORDER_COLOR, 2%);
-                }
+        .actions {
+            float: right;
+            cursor: pointer;
+            margin-bottom: 20px;
+            &:hover { 
+                color: lighten(@NAVTAB_BORDER_COLOR, 2%);
             }
+        }
     }
 
     .lower-content {
@@ -601,6 +612,17 @@ h1.page-header {
 
 .widget-actions {
     margin: 20px 0;
+    &.center-left {
+        width: 160px;
+        margin: 20px auto;
+        display: inline-block;
+    }
+    &.center-right {
+        width: 160px;
+        margin: 20px auto;
+        display: inline-block;
+        float: right;
+    }
     &.short-right {
         float: right;
         width: 250px;
@@ -1097,4 +1119,13 @@ body.password {
     color: darken(@NAVTAB_BORDER_COLOR, 15%);
     vertical-align: bottom;
     margin-right: 5px;
+}
+
+.cancel-action {
+    padding: 10px 35px;
+}
+
+.delete-notice {
+    text-align: center;
+    font: 16px~"/"22px @FONTFAMILY_SB;
 }

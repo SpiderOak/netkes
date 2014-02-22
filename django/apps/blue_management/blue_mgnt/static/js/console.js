@@ -30,6 +30,11 @@ $(function() {
         $('.widget-add-user-option').show();
         $('.modal-wrapper').hide();
     });
+
+    // Confirm delete
+    $('.cancel-action').click(function() {
+        $('.modal-wrapper').hide();
+    });
     
 
     // Status
