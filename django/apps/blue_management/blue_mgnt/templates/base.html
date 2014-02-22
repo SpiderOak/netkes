@@ -28,7 +28,9 @@
 	<![endif]--> 
 </head>
 <body class="{% block body_classes %}{% endblock body_classes %}">
-    <div class="shield"></div>
+    <div class="shield">
+        <img src="/static/blue_mgnt/img/loading.gif" class="loader" />
+    </div>
 {% if not request_login %}
     {% block modal_options %}{% endblock modal_options %}
 	<div id="bg-gradient">

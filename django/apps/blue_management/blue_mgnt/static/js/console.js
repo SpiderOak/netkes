@@ -1,14 +1,14 @@
 $(function() {
     // Workings for the modal wrapper and widgets
 
-    function posModal() {
-        $m_content = $('.modal-content');
-        if ( $m_content.is(':visible') ) {
+    function posModal(obj) {
+        obj = $(obj);
+        if ( obj.is(':visible') ) {
 
-            pos_left = Math.round(($(window).width() - $m_content.outerWidth()) / 2) + ($(document).scrollLeft());
-            pos_top = Math.round(($(window).height() - $m_content.outerHeight()) / 2) + ($(document).scrollTop());
+            pos_left = Math.round(($(window).width() - obj.outerWidth()) / 2) + ($(document).scrollLeft());
+            pos_top = Math.round(($(window).height() - obj.outerHeight()) / 2) + ($(document).scrollTop());
 
-            $m_content.css({
+            obj.css({
                 'left' : pos_left,
                 'top' : pos_top
             });
@@ -17,7 +17,7 @@ $(function() {
 
     $('#add-widget').click(function(){
         $('.modal-wrapper').show().css('height', $(document).height());
-        posModal();
+        posModal('.modal-wrapper');
     });
 
     $('#option-add-user button').click(function(){
@@ -59,12 +59,13 @@ $(function() {
         $('body').css({
             'position' : 'relative',
             'z-index' : '1',
-            'cursor' : 'wait'
         });
         $('.shield').css({
             'position' : 'absolute',
             'z-index' : '10000'
         }).toggle();
+        
+        posModal('.loader');
         
         $(this).closest('form').submit();
     });
