@@ -51,7 +51,7 @@ class ApiClient(object):
             )
         req = RequestWithMethod(urljoin(self.base, path), data, headers)
         req.set_method(method)
-        return self.opener.open(req)
+        return self.opener.open(req, timeout=300)
 
     def get(self, path):
         return self.open(path)
