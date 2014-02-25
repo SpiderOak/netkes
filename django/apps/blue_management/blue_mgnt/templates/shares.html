@@ -3,7 +3,7 @@
 {% block title %}Shares - Management Console{{ block.super }}{% endblock %}
 
 {% block body_classes %}shares {{ block.super }}{% endblock body_classes %}
-{% block modal_options %}{% endblock modal_options %}
+{% block modal_options %}{% include "partials/toggle-shares-widget.html" %}{% endblock modal_options %}
 {% block navtab %}{% include "partials/navtab-widget.html" with active="shares" %}{% endblock navtab %}
 {% block content %}
 <h1 class="page-header">
@@ -57,12 +57,8 @@
 {% block pagination %}{% include "partials/pagination-widget.html" %}{% endblock pagination %}
 {% endif %}
 <div class="widget-actions">
-<form action="{% url 'blue_mgnt:shares' %}" method="post" action="" style="clear:both">
-    {% csrf_token %}
     <div>
-        <input type='submit' value="{{ sharing_enabled|yesno:"Disable, Enable" }} All ShareRooms" class="button button-muted" id="edit_shares">
-        <input type='hidden' value='{{ sharing_enabled }}' name='sharing_enabled'>
-        <input type='hidden' value='edit_shares' name='form'>
+        <button class="button button-muted" id="add-widget">{{ sharing_enabled|yesno:"Disable, Enable" }} All ShareRooms</button>
     </div>
 </form>
 </div>

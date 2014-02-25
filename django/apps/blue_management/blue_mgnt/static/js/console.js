@@ -17,7 +17,7 @@ $(function() {
 
     $('#add-widget').click(function(){
         $('.modal-wrapper').show().css('height', $(document).height());
-        posModal('.modal-wrapper');
+        posModal('.modal-content');
     });
 
     $('#option-add-user button').click(function(){
@@ -68,6 +68,10 @@ $(function() {
         posModal('.loader');
         
         $(this).closest('form').submit();
+        
+        if ($('.modal-wrapper').is(':visible')) {
+            $('.modal-wrapper').hide();
+        }
     });
 
 

@@ -53,6 +53,8 @@ LOOKUP = TemplateLookup(directories=[os.path.join(APP_DIR, '../mako_templates')]
 SHARE_URL = os.getenv('SHARE_URL', 'https://spideroak.com')
 SIZE_OF_GIGABYTE = 10 ** 9
 
+
+
 def render_to_response(template, data=None, context=None):
     # pass ?force_template=mako to force using mako template
     # or ?force_template=django to force using Django
@@ -531,3 +533,6 @@ def pageit(sub, api, page, extra):
         req=req,
         page=page,
     )
+
+def error404(request):
+    return render_to_response('/omva/templates/404.html', status=404, RequestContext(request))
