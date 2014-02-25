@@ -713,6 +713,26 @@ button, .button {
 
 /* Special case */
 
+body.errors {
+    text-align: center;
+    .content {
+        margin: 18% auto;
+    }
+    h1 {
+        font:42px~"/"62px ProximaNova-Light;
+        margin-bottom: 20px;
+    }
+    p {
+        font:18px~"/"22px @FONTFAMILY_R;
+        a {
+            text-decoration: none;
+            &:hover {
+                text-decoration: underline;
+            }
+        }
+    }
+}
+
 .log-toggle {
     font-size: 8px;
     cursor: pointer;
@@ -887,6 +907,7 @@ body.password {
 }
 
 body.login,
+body.errors,
 body.password {
     .image-wrapper {
         width: 120px;

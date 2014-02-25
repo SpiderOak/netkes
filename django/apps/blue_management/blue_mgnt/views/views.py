@@ -533,6 +533,3 @@ def pageit(sub, api, page, extra):
         req=req,
         page=page,
     )
-
-def error404(request):
-    return render_to_response('/omva/templates/404.html', status=404, RequestContext(request))

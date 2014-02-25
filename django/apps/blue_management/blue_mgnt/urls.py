@@ -1,5 +1,4 @@
 from django.conf.urls import *
-from django.conf.urls.defaults import handler404, handler500
 from django.conf import settings as django_settings
 from django.views.generic import RedirectView
 
@@ -42,6 +41,3 @@ urlpatterns = patterns('',
     (r'^codes/$', managementvm.auth_codes, {}, 'auth_codes'),
     (r'^codes/saved/$', managementvm.auth_codes, {'saved': True}, 'auth_codes_saved'),
 )
-
-handler404 = 'views.error404'
-handler500 = 'views.error500'
