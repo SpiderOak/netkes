@@ -1,99 +1,149 @@
-<%inherit file="main.html" />
+{% extends "base.html" %}
+{% block title %}Management Console - {{ block.super }}{% endblock %}
+{% block body_classes %}home {{ block.super }}{% endblock body_classes %}
+{% block breadcrumb %}<a href="#">Back to Something</a>{% endblock breadcrumb %}
+{% block navtab %}{% include "partials/navtab-widget.html" with active="users" %}{% endblock navtab %}
+{% block content %}
+<h1 class="page-header">
+	<i class="icon">&#x1F464;</i> Users
+	<div class="actions">
+		<button class="button button-primary">Add user</button>
+		<input type="text">
+	</div>
+</h1>
+<table class="widget-table">
+	<thead>
+		<th>
+			Full Name
+		</th>
+		<th>
+			Email
+		</th>
+		<th>
+			Group
+		</th>
+		<th>
+			Storage Size
+		</th>
+		<th>
+			User Detail
+		</th>
+		<th>
+			Delete?
+		</th>
+	</thead>
+	<tbody>
+		<tr>
+			<td>
+				John Smith
+			</td>
+			<td>
+				jsmith@gmail.com
+			</td>
+			<td>
+				10 GB
+			</td>
+			<td>
+				100 MB
+			</td>
+			<td>
+				Details
+			</td>
+			<td>
+				Check
+			</td>
+		</tr>
+		<tr>
+			<td>
+				John Smith
+			</td>
+			<td>
+				jsmith@gmail.com
+			</td>
+			<td>
+				10 GB
+			</td>
+			<td>
+				100 MB
+			</td>
+			<td>
+				Details
+			</td>
+			<td>
+				Check
+			</td>
+		</tr>
+		<tr>
+			<td>
+				John Smith
+			</td>
+			<td>
+				jsmith@gmail.com
+			</td>
+			<td>
+				10 GB
+			</td>
+			<td>
+				100 MB
+			</td>
+			<td>
+				Details
+			</td>
+			<td>
+				Check
+			</td>
+		</tr>
+	</tbody>
+</table>
 
-<%def name="title()">Management Console - ${parent.title()}</%def>
-
-<%def name="head()"></%def>
-<%def name="scripts()">
-    <script type="text/javascript">
-        $(function() {
-            $('.topfive').cycle({ 
-                fit: 1,
-                fx: 'scrollDown', 
-                easing: 'easeInOutElastic',
-                speed: 1500,
-                timeout:  6000,
-                next: '#next',
-                prev: '#prev'
-            });
-        });
-
-    </script>
-
-</%def>
-
-<%def name="body_classes()">home ${parent.body_classes()}</%def>
-<%def name="container()">
-<h1 class="header">Enterprise Partner: <span>${username}</span></h1>
-<div class="recenter">
-<div class="division">
-${parent.progressbar()}
+<div class="widget-pagination">
+	<ul>
+		<li class="active">1</li>
+		<li>2</li>
+		<li>3</li>
+		<li>4</li>
+		<li>5</li>
+	</ul>
 </div>
-<!--
-<div class="topfive shadowbox">
-    <div>
-    <table class="alignleft">
-        <tr><td colspan="2"><h4>${top_space_used[0]}</h4></td></tr>
-         %for user in top_space_used[1]:
-            <tr style="width:300px"><td><b>${user[0]}</b> : </td><td>${user[1]}</td></tr>
-         %endfor
-    </table>
-    </div><div>
-    <table class="alignleft">
-        <tr><td colspan="2"><h4>${top_recent_uploads[0]}</h4></td></tr>
-         %for user in top_recent_uploads[1]:
-            <tr><td><b>${user[0]}</b> :</td><td>${user[1]}</td></tr>
-         %endfor
-    </table>
-    </div><div>
-    <table class="alignleft">
-        <tr><td colspan="2"><h4>${top_space_by_group[0]}</h4></td></tr>
-         %for user in top_space_by_group[1]:
-            <tr><td><b>${user[0]}</b> :</td><td>${user[1]}</td></tr>
-         %endfor
-    </table>
-    </div><div>
-    <table class="alignleft">
-        <tr><td><h4 colspan="2">${top_no_login[0]}</h4></td></tr>
-         %for user in top_no_login[1]:
-            <tr><td><b>${user[0]}</b> :</td><td>${user[1]}</td></tr>
-         %endfor
-    </table>
-    </div>
+
+<div class="widget-splitactions">
+	<div class="rhs">
+		<button class="button button-primary">Save Changes</button>
+	</div>
+	<div class="lhs">
+		<button class="button button-muted">Hide Disabled Users</button>
+		<button class="button button-muted">Download CSV</button>
+	</div>
 </div>
--->
+
+<div class="spacer"><!--ZXP--></div>
+
+<hr />
+
+<fieldset class="widget-fieldset">
+	<div>
+		<label>Name</label>
+		<p>John Smith <span class="tag">Administrator</span></p>
+	</div>
+	<div>
+		<label>Email Address</label>
+		<p>jsmith@gmail.com</p>
+	</div>
+	<div>
+		<label>Group ID</label>
+		<p>Friendly Name of the Group</p>
+	</div>
+</fieldset>
+
+<div class="widget-splitactions">
+	<div class="rhs">
+		<a class="button button-primary" href="#">Save Changes</a>
+	</div>
+	<div class="lhs">
+		<a class="button button-secondary" href="#">Delete User</a>
+		<a class="button button-muted" href="#">Disable User</a>
+	</div>
+</div>
 
 
-<div style="margin-top:40px">
-    <div id="buttons">
-       <ul>
-            <li>
-                <a class="btn btn-primary btn-large" href="${reverse('blue_mgnt:users')}">
-                <i class="icon-user icon-white"></i>
-                Manage Users</a></li>
-            <li>
-                <a class="btn btn-primary btn-large" href="${reverse('blue_mgnt:groups')}">
-                <i class="icon-asterisk icon-white"></i>
-                Manage Groups</a>
-            </li>
-            <li>
-                <a class="btn btn-primary btn-large" href="${reverse('blue_mgnt:shares')}">
-                <i class="icon-asterisk icon-white"></i>
-                Manage Shares</a>
-            </li>
-            % if management_vm:
-            <li>
-                <a class="btn btn-primary btn-large" href="${reverse('blue_mgnt:auth_codes')}">
-                <i class="icon-asterisk icon-white"></i>
-                Manage Codes</a>
-            </li>
-            % endif
-            <li>
-                <a class="btn btn-primary btn-large" href="${reverse('blue_mgnt:settings')}">
-                <i class="icon-cog icon-white"></i>
-                Settings</a>
-            </li>
-        </ul>
-    </div>
-</div>
-</div>
-</%def>
+{% endblock content %}

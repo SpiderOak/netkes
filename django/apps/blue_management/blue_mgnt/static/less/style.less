@@ -1,0 +1,367 @@
+@import "reset";
+@import "utils";
+
+@FONTFAMILY_R: sans-serif;
+@FONTFAMILY_B: sans-serif;
+@FONTFAMILY_SB: sans-serif;
+
+@PAGE_WIDTH: 880px;
+@HEADER_HEIGHT: 45px;
+
+@WIDGET_HEIGHT: 70px;
+@WIDGET_WIDTH: (@PAGE_WIDTH / 4) - 1;
+@NAVWIDGET_HEIGHT: 78px;
+
+@BREADCRUMB_HEIGHT: 35px;
+@PAGEHEADER_HEIGHT: 50px;
+@ACCOUNT_OVERVIEW_HEIGHT: 50px;
+
+@NAVTAB_BORDER_COLOR: #E0E0E0;
+
+@NAVTAB_BGCOLOR_USERS: #0D50A1;
+@NAVTAB_BGCOLOR_SHARES: #2089CA;
+@NAVTAB_BGCOLOR_MANAGE: #21B1E6;
+@NAVTAB_BGCOLOR_REPORTS: #5AC5F1;
+
+@LINK_COLOR: #268BC9;
+
+@ZEBRA_STRIPE: #fafafa;
+
+body {
+	font-size: 16px;
+	font-family: @FONTFAMILY_R;
+	color: #505050;
+}
+
+h1, h2, h3, h4, h5, h6 {
+	font-family: @FONTFAMILY_SB;
+	color: #505050;
+}
+
+a {
+	color: @LINK_COLOR;
+}
+
+strong, .strong, table thead th {
+    font-family: @FONTFAMILY_SB;
+}
+
+.overlord {
+	width: @PAGE_WIDTH;
+	margin: 0 auto;
+	position: relative;
+}
+
+#bg-gradient {
+	width: 100%;
+	div {
+		width: 100%;
+		position: absolute;
+		top: 25px;
+		height: 277px;
+		background-image: url(/static/blue_mgnt/img/bg_gradient.png);
+		background-repeat: repeat-x;
+		background-position: 0px 0px;
+	}
+}
+
+header {
+	height: @HEADER_HEIGHT;
+	background-color: #363636;
+	position: relative;
+	overflow: hidden;
+	div {
+		width: @PAGE_WIDTH;
+		margin: 0px auto;
+	}
+	h1 {
+		float: left;
+		img {
+			height: 38px;
+			width: 38px;
+			position: relative;
+			top: -2px;
+		}
+	}
+	ul {
+		float: right;
+		font-size: 14px;
+		line-height: @HEADER_HEIGHT;
+		list-style-type: none;
+		font-family: @FONTFAMILY_B;
+		li {
+			float: left;
+			color: #aeaeae;
+			margin-left: 30px;
+			a {
+				cursor: pointer;
+				color: #aeaeae;
+				text-decoration: none;
+				.ss-icon {
+					font-size: 10px;
+					padding: 0px 5px;
+				}
+			}
+		}
+	}
+}
+
+nav {
+	width: 100%;
+}
+
+.navtab-widget {
+	width: 100%;
+	height: @NAVWIDGET_HEIGHT;
+	list-style-type: none;
+	padding: 0px;
+	margin: 0px;
+	border-bottom: 1px solid @NAVTAB_BORDER_COLOR;
+	overflow: hidden;
+	li {
+		float: left;
+		margin-right: 1px;
+		font-family: @FONTFAMILY_B;
+		position: relative;
+		a {
+			float: left;
+			width: @WIDGET_WIDTH;
+			height: @WIDGET_HEIGHT;
+			text-decoration: none;
+			cursor: pointer;
+			.transition(height 0.2s);
+		}
+		a:hover {
+			height: @NAVWIDGET_HEIGHT;
+		}
+		&.active a {
+			height: @NAVWIDGET_HEIGHT;
+		}
+		img, i {
+			position: absolute;
+		}
+		img {
+			top: -4px;
+			right: 5px;
+		}
+		i {
+			top: -8px;
+			right: 5px;
+			color: white;
+			font-size: 45px;
+			opacity: 0.3;
+		}
+		span {
+			padding-top: @WIDGET_HEIGHT - 27;
+			padding-left: 10px;
+			display: block;
+			color: white;
+			text-transform: uppercase;
+			font-size: 16px;
+			.text-shadow(
+				0px -1px 0px rgba(000,000,000,0.4),
+				0px 1px 0px rgba(255,255,255,0.3)
+			);
+		}
+	}
+	li.navtab-item-users a{
+		background-color: @NAVTAB_BGCOLOR_USERS;
+	}
+	li.navtab-item-shares a{
+		background-color: @NAVTAB_BGCOLOR_SHARES;
+	}
+	li.navtab-item-manage a{
+		background-color: @NAVTAB_BGCOLOR_MANAGE;
+	}
+	li.navtab-item-reports a{
+		background-color: @NAVTAB_BGCOLOR_REPORTS;
+	}
+}
+
+.account-overview {
+	height: @ACCOUNT_OVERVIEW_HEIGHT;
+	color: #bcbcbc;
+	ul {
+		text-align: center;
+		list-style-type: none;
+		padding-top: 8px;
+		font-size: 13px;
+		li {
+			display: inline-block;
+			margin-left: 3em;
+			i {
+				margin-right: 5px;
+				position: relative;
+				top: 2px;
+			}
+		}
+		li:first-child {
+			margin-left: 0;
+		}
+	}
+}
+
+div.breadcrumb {
+	height: @BREADCRUMB_HEIGHT;
+	font-size: 10px;
+}
+
+h1.page-header {
+	height: @PAGEHEADER_HEIGHT;
+	position: relative;
+	.ss-icon {
+		font-size: 23px;
+		color: #929292;
+	}
+	.actions {
+		float: right;
+	}
+}
+
+
+.footer {
+	margin-top: 60px;
+	margin-bottom: 30px;
+	padding-top: 20px;
+	border-top: 1px solid #ddd;
+	color: #ccc;
+	font-size: 14px;
+	a {
+		color: #ccc;
+		text-decoration: none;
+	}
+	p {
+		float: left;
+	}
+	ul {
+		list-style-type: none;
+		float: right;
+		li {
+			float: left;
+			padding: 0 10px;
+			border-left: 1px solid #ddd;
+		}
+		li:first-child {
+			border-left: none;
+		}
+	}
+}
+
+/* widgets */
+
+.widget-table {
+	border-collapse: collapse;
+	border-spacing: 0;
+	width: 100%;
+	table-layout: fixed;
+	border: 1px solid #dddddd;
+	background-color: #ffffff;
+	font-size: 15px;
+	&>thead>tr>th {
+		padding: 16px 8px 4px 8px;
+		border-bottom: 2px solid #dddddd;
+		text-align: left;
+		font-weight: bold;
+		&:hover {
+			text-decoration: underline;
+		}
+	}
+	&>tbody>tr:hover>td {
+		background-color: #e6e6e6;
+		& .fixWidth-fader {
+			display: none;
+		}
+	}
+	&>tbody>tr>td {
+		padding: 14px 4px 14px 8px;
+		border-bottom: 1px solid #dddddd;
+	}
+	&>tbody>tr:nth-child(odd) {
+		background-color: @ZEBRA_STRIPE;
+	}
+}
+
+.widget-pagination {
+	padding: 20px 0;
+	ul {
+		text-align: center;
+		list-style-type: none;
+		font-size: 13px;
+		li {
+			display: inline-block;
+			padding: 2px 5px;
+			color: #4b4b4b;
+		}
+		li.active {
+			background-color: #4b4b4b;
+			color: #fff;
+		}
+	}
+}
+
+.widget-splitactions {
+	.rhs {
+		float: right;
+	}
+}
+
+.widget-fieldset {
+	border: 1px solid #ccc;
+	margin-bottom: 1em;
+	.border-radius(2px);
+	& > div {
+		border-top: 1px solid #ccc;
+		padding: 20px 20px 20px 200px;
+		position: relative;
+	}
+	& > div:first-child {
+		border-top: none;
+	}
+	label {
+		font-family: @FONTFAMILY_B;
+		font-size: 18px;
+		position: absolute;
+		left: 20px;
+	}
+}
+
+/* buttons */
+button, .button {
+	font-family: @FONTFAMILY_B;
+	font-size: 13px;
+	cursor: pointer;
+}
+
+.button-primary {
+	color: #fff;
+	.buttonate(#23B2E1, #21A2D9, #068CD3, #057ECF);
+}
+
+.button-secondary {
+	color: #fff;
+	.buttonate(#D44246, #CF3940, #C31E24, #BE1B1E);
+}
+
+.button-muted {
+	color: #fff;
+	.buttonate(#afafaf, #a0a0a0, #8b8b8b, #7e7e7e);
+}
+
+/* tags */
+.tag {
+	padding: 8px 10px;
+	font-size: 0.62em;
+	color: #fff;
+	background-color: #4c4c4c;
+	text-transform: uppercase;
+	.border-radius(2px);
+}
+
+/* utility classes */
+
+.spacer {
+	clear: both;
+	height: 1px;
+	margin-top: -1px;
+}
+
