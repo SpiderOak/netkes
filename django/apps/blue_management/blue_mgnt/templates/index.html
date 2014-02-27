@@ -10,13 +10,29 @@
 		<button id="add-widget" class="button button-primary-basic">Add User</button>
         <form action="{% url 'blue_mgnt:users' %}" method="GET">
             <input name="show_disabled" type="hidden" value="{{ show_disabled }}">
+            {% if search %}
+                <a id="clear-search" href="{% url 'blue_mgnt:users' %}" class="">Clear Search</a>
+            {% endif %}
             <input type="text" class="widget-search-input"  id="input_search" name="search" value="{{ search }}" placeholder="Find Users by Name or Email">
             <input type="submit" class="search-button ss-icon" value="&#x1F50E;">
         </form>
 	</div>
 </h1>
-{% if saved and not search_back %}
-<p id="saved" class="bigger" style="display:none">Changes saved successfully!</p>
+{% if saved %}
+<p id="saved">Changes saved successfully!</p>
+{% endif %}
+{% if user_form.errors %}
+<div class="error-alert">
+    <p>The following errors need to be addressed:</p>
+{% for item in user_form %}
+{% if item.errors %}
+    {% for error in item.errors %}
+        <p class="error-list">{{item.name|title}}:&nbsp;
+        {{ error }}</p>
+    {% endfor %}
+    {% endif %}
+{% endfor %}
+</div>
 {% endif %}
 <form action="{% url 'blue_mgnt:users' %}" method="POST">
     {% csrf_token %}
@@ -65,15 +81,13 @@
                 {% endfor %}
                 {% for field in curr_user.form.visible_fields %}
                 <td>
-                    {{ field }}
                     {% if field.errors %}
-                        <br />
-                        <span class="table_errors">
-                            {% for error in field.errors %}
-                                {{ error }}
-                            {% endfor %}
-                        </span>
-                    {% endif %} 
+                    <span class="error-highlight">
+                        {{ field }}
+                    </span>
+                    {% else %}
+                        {{ field }}
+                    {% endif %}
                 </td>
                 {% endfor %}
             {% else %}
