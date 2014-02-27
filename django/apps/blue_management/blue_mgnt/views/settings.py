@@ -77,7 +77,7 @@ class IPBlockForm(forms.Form):
 
 
 @enterprise_required
-@permission_required('blue_mgnt.can_view_settings')
+@permission_required('blue_mgnt.can_view_settings', raise_exception=True)
 def settings(request, api, account_info, config, username, saved=False):
     opts = api.enterprise_settings()
     features = api.enterprise_features()
@@ -211,7 +211,7 @@ class PasswordForm(forms.Form):
 
 
 @enterprise_required
-@permission_required('blue_mgnt.can_manage_settings')
+@permission_required('blue_mgnt.can_manage_settings', raise_exception=True)
 def password(request, api, account_info, config, username, saved=False):
     features = api.enterprise_features()
     password_form = PasswordForm()

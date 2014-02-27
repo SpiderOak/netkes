@@ -30,7 +30,7 @@ def get_login_link(username, auth_token):
                                                         auth_token
                                                        )
 @enterprise_required
-@permission_required('blue_mgnt.can_view_user_data')
+@permission_required('blue_mgnt.can_view_user_data', raise_exception=True)
 def escrow_login(request, api, account_info, config, username,
                  escrow_username, saved=False):
     data = dict(
@@ -57,7 +57,7 @@ class CodeForm(forms.Form):
                                          )
 
 @enterprise_required
-@permission_required('blue_mgnt.can_manage_auth_codes')
+@permission_required('blue_mgnt.can_manage_auth_codes', raise_exception=True)
 def auth_codes(request, api, account_info, config, username, saved=False):
     features = api.enterprise_features()
     opts = api.enterprise_settings()
@@ -110,7 +110,7 @@ def auth_codes(request, api, account_info, config, username, saved=False):
     RequestContext(request))
 
 @enterprise_required
-@permission_required('blue_mgnt.can_manage_logs')
+@permission_required('blue_mgnt.can_manage_logs', raise_exception=True)
 def logs(request, api, account_info, config, username, saved=False):
     features = api.enterprise_features()
     page = int(request.GET.get('page', 1))

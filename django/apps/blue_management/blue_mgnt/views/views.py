@@ -417,7 +417,7 @@ def process_row(row):
                )
 
 @enterprise_required
-@permission_required('blue_mgnt.can_manage_shares')
+@permission_required('blue_mgnt.can_manage_shares', raise_exception=True)
 def shares(request, api, account_info, config, username, saved=False):
     features = api.enterprise_features()
     opts = api.enterprise_settings()
@@ -460,7 +460,7 @@ def shares(request, api, account_info, config, username, saved=False):
     RequestContext(request))
 
 @enterprise_required
-@permission_required('blue_mgnt.can_manage_shares')
+@permission_required('blue_mgnt.can_manage_shares', raise_exception=True)
 def share_detail(request, api, account_info, config, username, email,
                  room_key, saved=False):
     api_user = api.get_user(email)
@@ -492,7 +492,6 @@ def reports(request, api, account_info, config, username, saved=False):
     RequestContext(request))
 
 @enterprise_required
-@permission_required('blue_mgnt.can_manage_settings')
 def manage(request, api, account_info, config, username):
     group_count = len(api.list_groups())
     codes = models.AdminSetupTokensUse.objects.all()

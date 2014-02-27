@@ -89,7 +89,7 @@ def add_config_items(group, config):
     group['admin_group'] = g['admin_group']
 
 @enterprise_required
-@permission_required('blue_mgnt.can_view_groups')
+@permission_required('blue_mgnt.can_view_groups', raise_exception=True)
 def groups(request, api, account_info, config, username, saved=False):
     features = api.enterprise_features()
     plans = api.list_plans()
@@ -262,7 +262,7 @@ def get_delete_group_form(group_id, config, groups_list):
     return DeleteGroupForm
 
 @enterprise_required
-@permission_required('blue_mgnt.can_manage_groups')
+@permission_required('blue_mgnt.can_manage_groups', raise_exception=True)
 def group_detail(request, api, account_info, config, username, group_id, saved=False):
     group_id = int(group_id)
     plans = api.list_plans()
@@ -314,7 +314,7 @@ def group_detail(request, api, account_info, config, username, group_id, saved=F
 
 
 @enterprise_required
-@permission_required('blue_mgnt.can_manage_admins')
+@permission_required('blue_mgnt.can_manage_admins', raise_exception=True)
 def admin_groups(request, api, account_info, config, username, saved=False):
     features = api.enterprise_features()
     groups_list = api.list_groups()
