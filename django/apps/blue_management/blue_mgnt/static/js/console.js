@@ -51,6 +51,10 @@ $(function() {
         }
     });
 
+    $('#sel_all').click(function(){
+        $('.del_box input').prop('checked', $(this).prop("checked"));
+    });
+
     //Loading shield for submit buttons
     $('.shield').hide();
     

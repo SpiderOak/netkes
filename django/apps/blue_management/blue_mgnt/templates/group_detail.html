@@ -51,6 +51,9 @@
 <div class="spacer"><!--ZXP--></div>
 <div class="widget-actions short-right">
     <input type='submit' value="Save Changes" class="rhs button button-primary-basic" id="edit_group">
+    {% if show_force %}
+    <input type='submit' value="Force Plan Change" class="button button-warning" name="force_plan_change">
+    {% endif %}
 </div>
 </form>
 <div class="widget-splitactions float">

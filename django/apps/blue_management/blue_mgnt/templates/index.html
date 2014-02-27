@@ -20,7 +20,6 @@
 {% endif %}
 <form action="{% url 'blue_mgnt:users' %}" method="POST">
     {% csrf_token %}
-    {{ users.management_form }}
     {{ delete_user_formset.management_form }}
     {{ tmp_user_formset.management_form }}
 <table class="widget-table">
@@ -49,12 +48,23 @@
                 <td>{{ curr_user.username }}</td>
             {% endif %}
 
+            <td>
+                <i class="ss-icon edit-status">
+                    {% if curr_user.is_local_user %}
+                        &#x270E;
+                    {% else %}
+                        &#xE071;
+                    {% endif %}
+                </i>
+                {{ curr_user.name }}
+            </td>
+            <td>{{ curr_user.email }}</td>
             {% if curr_user.is_local_user %}
                 {% for hidden in curr_user.form.hidden_fields %}
                     {{ hidden }}
                 {% endfor %}
                 {% for field in curr_user.form.visible_fields %}
-                <td>{% if field.name == 'name' %}<i class="ss-icon edit-status">&#x270E;</i>{% endif %}
+                <td>
                     {{ field }}
                     {% if field.errors %}
                         <br />
@@ -67,8 +77,6 @@
                 </td>
                 {% endfor %}
             {% else %}
-            <td><i class="ss-icon edit-status">&#xE071;</i>{{ curr_user.name }}</td>
-                <td>{{ curr_user.email }}</td>
                 <td>{{ curr_user.group_name }}</td>
             {% endif %}
             <td>{{ curr_user.bytes_stored|filesizeformat }}</td>

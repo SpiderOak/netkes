@@ -38,8 +38,6 @@ class DeleteUserForm(forms.Form):
 
 def get_user_form(local_groups):
     class UserForm(forms.Form):
-        name = forms.CharField(max_length=45)
-        email = forms.CharField()
         group_id = forms.ChoiceField(local_groups)
         orig_email = forms.CharField(widget=forms.HiddenInput)
     return UserForm
@@ -170,34 +168,6 @@ def users(request, api, account_info, config, username, saved=False):
     UserCSVForm = get_user_csv_form(api)
     NewUserForm = get_new_user_form(api, features, config, local_groups, groups, request)
 
-    class LocalUserForm(forms.Form):
-        pass
-
-    class UserForm(forms.Form):
-        if not features['email_as_username']:
-            username = forms.CharField(widget=ReadOnlyWidget, required=False)
-        if features['ldap']:
-            name = forms.CharField(max_length=45, widget=ReadOnlyWidget, required=False)
-            email = forms.CharField(widget=ReadOnlyWidget, required=False)
-            group_id = forms.ChoiceField([(g['group_id'], g['name']) for g in groups],
-                                         widget=ReadOnlyWidget, required=False)
-        else:
-            name = forms.CharField(max_length=45)
-            email = forms.CharField()
-            group_id = forms.ChoiceField([(g['group_id'], g['name']) for g in groups])
-        orig_email = forms.CharField(widget=forms.HiddenInput)
-        gigs_stored = forms.FloatField(widget=ReadOnlyWidget, required=False)
-        creation_time = forms.DateTimeField(widget=ReadOnlyWidget, required=False)
-        last_login = forms.DateTimeField(required=False, widget=ReadOnlyWidget)
-        if features['ldap'] and request.user.has_perm('blue_mgnt.can_view_user_data'):
-            escrow_login = forms.CharField(required=False, widget=LoginLinkWidget)
-        user_detail = forms.CharField(required=False, widget=UserDetailWidget)
-        if features['ldap']:
-            enabled = forms.BooleanField(required=False, widget=ReadOnlyWidget)
-        else:
-            enabled = forms.BooleanField(required=False)
-
-
     class BaseUserFormSet(forms.formsets.BaseFormSet):
         def clean(self):
             if any(self.errors):
@@ -214,9 +184,6 @@ def users(request, api, account_info, config, username, saved=False):
                                     'with data: %s' % data)
                     api.edit_user(form.cleaned_data['orig_email'], data)
 
-
-    UserFormSet = formset_factory(UserForm, extra=0, formset=BaseUserFormSet,
-                                  can_delete=True)
 
     TmpUserForm = get_user_form(local_groups)
     TmpUserFormSet = formset_factory(TmpUserForm, extra=0, formset=BaseUserFormSet)
@@ -266,7 +233,6 @@ def users(request, api, account_info, config, username, saved=False):
     for x, local_user in enumerate(local_users):
         local_user['index'] = x
 
-    user_formset = UserFormSet(initial=initial, prefix='user')
     tmp_user_formset = TmpUserFormSet(initial=local_users, prefix='tmp_user')
     delete_user_formset = DeleteUserFormSet(initial=initial, prefix='delete_user')
     user_csv = UserCSVForm()
@@ -282,7 +248,6 @@ def users(request, api, account_info, config, username, saved=False):
             if new_user.is_valid():
                 return redirect('blue_mgnt:users_saved')
         else:
-            user_formset = UserFormSet(request.POST, prefix='user')
             tmp_user_formset = TmpUserFormSet(request.POST, prefix='tmp_user')
             delete_user_formset = DeleteUserFormSet(request.POST, prefix='delete_user')
             if (request.user.has_perm('blue_mgnt.can_manage_users')
@@ -308,9 +273,7 @@ def users(request, api, account_info, config, username, saved=False):
         next_page=next_page,
         new_user=new_user,
         username=username,
-        user_formset=user_formset,
         tmp_user_formset=tmp_user_formset,
-        users=user_formset,
         delete_user_formset=delete_user_formset,
         user_csv=user_csv,
         features=api.enterprise_features(),
@@ -371,7 +334,7 @@ def user_detail(request, api, account_info, config, username, email, saved=False
                 if data:
                     log_admin_action(request, 'edit user "%s" with data: %s' % (email, data))
                     api.edit_user(email, data)
-                return redirect('blue_mgnt:user_detail_saved', email)
+                return redirect('blue_mgnt:user_detail_saved', data.get('email', email))
         if request.POST.get('form', '') == 'edit_share':
             room_key = request.POST['room_key']
             enable = request.POST['enabled'] == 'False'

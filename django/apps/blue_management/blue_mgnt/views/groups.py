@@ -14,7 +14,7 @@ from netkes.account_mgr.user_source import local_source
 from netkes.netkes_agent import config_mgr
 from blue_mgnt import models
 
-def get_group_form(request, config, plans, show_user_source):
+def get_group_form(request, config, plans, show_user_source=True, new_group=True):
     class GroupForm(forms.Form):
         name = forms.CharField(label="Group Name")
         plan_id = forms.ChoiceField(
@@ -39,6 +39,41 @@ def get_group_form(request, config, plans, show_user_source):
                                  )],
                         widget=forms.CheckboxSelectMultiple)
         group_id = forms.IntegerField(widget=forms.HiddenInput, required=False)
+
+        if not new_group:
+            def clean(self):
+                cleaned_data = super(GroupForm, self).clean()
+                data = dict(name=cleaned_data['name'],
+                            plan_id=cleaned_data['plan_id'],
+                            webapi_enable=cleaned_data['webapi_enable'],
+                            check_domain=cleaned_data.get('check_domain', False),
+                            )
+                group_id = cleaned_data['group_id']
+
+                try:
+                    api.edit_group(group_id, data)
+                    log_admin_action(request,
+                                     'edit group %s with data: %s' % (group_id, data))
+                    config_mgr_ = config_mgr.ConfigManager(config_mgr.default_config())
+                    for g in config_mgr_.config['groups']:
+                        if g['group_id'] == group_id:
+                            g['ldap_id'] = cleaned_data['ldap_dn']
+                            g['priority'] = cleaned_data['priority']
+                            g['admin_group'] = cleaned_data['admin_group']
+                    config_mgr_.apply_config()
+
+                    django_group, admin_group = get_or_create_admin_group(group_id)
+                    django_group.permissions.clear()
+                    for permission_id in cleaned_data['permissions']:
+                        django_group.permissions.add(Permission.objects.get(pk=permission_id))
+                    django_group.save()
+                except api.QuotaExceeded:
+                    self.show_force = True
+                    form._errors['plan_id'] = form.error_class([
+                        'Changing the plan of this group will put one '
+                        'or more users over quota. Please choose "Force '
+                        'Plan Change" if you are sure you want to do this.'])
+
     return GroupForm
 
 def get_config_group(config, group_id):
@@ -133,6 +168,9 @@ def groups(request, api, account_info, config, username, saved=False):
 
     for i in initial:
         add_config_items(i, config)
+        for plan in plans:
+            if plan['plan_id'] == i['plan_id']:
+                i['plan_name'] = '%s GB' % (plan['storage_bytes'] / SIZE_OF_GIGABYTE)
 
     groups = GroupFormSet(initial=initial, prefix='groups')
     group_csv = GroupCSVForm()
@@ -263,28 +301,6 @@ def group_detail(request, api, account_info, config, username, group_id, saved=F
         else:
             group_form = GroupForm(request.POST)
             if group_form.is_valid():
-                data = dict(name=group_form.cleaned_data['name'],
-                            plan_id=group_form.cleaned_data['plan_id'],
-                            webapi_enable=group_form.cleaned_data['webapi_enable'],
-                            check_domain=group_form.cleaned_data.get('check_domain', False),
-                            )
-
-                log_admin_action(request, 'edit group with data: %s' % data)
-                api.edit_group(group_id, data)
-
-                config_mgr_ = config_mgr.ConfigManager(config_mgr.default_config())
-                for g in config_mgr_.config['groups']:
-                    if g['group_id'] == group_id:
-                        g['ldap_id'] = group_form.cleaned_data['ldap_dn']
-                        g['priority'] = group_form.cleaned_data['priority']
-                        g['admin_group'] = group_form.cleaned_data['admin_group']
-                config_mgr_.apply_config()
-
-                django_group, admin_group = get_or_create_admin_group(group_id)
-                django_group.permissions.clear()
-                for permission_id in group_form.cleaned_data['permissions']:
-                    django_group.permissions.add(Permission.objects.get(pk=permission_id))
-                django_group.save()
                 return redirect('blue_mgnt:group_detail', group_id)
 
     return render_to_response('group_detail.html', dict(

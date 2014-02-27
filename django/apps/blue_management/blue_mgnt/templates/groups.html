@@ -26,9 +26,7 @@
 <table id="groups" class="widget-table">
     <thead>
         <tr>
-            {% if config.enable_local_users %}
             <th>Group Name</th>
-            {% endif %}
             <th>Plan</th>
             <th>Group Details</th>
         </tr>
@@ -40,8 +38,17 @@
         {% for group, data in groups_and_data %}
         {{ group.group_id }}
         <tr>
-            <td>{{ group.name }}</td>
-            <td>{{ group.plan_id }}</td>
+            <td>
+                <i class="ss-icon edit-status">
+                    {% if data.user_source == 'local' %}
+                        &#x270E;
+                    {% else %}
+                        &#xE071;
+                    {% endif %}
+                </i>
+                {{ data.name }}
+            </td>
+            <td>{{ data.plan_name }}</td>
             <td><a href="{% url 'blue_mgnt:group_detail' data.group_id %}">Details</a></td>
         </tr>
         {% endfor %}
@@ -49,10 +56,9 @@
 </table>
 <div class="widget-splitactions space-20none">
     {% if perms.blue_mgnt.can_manage_groups %}
-    <input type='submit' value="Save Changes" class="rhs button button-primary-basic">
-    {% if show_force %}
-    <input type='submit' value="Force Plan Change" class="button button-warning" name="force_plan_change">
-    {% endif %}
+        {% if show_force %}
+        <input type='submit' value="Force Plan Change" class="button button-warning" name="force_plan_change">
+        {% endif %}
     <input type='hidden' value='management' name='form'>
     <input type='hidden' value='{{ search }}' name='search'>
     {% endif %}
