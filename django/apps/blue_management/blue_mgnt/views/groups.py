@@ -14,7 +14,7 @@ from netkes.account_mgr.user_source import local_source
 from netkes.netkes_agent import config_mgr
 from blue_mgnt import models
 
-def get_group_form(request, config, plans, show_user_source=True, new_group=True):
+def get_group_form(request, config, plans, api, show_user_source=True, new_group=True):
     class GroupForm(forms.Form):
         name = forms.CharField(label="Group Name")
         plan_id = forms.ChoiceField(
@@ -154,8 +154,8 @@ def groups(request, api, account_info, config, username, saved=False):
             config_mgr_.apply_config()
 
 
-    GroupForm = get_group_form(request, config, plans, True)
-    GroupFormSet = formset_factory(get_group_form(request, config, plans, False),
+    GroupForm = get_group_form(request, config, plans, api)
+    GroupFormSet = formset_factory(get_group_form(request, config, plans, api, False),
                                    extra=0, formset=BaseGroupFormSet)
 
     if search_back == '1':
@@ -276,7 +276,7 @@ def group_detail(request, api, account_info, config, username, group_id, saved=F
     if local_group:
         fields_not_to_show = ['ldap_dn', 'priority']
 
-    GroupForm = get_group_form(request, config, plans, False)
+    GroupForm = get_group_form(request, config, plans, api, False, False)
     group_form = GroupForm(data=api_group)
     DeleteGroupForm = get_delete_group_form(group_id, config, groups_list)
     delete_group = DeleteGroupForm()
