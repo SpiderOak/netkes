@@ -127,7 +127,7 @@ def logs(request, api, account_info, config, username, saved=False):
     count = len(log_entries)
     log_entries = log_entries[user_offset:user_offset + RESULTS_PER_PAGE]
     next_page = count > (user_offset + RESULTS_PER_PAGE)
-    all_pages = pageit('logs', api, page, log_entries)
+    all_pages = pageit('logs', api, page, count)
 
     return render_to_response('logs.html', dict(
         page=page,

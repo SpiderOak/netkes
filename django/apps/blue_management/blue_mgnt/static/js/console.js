@@ -1,4 +1,15 @@
 $(function() {
+    // Shorten numeric inputs
+    $(window).load(function() {
+        $input = $("input[type='text']");
+        $input.each(function() {
+            if( $input.val().match(/^\d+$/) ) {
+                $(this).css('max-width', '135px');
+                console.log($(this).attr('id'));
+            }
+        });
+    });
+
     // Workings for the modal wrapper and widgets
 
     function posModal(obj) {

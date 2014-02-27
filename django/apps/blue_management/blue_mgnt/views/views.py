@@ -7,6 +7,7 @@ from base64 import b32encode
 import urlparse
 import ldap
 import logging
+import math
 
 from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import redirect
@@ -517,7 +518,7 @@ def pageit(sub, api, page, extra):
             'users':api.get_user_count(),
             'groups':len(api.list_groups()),
             'shares':len(api.list_shares_for_brand()),
-            'logs':len(extra),
+            'logs':extra,
             }
     try:
         all_items = funcmap[sub]
@@ -525,7 +526,7 @@ def pageit(sub, api, page, extra):
         return False
 
     limit = 25
-    item_count = all_items / limit
+    item_count = math.ceil(all_items / float(limit))
     if page > item_count:
         page = item_count
     elif page < 1:

@@ -83,10 +83,13 @@
             <td>
                 <a href="{% url 'blue_mgnt:user_detail' curr_user.email %}">Detail</a>
             </td>
-            <td>
                 {{ curr_user.gigs_stored }}
                 {% if not curr_user.enabled or curr_user.is_local_user and perms.blue_mgnt.can_manage_users %}
+            <td style="text-align:center">
                     <span class="del_box">{{ delete_form.DELETE }}</span>
+                {% else %}
+            <td style="text-align:center">
+                    <span class="delete-fill ss-icon">&#x1F6AB;</span>
                 {% endif %}
             </td>
         </tr>

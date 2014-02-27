@@ -61,7 +61,7 @@
         height: 30px;
         border-radius: 5px;
         border: 1px solid @NAVTAB_BORDER_COLOR;
-        text-indent: 12px;
+        padding-left: 12px;
         color: @INPUT_EDIT_COLOR;
         font: 13px~"/"23px @FONTFAMILY_R;
         display: block;
@@ -309,9 +309,10 @@ h1.page-header {
             height: 39px;
             border-radius: 5px;
             border: 1px solid @NAVTAB_BORDER_COLOR;
-            text-indent: 12px;
+            padding-left: 12px;
             color: @INPUT_EDIT_COLOR;
             font: 15px~"/"19px @FONTFAMILY_R;
+            overflow: hidden;
         }
         .search-button {
             height: 37px;
@@ -393,7 +394,7 @@ h1.page-header {
 		border-bottom: 1px solid #dddddd;
         overflow: hidden;
         text-overflow: ellipsis;
-        white-space: nowrap;
+        white-space: normal;
 	}
 	&>tbody>tr:nth-child(odd) {
 		background-color: @ZEBRA_STRIPE;
@@ -407,7 +408,7 @@ h1.page-header {
         height: 30px;
         border-radius: 5px;
         border: 1px solid @NAVTAB_BORDER_COLOR;
-        text-indent: 7px;
+        padding-left: 7px;
         color: @INPUT_EDIT_COLOR;
         font: 13px~"/"23px @FONTFAMILY_R;
     }
@@ -575,7 +576,8 @@ h1.page-header {
     }
     .permissions {
         ul {
-            min-height: 145px;
+            height: 145px;
+            list-style: none;
             column-fill: auto;
             column-width: 140px;
             column-gap: 0px;
@@ -712,6 +714,16 @@ button, .button {
 }
 
 /* Special case */
+body.home {
+    td:first-of-type {
+        input {
+            width: 130px;
+        }
+    }
+    .delete-fill {
+        color: #aeaeae;
+    }
+}
 
 body.errors {
     text-align: center;
@@ -1154,3 +1166,6 @@ body.password {
 .loader {
     position: relative;
 }
+ select {
+     max-width: 135px;
+ }

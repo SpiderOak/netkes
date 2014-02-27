@@ -45,7 +45,7 @@
 				</a>
 			</h1>
 			<ul>
-                <li>(Company)</li>
+                <li>({{user|title}})</li>
 				<li>{{ username }}</li>
 				<li><a href="{% url "blue_mgnt:logout" %}"><i class="ss-icon">&#x1F512;</i>Logout</a></li>
 			</ul>
@@ -73,6 +73,9 @@
 		<div class="spacer"><!--ZKP--></div>
 		<div class="breadcrumb">{% block breadcrumb %}{% endblock breadcrumb%}</div>
 		<div class="spacer"><!--ZKP--></div>
+{% endif %}
+{% if request_login %}
+        <div class="overlord">
 {% endif %}
 		<div class="content">{% block content %}{% endblock content %}</div>
         <div class="spacer"><!--ZKP--></div>

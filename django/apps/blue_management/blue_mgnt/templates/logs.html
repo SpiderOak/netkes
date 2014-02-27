@@ -10,7 +10,7 @@
     <div class="actions">
         <form action="{% url 'blue_mgnt:logs' %}" method="GET">
             <input name="show_disabled" type="hidden" value="{{ show_disabled }}">
-            <input type="text" class="widget-search-input" value="{{ search }}" placeholder="Find Logs">
+            <input type="text" id="input_search" name="search" class="widget-search-input" value="{{ search }}" placeholder="Find Logs">
             <input type="submit" class="search-button ss-icon" value="&#x1F50E;">
         </form>
 	</div>
