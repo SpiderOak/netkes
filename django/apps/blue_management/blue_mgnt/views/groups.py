@@ -16,7 +16,7 @@ from blue_mgnt import models
 
 def get_group_form(request, config, plans, api, show_user_source=True, new_group=True):
     class GroupForm(forms.Form):
-        name = forms.CharField(label="Group Name")
+        name = forms.CharField(label="Group Name", required=True)
         plan_id = forms.ChoiceField(
             [(p['plan_id'], '%s GB' % (p['storage_bytes'] / SIZE_OF_GIGABYTE)) \
              for p in plans],
@@ -43,36 +43,39 @@ def get_group_form(request, config, plans, api, show_user_source=True, new_group
         if not new_group:
             def clean(self):
                 cleaned_data = super(GroupForm, self).clean()
-                data = dict(name=cleaned_data['name'],
-                            plan_id=cleaned_data['plan_id'],
-                            webapi_enable=cleaned_data['webapi_enable'],
-                            check_domain=cleaned_data.get('check_domain', False),
-                            )
-                group_id = cleaned_data['group_id']
+                if 'name' in cleaned_data:
+                    data = dict(name=cleaned_data['name'],
+                                plan_id=cleaned_data['plan_id'],
+                                webapi_enable=cleaned_data['webapi_enable'],
+                                check_domain=cleaned_data.get('check_domain', False),
+                                )
+                    group_id = cleaned_data['group_id']
 
-                try:
-                    api.edit_group(group_id, data)
-                    log_admin_action(request,
-                                     'edit group %s with data: %s' % (group_id, data))
-                    config_mgr_ = config_mgr.ConfigManager(config_mgr.default_config())
-                    for g in config_mgr_.config['groups']:
-                        if g['group_id'] == group_id:
-                            g['ldap_id'] = cleaned_data['ldap_dn']
-                            g['priority'] = cleaned_data['priority']
-                            g['admin_group'] = cleaned_data['admin_group']
-                    config_mgr_.apply_config()
+                    try:
+                        api.edit_group(group_id, data)
+                        log_admin_action(request,
+                                        'edit group %s with data: %s' % (group_id, data))
+                        config_mgr_ = config_mgr.ConfigManager(config_mgr.default_config())
+                        for g in config_mgr_.config['groups']:
+                            if g['group_id'] == group_id:
+                                g['ldap_id'] = cleaned_data['ldap_dn']
+                                g['priority'] = cleaned_data['priority']
+                                g['admin_group'] = cleaned_data['admin_group']
+                        config_mgr_.apply_config()
 
-                    django_group, admin_group = get_or_create_admin_group(group_id)
-                    django_group.permissions.clear()
-                    for permission_id in cleaned_data['permissions']:
-                        django_group.permissions.add(Permission.objects.get(pk=permission_id))
-                    django_group.save()
-                except api.QuotaExceeded:
-                    self.show_force = True
-                    form._errors['plan_id'] = form.error_class([
-                        'Changing the plan of this group will put one '
-                        'or more users over quota. Please choose "Force '
-                        'Plan Change" if you are sure you want to do this.'])
+                        django_group, admin_group = get_or_create_admin_group(group_id)
+                        django_group.permissions.clear()
+                        for permission_id in cleaned_data['permissions']:
+                            django_group.permissions.add(Permission.objects.get(pk=permission_id))
+                        django_group.save()
+                    except api.QuotaExceeded:
+                        self.show_force = True
+                        form._errors['plan_id'] = form.error_class([
+                            'Changing the plan of this group will put one '
+                            'or more users over quota. Please choose "Force '
+                            'Plan Change" if you are sure you want to do this.'])
+                return cleaned_data
+
 
     return GroupForm
 
