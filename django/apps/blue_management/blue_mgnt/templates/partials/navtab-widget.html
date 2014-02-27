@@ -18,8 +18,8 @@
 			<span>Manage</span>
 		</a>
 	</li>
-	<li class="navtab-item-reports">
-		<a href="#">
+	<li class="navtab-item-reports{% if active == "reports" %} active {% endif %}">
+		<a href="{% url "blue_mgnt:reports" %}">
 			<i class="ss-icon">&#x1F4CA;</i>
 			<span>Reports</span>
 		</a>

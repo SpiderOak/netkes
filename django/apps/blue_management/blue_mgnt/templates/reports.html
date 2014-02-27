@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% load filter_todate %}
+
+{% block title %}Reports - Management Console{{ block.super }}{% endblock %}
+
+{% block body_classes %}reports {{ block.super }}{% endblock body_classes %}
+{% block navtab %}{% include "partials/navtab-widget.html" with active="reports" %}{% endblock navtab %}
+{% block content %}
+<h1 class="page-header">
+	<i class="ss-icon">&#xEE00;</i> Reports
+</h1>
+Space Allocated: {{ quota.bytes_allocated|filesizeformat }} <br>
+Space Used: {{ quota.bytes_used|filesizeformat }}
+{% endblock content %}
+

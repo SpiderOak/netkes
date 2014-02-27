@@ -174,10 +174,7 @@ def users(request, api, account_info, config, username, saved=False):
                 return
             for x in range(0, self.total_form_count()):
                 form = self.forms[x]
-                data = dict(name=form.cleaned_data['name'],
-                            group_id=form.cleaned_data['group_id'],
-                            email=form.cleaned_data['email'],
-                           )
+                data = dict(group_id=form.cleaned_data['group_id'], )
                 if request.user.has_perm('blue_mgnt.can_manage_users'):
                     log_admin_action(request,
                                     'edit user %s ' % form.cleaned_data['orig_email'] + \

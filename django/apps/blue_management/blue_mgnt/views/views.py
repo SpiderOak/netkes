@@ -482,6 +482,13 @@ def share_detail(request, api, account_info, config, username, email,
     ),
     RequestContext(request))
 
+@enterprise_required
+def reports(request, api, account_info, config, username, saved=False):
+    return render_to_response('reports.html', dict(
+        account_info=account_info,
+        quota=api.quota(),
+    ),
+    RequestContext(request))
 
 @enterprise_required
 @permission_required('blue_mgnt.can_manage_settings')
