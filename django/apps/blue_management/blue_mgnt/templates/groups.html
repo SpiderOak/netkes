@@ -17,7 +17,7 @@
 	</div>
 </h1>
 {% if saved and not search_back %}
-<p id="saved" class="bigger" style="display:none">Changes saved successfully!</p>
+<p id="saved">Changes saved successfully!</p>
 {% endif %}
 {% if perms.blue_mgnt.can_manage_groups %}
 <form action="{% url 'blue_mgnt:groups' %}" method="post" action="">

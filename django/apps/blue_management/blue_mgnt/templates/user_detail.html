@@ -21,7 +21,19 @@
 {% if saved %}
 <p id="saved">Changes saved successfully!</p>
 {% endif %}
-
+{% if user_form.errors %}
+<div class="error-alert">
+    <p>The following errors need to be addressed:</p>
+{% for item in user_form %}
+{% if item.errors %}
+    {% for error in item.errors %}
+        <p class="error-list">{{item.name|title}}:&nbsp;
+        {{ error }}</p>
+    {% endfor %}
+    {% endif %}
+{% endfor %}
+</div>
+{% endif %}
 <form method="POST" action="{% url 'blue_mgnt:user_detail' email %}">
     {% csrf_token %}
     <div class="" id="options">
@@ -41,7 +53,13 @@
                     {{ field.label_tag }}
                 </td>
                 <td>
-                    {{ field }}
+                    {% if field.errors %}
+                    <span class="error-highlight">
+                        {{ field }}
+                    </span>
+                    {% else %}
+                        {{ field }}
+                    {% endif %}
                 </td>
                 {% if field.html_name == 'group_id' %}
                 <td id="hint">

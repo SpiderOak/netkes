@@ -99,6 +99,7 @@ $(function() {
 
     });
 */
+
     // Toggle long logs
     if ( $('body').hasClass('logs') ){
         $('td').each(function() {

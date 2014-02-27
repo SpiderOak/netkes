@@ -11,6 +11,22 @@
 <h1 class="page-header">
 	<i class="ss-icon">&#xEE00;</i> Group Details
 </h1>
+{% if saved %}
+<p id="saved">Changes saved successfully!</p>
+{% endif %}
+{% if group_form.errors %}
+<div class="error-alert">
+    <p>The following errors need to be addressed:</p>
+{% for item in group_form %}
+{% if item.errors %}
+    {% for error in item.errors %}
+        <p class="error-list">{{item.name|title}}:&nbsp;
+        {{ error }}</p>
+    {% endfor %}
+    {% endif %}
+{% endfor %}
+</div>
+{% endif %}
 <form method="POST" action="{% url 'blue_mgnt:group_detail' group_id %}">
 {% csrf_token %}
 <table id="group" class="widget-table">
@@ -22,23 +38,18 @@
         {% if field.html_name not in fields_not_to_show %}
         <tr {% if field.html_name == 'permissions' %}class="permissions"{% endif %}>
             <td>
-                <div class="widget-table-label {{ field.errors|yesno:"error, ''" }}">
+                <div class="widget-table-label">
                     {{ field.label_tag }}
                 </div>
             </td>
             <td {% if field.html_name == 'permissions' %}colspan="2"{% endif %}>
-                {{ field }} 
-                {% if field.errors %}
-                <br />
-                {% for error in field.errors %}
-                <span class="table_errors">
-                    {{ error }}
-                </span>
-                {% endfor %}
-                {% else %}
-                <label for="id_{{ field.name }}">
-                </label>
-                {% endif %}
+                    {% if field.errors %}
+                    <span class="error-highlight">
+                        {{ field }}
+                    </span>
+                    {% else %}
+                        {{ field }}
+                    {% endif %}
             </td>
             {% if field.html_name != 'permissions' %}
             <td></td>
@@ -51,6 +62,7 @@
 <div class="spacer"><!--ZXP--></div>
 <div class="widget-actions short-right">
     <input type='submit' value="Save Changes" class="rhs button button-primary-basic" id="edit_group">
+    <input type='hidden' value='edit_group' name='form'>
     {% if show_force %}
     <input type='submit' value="Force Plan Change" class="button button-warning" name="force_plan_change">
     {% endif %}

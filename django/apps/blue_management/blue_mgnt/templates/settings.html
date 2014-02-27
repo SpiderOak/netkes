@@ -25,7 +25,20 @@
 </h1>
 <div class="spacer"></div>
 {% if saved %}
-    <p id="saved" class="bigger">Changes saved successfully!</p>
+    <p id="saved">Changes saved successfully!</p>
+{% endif %}
+{% if options.errors %}
+<div class="error-alert">
+    <p>The following errors need to be addressed:</p>
+{% for item in options %}
+{% if item.errors %}
+    {% for error in item.errors %}
+        <p class="error-list">{{item.name|title}}:&nbsp;
+        {{ error }}</p>
+    {% endfor %}
+    {% endif %}
+{% endfor %}
+</div>
 {% endif %}
     <form method="post" action="{% url 'blue_mgnt:settings' %}">
     {% csrf_token %}
@@ -39,13 +52,12 @@
                         </div>
                     </td>
                     <td>
-                        {{ field }}
                     {% if field.errors %}
-                        {% for error in field.errors %}
-                        <span class="table_errors">
-                            {{ error }}
-                        </span>
-                        {% endfor %}
+                    <span class="error-highlight">
+                        {{ field }}
+                    </span>
+                    {% else %}
+                        {{ field }}
                     {% endif %}
                     </td>
                 </tr>
