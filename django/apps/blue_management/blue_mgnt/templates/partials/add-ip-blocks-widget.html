@@ -70,7 +70,7 @@ function update_form(new_form, total){
 function add_ip_block_form(){
     var new_form = empty_ip_block_form.clone(true);
     var total = parseInt($('#id_ip_blocks-TOTAL_FORMS').val());
-    update_form(new_form);
+    update_form(new_form, total);
     $('#id_ip_blocks-TOTAL_FORMS').val(1 + total);
     $('#ip_blocks > tbody').append(new_form);
 }

@@ -34,7 +34,6 @@ from django.core.servers.basehttp import FileWrapper
 from interval.forms import IntervalFormField
 from mako.lookup import TemplateLookup
 from mako import exceptions
-from IPy import IP
 
 from blue_mgnt import models
 from netkes.account_mgr.accounts_api import Api
