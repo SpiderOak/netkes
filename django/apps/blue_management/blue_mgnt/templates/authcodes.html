@@ -17,6 +17,15 @@
         </form>
 	</div>
 </h1>
+<div class="spacer"><!--ZXP--></div>
+{% if saved %}
+    <p id="saved">Changes saved successfully!</p>
+{% endif %}
+{% if new_code.errors %}
+<div class="error-alert">
+    <p>{{ new_code.errors|length }} errors have been detected. Please see below for more information.</p>
+</div>
+{% endif %}
     <table id="groups" class="widget-table">
         <thead>
             <tr class="bigger">

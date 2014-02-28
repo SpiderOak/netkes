@@ -22,15 +22,7 @@
 {% endif %}
 {% if user_form.errors %}
 <div class="error-alert">
-    <p>The following errors need to be addressed:</p>
-{% for item in user_form %}
-{% if item.errors %}
-    {% for error in item.errors %}
-        <p class="error-list">{{item.name|title}}:&nbsp;
-        {{ error }}</p>
-    {% endfor %}
-    {% endif %}
-{% endfor %}
+    <p>{{ user_form.errors|length }} errors have been detected. Please see below for more information.</p>
 </div>
 {% endif %}
 <form method="POST" action="{% url 'blue_mgnt:user_detail' email %}">
@@ -49,13 +41,18 @@
             {% for field in user_form %}
             <tr>
                 <td>
-                    {{ field.label_tag }}
+                    <div class="{{ field.errors|yesno:'error,' }}">
+                        {{ field.label_tag }}
+                    </div>
                 </td>
-                <td>
+                <td {{ field.errors|yesno:'style=overflow:visible,' }}>
                     {% if field.errors %}
-                    <span class="error-highlight">
-                        {{ field }}
-                    </span>
+                        {% for error in field.errors %}
+                        <span class="error-highlight">
+                            {{ field }}
+                            <span class="error-tag">{{ error }}</span>
+                        </span>
+                        {% endfor %}
                     {% else %}
                         {{ field }}
                     {% endif %}

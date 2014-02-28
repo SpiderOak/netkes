@@ -11,18 +11,21 @@
                     {% for field in new_group.visible_fields %}
                     <tr {% if field.html_name == 'permissions' %}class="permissions"{% endif %}>
                         <td class="modal-table-label">
+                            <div class="{{ field.errors|yesno:'error,' }}">
                             {{ field.label_tag }}
+                            </div>
                         </td>
                         <td>
-                            {{ field }}
-                        {% if field.errors %}
-                            <br />
+                            {% if field.errors %}
                             {% for error in field.errors %}
-                                <span class="errors">
-                                    {{ error }}
-                                </span>
+                            <span class="error-highlight">
+                                {{ field }}
+                                <span class="error-tag">{{ error }}</span>
+                            </span>
                             {% endfor %}
-                        {% endif %}
+                            {% else %}
+                                {{ field }}
+                            {% endif %}
                         </td>
                     </tr> 
                     {% endfor %}

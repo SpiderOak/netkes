@@ -10,18 +10,21 @@
         {% for field in new_code.visible_fields %}
         <tr>
             <td class="modal-table-label">
-                {{ field.label_tag }}
+                <div class="{{ field.errors|yesno:'error,' }}">
+                    {{ field.label_tag }}
+                </div>
             </td>
             <td>
-                {{ field }}
-            {% if field.errors %}
-                <br />
-                {% for error in field.errors %}
-                    <span class="errors">
-                            {{ error }}
+                {% if field.errors %}
+                    {% for error in field.errors %}
+                    <span class="error-highlight">
+                        {{ field }}
+                        <span class="error-tag">{{ error }}</span>
                     </span>
-                {% endfor %}
-            {% endif %}
+                    {% endfor %}
+                {% else %}
+                    {{ field }}
+                {% endif %}
             </td>
         </tr>
         {% endfor %}

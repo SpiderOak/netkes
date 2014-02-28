@@ -5,7 +5,7 @@ $(function() {
         var $size;
         $input.each(function() {
             if ( $(this).val().length < 1 ) {
-                $size = 30;
+                $size = 25;
             } else {
                 $size = $(this).val().length;
             }
@@ -27,6 +27,15 @@ $(function() {
                 'left' : pos_left,
                 'top' : pos_top
             });
+        }
+    }
+
+    if ( $('.modal-content span').hasClass('error-highlight') ) {
+        $('.modal-wrapper').show().css('height', $(document).height());
+        posModal('.modal-content');
+        if ($('.widget-add-user .error-highlight').length) {
+            $('.widget-add-user').show();
+            $('.widget-add-user-option').hide();
         }
     }
 

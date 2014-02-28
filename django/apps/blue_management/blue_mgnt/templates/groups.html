@@ -19,6 +19,11 @@
 {% if saved and not search_back %}
 <p id="saved">Changes saved successfully!</p>
 {% endif %}
+{% if groups.errors %}
+<div class="error-alert">
+    <p>{{ groups.errors|length }} errors have been detected. Please see below for more information.</p>
+</div>
+{% endif %}
 {% if perms.blue_mgnt.can_manage_groups %}
 <form action="{% url 'blue_mgnt:groups' %}" method="post" action="">
 {% csrf_token %}

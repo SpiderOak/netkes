@@ -31,22 +31,22 @@
             {% for field in new_user.visible_fields %}
                 <tr>
                     <td class="modal-table-label">
-                        {{ field.label_tag }}
+                        <div class="{{ field.errors|yesno:'error,' }}">
+                            {{ field.label_tag }}
+                        </div>
                     </td>
                     <td>
-                        {{ field }}
-                    </td>
                     {% if field.errors %}
-                        <br />
-                        <span class="errors">
                         {% for error in field.errors %}
-                            {{ error }}
-                        {% endfor %}
+                        <span class="error-highlight">
+                            {{ field }}
+                            <span class="error-tag">{{ error }}</span>
                         </span>
-                    </td>
+                        {% endfor %}
                     {% else %}
-                    </td>
+                        {{ field }}
                     {% endif %}
+                    </td>
                 </tr>
             {% endfor %}
             <tr>

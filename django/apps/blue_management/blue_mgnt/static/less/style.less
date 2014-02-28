@@ -64,7 +64,7 @@
         padding-left: 12px;
         color: @INPUT_EDIT_COLOR;
         font: 13px~"/"23px @FONTFAMILY_R;
-        display: block;
+        /* display: block; */
     }
 
     select {
@@ -503,7 +503,7 @@ h1.page-header {
 
 .modal-content {
     position: absolute;
-    width: 530px;
+    width: 600px;
     border: 1px solid @NAVTAB_BORDER_COLOR;
     border-radius: 8px;
     background-color: #FFF;
@@ -525,7 +525,6 @@ h1.page-header {
     }    
 
     .inline_inputs();
-
 
     .modal-table-label {
         width: 30%;
@@ -714,6 +713,13 @@ button, .button {
 }
 
 /* Special case */
+
+#usage-report {
+    width: 600px;
+    text-align: center;
+    margin: 20px auto;
+}
+
 body.home {
     td:first-of-type {
         input {
@@ -842,7 +848,7 @@ body.admin_groups {
 
 /* login & password*/
     .error {
-        color: #ff0000;
+        color: #CC3239;
     }
 body.login {
     h1 {
@@ -1186,6 +1192,7 @@ body.password {
      margin-bottom: 10px;
      p {
          color: #fff;
+         white-space: nowrap;
          &.error-list {
              position: relative;
              left: 20px;
@@ -1197,6 +1204,18 @@ body.password {
          border-color: #CC3239!important;
          background-color: lighten(#CC3239, 40%);
      }
+     .error-tag {
+         border: 1px solid #CC3239;
+         background-color: lighten(#CC3239, 4%);
+         padding: 4px;
+         border-radius: 4px;
+         color: #fff;
+         font-size: 12px;
+         vertical-align: middle;
+         margin-left: 10px;
+         text-shadow: 0 0 1px #000;
+     }
+
  }
 
  #clear-search {

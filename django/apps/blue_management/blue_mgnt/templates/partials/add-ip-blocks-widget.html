@@ -26,14 +26,15 @@
                             {{ hidden }}
                         {% endfor %}
                     {% endif %}
-                    {{ field }}
                     {% if field.errors %}
-                    <br />
                         {% for error in field.errors %}
-                        <span class="table_errors">
-                            {{ error }}
+                        <span class="error-highlight">
+                            {{ field }}
+                            <span class="error-tag">{{ error }}</span>
                         </span>
                         {% endfor %}
+                    {% else %}
+                        {{ field }}
                     {% endif %}
                 </td>
                 {% endfor %}
