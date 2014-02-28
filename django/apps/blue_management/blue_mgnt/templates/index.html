@@ -93,8 +93,8 @@
             {% else %}
                 <td>{{ curr_user.group_name }}</td>
             {% endif %}
-            <td>{{ curr_user.bytes_stored|filesizeformat }}</td>
-            <td>
+            <td style="text-align: center">{{ curr_user.bytes_stored|filesizeformat }}</td>
+            <td style="text-align: center">
                 <a href="{% url 'blue_mgnt:user_detail' curr_user.email %}">Detail</a>
             </td>
                 {{ curr_user.gigs_stored }}

@@ -57,7 +57,7 @@
     select,
     textarea,
     input[type='password'] {
-        width: 275px;
+        width: auto;
         height: 30px;
         border-radius: 5px;
         border: 1px solid @NAVTAB_BORDER_COLOR;
@@ -394,7 +394,7 @@ h1.page-header {
 		border-bottom: 1px solid #dddddd;
         overflow: hidden;
         text-overflow: ellipsis;
-        white-space: normal;
+        white-space: nowrap;
 	}
 	&>tbody>tr:nth-child(odd) {
 		background-color: @ZEBRA_STRIPE;
@@ -404,7 +404,7 @@ h1.page-header {
     select,
     textarea,
     input[type='password'] {
-        width: 88%;
+        width: auto;
         height: 30px;
         border-radius: 5px;
         border: 1px solid @NAVTAB_BORDER_COLOR;
@@ -1197,4 +1197,12 @@ body.password {
          border-color: #CC3239!important;
          background-color: lighten(#CC3239, 40%);
      }
+ }
+
+ #clear-search {
+     font: 14px~"/"16px ProximaNova-Regular;
+     display: block;
+     position: absolute;
+     right: 8px;
+     top: -8px;
  }

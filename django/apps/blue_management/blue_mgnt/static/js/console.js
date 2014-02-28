@@ -1,12 +1,16 @@
 $(function() {
     // Shorten numeric inputs
     $(window).load(function() {
-        $input = $("input[type='text']");
+        $input = $("input[type='text']").not('.widget-search-input');
+        var $size;
         $input.each(function() {
-            if( $input.val().match(/^\d+$/) ) {
-                $(this).css('max-width', '135px');
-                console.log($(this).attr('id'));
+            if ( $(this).val().length < 1 ) {
+                $size = 30;
+            } else {
+                $size = $(this).val().length;
             }
+            var size_calc = $size <= 8 ? 10 : ($size + 5);
+            $(this).css('width', 'auto').attr('size', size_calc);
         });
     });
 
