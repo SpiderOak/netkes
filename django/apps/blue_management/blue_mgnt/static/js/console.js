@@ -1,7 +1,7 @@
 $(function() {
     // Shorten numeric inputs
     $(window).load(function() {
-        $input = $("input[type='text']").not('.widget-search-input');
+        $input = $("input[type='text']").not('.widget-search-input, #id_username');
         var $size;
         $input.each(function() {
             if ( $(this).val().length < 1 ) {
