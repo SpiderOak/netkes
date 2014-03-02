@@ -10,8 +10,11 @@
 	<i class="ss-icon">&#x1F511;</i> Auth Codes
     <div class="actions">
 		<button id="add-widget" class="button button-primary-basic">Create Code</button>
-        <form action="{% url 'blue_mgnt:users' %}" method="GET">
+        <form action="{% url 'blue_mgnt:auth_codes' %}" method="GET">
             <input name="show_disabled" type="hidden" value="{{ show_disabled }}">
+            {% if search %}
+                <a id="clear-search" href="{% url 'blue_mgnt:auth_codes' %}" class="">Clear Search</a>
+            {% endif %}
             <input type="text" class="widget-search-input" value="{{ search }}" placeholder="Find Auth Codes">
             <input type="submit" class="search-button ss-icon" value="&#x1F50E;">
         </form>

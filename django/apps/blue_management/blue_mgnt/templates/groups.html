@@ -11,6 +11,9 @@
 		<button id="add-widget" class="button button-primary-basic">Add Group</button>
         <form action="{% url 'blue_mgnt:groups' %}" method="GET">
             <input name="show_disabled" type="hidden" value="{{ show_disabled }}">
+            {% if search %}
+                <a id="clear-search" href="{% url 'blue_mgnt:groups' %}" class="">Clear Search</a>
+            {% endif %}
             <input type="text" id="input_search" name="search" class="widget-search-input" value="{{ search }}" placeholder="Find Groups">
             <input type="submit" class="search-button ss-icon" value="&#x1F50E;">
         </form>

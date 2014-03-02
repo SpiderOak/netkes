@@ -11,6 +11,9 @@
     <div class="actions">
         <form action="{% url 'blue_mgnt:shares' %}" method="GET">
             <input name="show_disabled" type="hidden" value="{{ show_disabled }}">
+            {% if search %}
+                <a id="clear-search" href="{% url 'blue_mgnt:shares' %}" class="">Clear Search</a>
+            {% endif %}
             <input type="text" class="widget-search-input" value="{{ search }}" placeholder="Find Shares">
             <input type="submit" class="search-button ss-icon" value="&#x1F50E;">
         </form>
@@ -52,7 +55,6 @@
             {% endfor %}
         </tbody>
     </table>
-</form>
 {% if page > 1 %}
 {% block pagination %}{% include "partials/pagination-widget.html" %}{% endblock pagination %}
 {% endif %}
