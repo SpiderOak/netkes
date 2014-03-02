@@ -1,4 +1,6 @@
 {% extends "base.html" %}
+{% load so_filters %}
+
 {% block title %}Users - Management Console{{ block.super }}{% endblock %}
 {% block body_classes %}home {{ block.super }}{% endblock body_classes %}
 {% block modal_options %}{% include "partials/add-user-widget.html" with active="users" %}{% endblock modal_options %}
@@ -88,7 +90,7 @@
             {% else %}
                 <td>{{ curr_user.group_name }}</td>
             {% endif %}
-            <td style="text-align: center">{{ curr_user.bytes_stored|filesizeformat }}</td>
+            <td style="text-align: center">{{ curr_user.bytes_stored|sofilesizeformat }}</td>
             <td style="text-align: center">
                 <a href="{% url 'blue_mgnt:user_detail' curr_user.email %}">Detail</a>
             </td>

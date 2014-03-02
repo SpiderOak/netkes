@@ -27,7 +27,7 @@ SELECT email, pw_hash
 FROM passwords WHERE email=%s;'''
 def check_local_auth(db_conn, username, password):
     log = logging.getLogger("check_local_auth")
-    log.info('login: %s %s' % (username, password,))
+    log.info('login: %s' % (username, ))
     cur = db_conn.cursor()
     cur.execute(_PW_HASH_SELECT, (username,))
     if cur.rowcount != 1:

@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load filter_todate %}
+{% load so_filters %}
 
 {% block title %}User Detail - Management Console{{ block.super }}{% endblock %}
 
@@ -10,11 +11,6 @@
 {% block content %}
 <h1 class="page-header">
 	<i class="ss-icon">&#x1F464;</i> User Details
-    <div class="actions">
-        <form action="{% url 'blue_mgnt:users' %}" method="GET">
-            <input name="show_disabled" type="hidden" value="{{ show_disabled }}">
-        </form>
-	</div>
 </h1>
 
 {% if saved %}
@@ -129,9 +125,7 @@
                             <tr>
                                 <td>
                                     <a class="link-primary" 
-                                        href="{{ share_url }}/browse/share/
-                                        {{ api_user.share_identifier }}/
-                                        {{ share.room_key }}">{{ share.name }}
+                                        href="{{ share_url }}/browse/share/{{ api_user.share_identifier }}/{{ share.room_key }}">{{ share.name }}
                                     </a>
                                 </td>
                                 <td>{{ share.creation_time|todate }}</td>
@@ -153,12 +147,12 @@
             {% endif %}
             <tr>
                 <td><label>GBs Stored</label></td>
-                <td>{{ api_user.bytes_stored|filesizeformat }}</td>
+                <td>{{ api_user.bytes_stored|sofilesizeformat }}</td>
                 <td></td>
             </tr>
             <tr>
                 <td><label>Storage GBs</label></td>
-                <td>{{ api_user.storage_bytes|filesizeformat }}</td>
+                <td>{{ api_user.storage_bytes|sofilesizeformat }}</td>
                 <td></td>
             </tr>
             <tr>
@@ -183,7 +177,9 @@
             </tr>
             <tr>
                 <td><label>Storage Login</label></td>
-                <td>{{ storage_login }}</td>
+                <td><a href="{{ storage_login }}">storage login
+
+                </a></td>
                 <td></td>
             </tr>
         </tbody>
@@ -197,16 +193,13 @@
     </form>
     <div class="widget-splitactions float">
         <button id="add-widget" class="button button-secondary">Delete User</button>
-        <input type='submit' value="{{ api_user.enabled|yesno:'Disable, Enable' }} User" class="button button-muted">
     </div>
 
-{% if not features.ldap %}
-    {% if not api_user.num_devices %}
-        <form method="post" action="{% url 'blue_mgnt:user_detail' email %}">
-            {% csrf_token %}
-            <input type='hidden' value='resend_email' name='form'>
-            <input type='submit' value="Re-send Activation Email" class="button button-primary-basic">
-        </form>
-    {% endif %}
+{% if not api_user.num_devices %}
+    <form method="post" action="{% url 'blue_mgnt:user_detail' email %}">
+        {% csrf_token %}
+        <input type='hidden' value='resend_email' name='form'>
+        <input type='submit' value="Re-send Activation Email" class="button button-primary-basic">
+    </form>
 {% endif %}
 {% endblock content %}

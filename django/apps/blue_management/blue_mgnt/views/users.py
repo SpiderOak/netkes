@@ -295,12 +295,15 @@ def user_detail(request, api, account_info, config, username, email, saved=False
 
     class UserForm(forms.Form):
         if local_user:
-            #enabled = forms.BooleanField(required=False)
             name = forms.CharField(max_length=45)
             email = forms.EmailField()
             group_id = forms.ChoiceField(local_groups, label='Group ID')
+            password = forms.CharField(max_length=64, 
+                                       widget=forms.PasswordInput,
+                                       required=False
+                                      )
+            enabled = forms.BooleanField(required=False)
         else:
-            #enabled = forms.BooleanField(widget=ReadOnlyWidget, required=False)
             name = forms.CharField(widget=ReadOnlyWidget, required=False, max_length=45)
             email = forms.EmailField(widget=ReadOnlyWidget, required=False)
             group_id = forms.ChoiceField(
@@ -308,6 +311,7 @@ def user_detail(request, api, account_info, config, username, email, saved=False
                 label='Group ID',
                 widget=ReadOnlyWidget, required=False
             )
+            enabled = forms.BooleanField(widget=ReadOnlyWidget, required=False)
         bonus_gigs = forms.IntegerField(label="Bonus GBs", min_value=0)
 
     data = dict()
@@ -326,12 +330,20 @@ def user_detail(request, api, account_info, config, username, email, saved=False
                 if local_user:
                     data.update(user_form.cleaned_data)
                     del data['bonus_gigs']
+                if 'password' in data:
+                    local_source.set_user_password(local_source._get_db_conn(config),
+                                                   email, data['password'])
+                    del data['password']
                 if request.user.has_perm('blue_mgnt.can_edit_bonus_gigs'):
                     data['bonus_bytes'] = user_form.cleaned_data['bonus_gigs'] * SIZE_OF_GIGABYTE
                 if data:
                     log_admin_action(request, 'edit user "%s" with data: %s' % (email, data))
                     api.edit_user(email, data)
                 return redirect('blue_mgnt:user_detail_saved', data.get('email', email))
+        if request.POST.get('form', '') == 'delete_user':
+            if request.user.has_perm('blue_mgnt.can_manage_users'):
+                api.delete_user(email)
+                return redirect('blue_mgnt:users')
         if request.POST.get('form', '') == 'edit_share':
             room_key = request.POST['room_key']
             enable = request.POST['enabled'] == 'False'
@@ -347,6 +359,7 @@ def user_detail(request, api, account_info, config, username, email, saved=False
         username=username,
         email=email,
         api_user=user,
+        storage_login=get_login_link(data['username']),
         user_form=user_form,
         features=features,
         account_info=account_info,

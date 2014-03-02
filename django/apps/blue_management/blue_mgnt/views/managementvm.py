@@ -25,7 +25,7 @@ RESULTS_PER_PAGE = 25
 
 def get_login_link(username, auth_token):
     b32_username = b32encode(username).rstrip('=')
-    return '%s/storage/%s/escrowlogin?auth_token=%s' % (get_base_url(),
+    return '%s/storage/%s/escrowlogin-v2?auth_token=%s' % (get_base_url(),
                                                         b32_username,
                                                         auth_token
                                                        )
