@@ -12,7 +12,5 @@
 <div id="usage-report">
 {% block usage-info %}{% include "partials/usage-info-widget.html"  with usage_bar="1" %}{% endblock usage-info %}
 </div>
-Space Allocated: {{ quota.bytes_allocated|filesizeformat }} <br>
-Space Used: {{ quota.bytes_used|filesizeformat }}
 {% endblock content %}
 
