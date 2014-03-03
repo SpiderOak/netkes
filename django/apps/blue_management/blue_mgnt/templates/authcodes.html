@@ -33,30 +33,23 @@
         <thead>
             <tr class="bigger">
                 <th>Token</th>
-                <th>Created</th>
-                <th>Expires</th>
+                <th>Created/Expires</th>
                 <th>Single Use?</th>
                 <th>No Devices?</th>
                 <th>Used</th>
-                <th></th>
             </tr>
         </thead>
         <tbody>
             {% for code in codes %}
             <tr{% if code.new_token %} class="success"{% endif %}>
-                    <td>{{ code.token }}</td>
-                    <td>{{ code.date_created|todate }}</td>
-                    <td>{{ code.expiry|todate }}</td>
-                    <td>{{ code.no_devices_only }}</td>
-                    <td>{{ code.single_use_only }}</td>
-                    <td>{{ code.used }}</td>
-                    <td>
+                <td>{{ code.token }}
+                    <div class="code-extra-info">
                         {% if code.active %}
                         <form method="post" action="{% url 'blue_mgnt:auth_codes' %}?show_inactive={{show_inactive }}">
                             {% csrf_token %}
                             <input type='submit' 
-                                value="Disable" 
-                                class="button button-muted" 
+                                value="Disable Code" 
+                                class="button button-muted thin" 
                                 id="edit_share" 
                                 style="display: inline-block">
                             <input type='hidden' value='disable_code' name='form'>
@@ -64,8 +57,15 @@
                         </form>
                         {% else %}
                             <span style="color:#ff0000">Disabled</span>
-                        {% endif %}
+                            {% endif %}
+                        </div>
                     </td>
+                    <td>{{ code.date_created|todate }}<br />
+                    {{ code.expiry|todate }}</td>
+                    <td>{{ code.no_devices_only }}</td>
+                    <td>{{ code.single_use_only }}</td>
+                    <td>{{ code.used }}</td>
+                    </tr><tr>
                 </tr>
             {% endfor %}
         </tbody>
