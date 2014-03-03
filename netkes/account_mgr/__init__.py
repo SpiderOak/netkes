@@ -17,13 +17,12 @@ select no_devices_only, single_use_only,
     case when exists(select 1 from admin_token_avatar_use where token=%(token)s) then true
     else false end as token_used
 from admin_setup_tokens
-where token=%(token)s and expiry > now() and
-    exists(select 1 from users where email=%(email)s and enabled)
+where token=%(token)s and expiry > now()
 '''
 
 INSERT_ADMIN_AUTH_TOKEN_AVATAR_USE = '''
 insert into admin_token_avatar_use (token, avatar_id)
-values (%(token)s, (select avatar_id from users where email=%(email)s))
+values (%(token)s, %(avatar_id)s)
 '''
 
 SELECT_LOCAL_USER = '''
@@ -58,7 +57,11 @@ def admin_token_auth(config, username, password):
     log = logging.getLogger("admin_token_auth")
     log.debug('checking admin auth code for username: %s' % username)
     api = get_api(config)
-    user_token = dict(email=username, token=password)
+    user = api.get_user(username)
+    user_token = dict(avatar_id=user['avatar_id'], token=password)
+    if not user['enabled']:
+        return False
+
     with get_cursor(config) as cur:
         cur.execute(SELECT_ADMIN_TOKEN, user_token)
         if cur.rowcount != 1:
