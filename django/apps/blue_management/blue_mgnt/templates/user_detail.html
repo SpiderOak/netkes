@@ -190,11 +190,11 @@
                 <input type='submit' value="Save Changes" class="rhs button button-primary-basic" id="edit_user">
                 <input type='hidden' value='edit_user' name='form'>
             </div>
+            <div class="widget-splitactions float">
+                <button id="add-widget" class="button button-secondary">Delete User</button>
+                <input type='submit' value="{{ api_user.enabled|yesno:'Disable, Enable' }} User" class="button button-muted">
+            </div>
     </form>
-    <div class="widget-splitactions float">
-        <button id="add-widget" class="button button-secondary">Delete User</button>
-    </div>
-
 {% if not api_user.num_devices %}
     <form method="post" action="{% url 'blue_mgnt:user_detail' email %}">
         {% csrf_token %}
