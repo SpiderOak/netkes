@@ -17,6 +17,9 @@
 {% if group_form.errors %}
 <div class="error-alert">
     <p>{{ group_form.errors|length }} errors have been detected. Please see below for more information.</p>
+    {% for error in group_form.non_field_errors %}
+    <p>{{ error }}</p>
+    {% endfor %}
 </div>
 {% endif %}
 <form method="POST" action="{% url 'blue_mgnt:group_detail' group_id %}">
@@ -55,12 +58,15 @@
     </tbody>
 </table>
 <div class="spacer"><!--ZXP--></div>
+{% if show_force %}
+<div class="widget-actions center-right">
+    <input type='submit' value="Force Plan Change" class="button button-warning" name="force_plan_change">
+    <input type='hidden' value='force_change' name='force_change'>
+</div>
+{% endif %}
 <div class="widget-actions short-right">
     <input type='submit' value="Save Changes" class="rhs button button-primary-basic" id="edit_group">
     <input type='hidden' value='edit_group' name='form'>
-    {% if show_force %}
-    <input type='submit' value="Force Plan Change" class="button button-warning" name="force_plan_change">
-    {% endif %}
 </div>
 </form>
 <div class="widget-splitactions float">
