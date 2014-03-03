@@ -56,8 +56,6 @@ def save_settings(request, api, options):
     config_mgr_ = config_mgr.ConfigManager(config_mgr.default_config())
     for var in AGENT_CONFIG_VARS:
         config_mgr_.config[var] = cleaned_data[var]
-    local_users = cleaned_data['enable_local_users']
-    config_mgr_.config['enable_local_users'] = local_users
     config_mgr_.apply_config()
 
     with open('/etc/timezone', 'w') as f:
@@ -84,11 +82,11 @@ def settings(request, api, account_info, config, username, saved=False):
     features = api.enterprise_features()
 
     class OpenmanageOptsForm(forms.Form):
-        share_link_ttl = IntervalFormField(
-            'D', 
-            label='Share Link Time-to-Live', 
-            initial=datetime.timedelta(minutes=opts['share_link_ttl'])
-        )
+        #share_link_ttl = IntervalFormField(
+        #    'D', 
+        #    label='Share Link Time-to-Live', 
+        #    initial=datetime.timedelta(minutes=opts['share_link_ttl'])
+        #)
         if features['ldap']:
             ad_domain = forms.CharField(
                 required=False, 
@@ -113,10 +111,6 @@ def settings(request, api, account_info, config, username, saved=False):
         timezone = forms.ChoiceField(
             choices=[(x, x) for x in pytz.common_timezones],
             initial=file('/etc/timezone').read().strip(),
-        )
-        enable_local_users = forms.BooleanField(
-            initial=config.get('enable_local_users', False),
-            required=False
         )
 
         def __init__(self, *args, **kwargs):
