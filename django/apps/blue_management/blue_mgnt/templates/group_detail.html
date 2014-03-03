@@ -58,12 +58,6 @@
     </tbody>
 </table>
 <div class="spacer"><!--ZXP--></div>
-{% if show_force %}
-<div class="widget-actions center-right">
-    <input type='submit' value="Force Plan Change" class="button button-warning" name="force_plan_change">
-    <input type='hidden' value='force_change' name='force_change'>
-</div>
-{% endif %}
 <div class="widget-actions short-right">
     <input type='submit' value="Save Changes" class="rhs button button-primary-basic" id="edit_group">
     <input type='hidden' value='edit_group' name='form'>
@@ -71,6 +65,10 @@
 </form>
 <div class="widget-splitactions float">
     <button class="button button-secondary" id="add-widget">Delete Group</button>
+    {% if show_force %}
+    <input type='submit' value="Force Plan Change" class="button button-secondary" name="force_plan_change">
+    <input type='hidden' value='force_change' name='force_change'>
+    {% endif %}
 </div>
 {% endblock content %}
 
