@@ -9,12 +9,10 @@
             <p class="description">You can either import users via a CSV file or manually add them.
             If you are using LDAP for user management, users will be added automatically.</p>
 
-        {% if not features.ldap %}
             <div class="option-box" id="option-upload-csv">
                 <p>Upload from<br />a CSV file.</p>
                 <button class="button button-primary-basic">Upload CSV</button>
             </div>
-        {% endif %}
             <div class="option-box" id="option-add-user">
                 <p>Manually<br />add users.</p>
                 <button class="button button-primary-basic">Create User</button>
@@ -63,42 +61,40 @@
         </form>
     </div>
 {% endif %}
-{% if not features.ldap %}
-<div class="widget-add-user" style="display: none">
-    <form action="{% url 'blue_mgnt:users' %}" enctype="multipart/form-data" method="post">
-    {% csrf_token %}
-        <fieldset>
-            {% for field in user_csv %}
-            <table class="widget-table">
-                <tr>
-                    <td class="modal-table-label">
-                        {{ field.label_tag }}
-                    </td>
-                    <td>
-                        {{ field }}
-                        {% if field.errors %}
-                        <br />
-                        <span class="errors">
-                            {% for error in field.errors %}
-                                {{ error }}
-                            {% endfor %}
-                        </span>
-                    </td>
-                        {% else %}
-                        <label for="id_{{ field.name }}">
-                        </label>
-                    </td>
-                        {% endif %}
-                    
-            {% endfor %}
-            </table>
-        </fieldset>
-        <div class="widget-actions">
-            <input type='submit' value="Upload CSV" class="rhs button button-primary-basic">
-            <input type='hidden' value='csv' name='form'>
-        </div>
-    </form>
-</div>
-{% endif %}
+    <div class="widget-upload-csv" style="display: none">
+        <form action="{% url 'blue_mgnt:users' %}" enctype="multipart/form-data" method="post">
+        {% csrf_token %}
+            <fieldset>
+                {% for field in user_csv %}
+                <table class="widget-table">
+                    <tr>
+                        <td class="modal-table-label">
+                            {{ field.label_tag }}
+                        </td>
+                        <td>
+                            {{ field }}
+                            {% if field.errors %}
+                            <br />
+                            <span class="errors">
+                                {% for error in field.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </span>
+                        </td>
+                            {% else %}
+                            <label for="id_{{ field.name }}">
+                            </label>
+                        </td>
+                            {% endif %}
+                        
+                {% endfor %}
+                </table>
+            </fieldset>
+            <div class="widget-actions">
+                <input type='submit' value="Upload CSV" class="rhs button button-primary-basic">
+                <input type='hidden' value='csv' name='form'>
+            </div>
+        </form>
+    </div>
     </div>
 </div>

@@ -49,8 +49,14 @@ $(function() {
             $('.widget-add-user').show();
     });
 
+    $('#option-upload-csv button').click(function(){
+            $('.widget-add-user-option').hide();
+            $('.widget-upload-csv').show();
+    });
+
     $('h2.page-header .actions').click(function() {
         $('.widget-add-user').hide()
+        $('.widget-upload-csv').hide();
         $('.widget-add-user-option').show();
         $('.modal-wrapper').hide();
     });
