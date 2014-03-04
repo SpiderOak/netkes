@@ -130,8 +130,8 @@ def settings(request, api, account_info, config, username, saved=False):
                 return
             blocks = [a.cleaned_data['ip_block'] for a in self.forms \
                       if a.cleaned_data.get('ip_block') and not a.cleaned_data.get('DELETE')]
-            log_admin_action(request, 'update signup network restrictions: %s' % blocks)
             api.update_enterprise_settings(dict(signup_network_restriction=blocks))
+            log_admin_action(request, 'update signup network restrictions: %s' % blocks)
 
     IPBlockFormSet = formset_factory(IPBlockForm, 
                                      can_delete=True,

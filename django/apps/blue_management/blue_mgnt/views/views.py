@@ -393,7 +393,6 @@ def users_csv(request, api, account_info, config, username):
     RequestContext(request))
 
 def list_users_paged(api, account_info):
-    print 'paged'
     all_users = []
     user_limit = 1000
     for page in range((account_info['total_users'] / user_limit) + 1):

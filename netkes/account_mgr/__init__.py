@@ -11,13 +11,14 @@ import logging
 import psycopg2
 from accounts_api import Api
 from contextlib import contextmanager
+import datetime
 
 SELECT_ADMIN_TOKEN = '''
-select no_devices_only, single_use_only,
+select no_devices_only, single_use_only, expiry,
     case when exists(select 1 from admin_token_avatar_use where token=%(token)s) then true
     else false end as token_used
 from admin_setup_tokens
-where token=%(token)s and expiry > now()
+where token=%(token)s
 '''
 
 INSERT_ADMIN_AUTH_TOKEN_AVATAR_USE = '''
@@ -55,7 +56,6 @@ def get_api(config):
 
 def admin_token_auth(config, username, password):
     log = logging.getLogger("admin_token_auth")
-    log.debug('checking admin auth code for username: %s' % username)
     api = get_api(config)
     user = api.get_user(username)
     user_token = dict(avatar_id=user['avatar_id'], token=password)
@@ -67,17 +67,25 @@ def admin_token_auth(config, username, password):
         if cur.rowcount != 1:
             return False
 
-        no_devices_only, single_use_only, token_used = cur.fetchone()
+        no_devices_only, single_use_only, expiry, token_used = cur.fetchone()
+    log.info('found admin auth code for username: %s' % username)
+
+    if expiry < datetime.datetime.now():
+        log.info('admin auth code is expired')
+        return False
 
     if no_devices_only and api.list_devices(username):
+        log.info('admin auth code is no devices only and the user has devices')
         return False
 
     if single_use_only and token_used:
+        log.info('admin auth code has been used and is single use only')
         return False
 
     with get_cursor(config) as cur:
         cur.execute(INSERT_ADMIN_AUTH_TOKEN_AVATAR_USE, user_token) 
 
+    log.info('admin auth code login successful')
     return True
 
 def authenticator(config, username, password, use_admin_tokens=True):
@@ -98,6 +106,9 @@ def authenticator(config, username, password, use_admin_tokens=True):
 
     auth_method = config.get('auth_method', None)
     auth_source = None
+
+    api = get_api(config)
+    user = api.get_user(username)
 
     if use_admin_tokens and admin_token_auth(config, username, password):
         return True
@@ -123,9 +134,10 @@ def authenticator(config, username, password, use_admin_tokens=True):
         return False
 
     with get_cursor(config) as cur:
-        cur.execute(SELECT_LOCAL_USER, [username])
+        email = user['email']
+        cur.execute(SELECT_LOCAL_USER, [email])
         if cur.rowcount == 1:
-            log.debug('Found user %s in the local users table' % username)
+            log.debug('Found user %s in the local users table' % email)
             from account_mgr.user_source import local_source
             auth_source = local_source
 
