@@ -36,7 +36,7 @@ urlpatterns = patterns('',
     (r'^logs/$', managementvm.logs, {}, 'logs'),
     (r'^logs/download/$', views.download_logs, {}, 'download_logs'),
     (r'^validate/$', views.validate, {}, 'validate'),
-    (r'^favicon\.ico$', RedirectView.as_view(url='/static/blue_mgnt/img/favicon.ico')),
+    (r'^favicon\.ico$', RedirectView.as_view(url='/static/blue_mgnt/img/favicon.png')),
     (r'^codes/$', managementvm.auth_codes, {}, 'auth_codes'),
     (r'^codes/saved/$', managementvm.auth_codes, {'saved': True}, 'auth_codes_saved'),
 )
