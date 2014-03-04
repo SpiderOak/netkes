@@ -360,7 +360,11 @@ def enterprise_required(fun):
         if not account_info['space_available']:
             account_info['show_available'] = False
             account_info['space_available'] = account_info['space_allocated']
-        account_info['total_users'] = api.get_user_count()
+        user_count = cache.get('user_count')
+        if not user_count:
+            user_count = api.get_user_count()
+            cache.set('user_count', user_count, 60 * 5)
+        account_info['total_users'] = user_count
         account_info['total_groups'] = len(config['groups'])
         account_info['total_auth_codes'] = models.AdminSetupTokensUse.objects.count()
         return fun(request, api, account_info, config,
@@ -555,13 +559,13 @@ def pageit(sub, api, page, extra):
         extra=()
 
     funcmap = {
-            'users':api.get_user_count(),
-            'groups':len(api.list_groups()),
-            'shares':len(api.list_shares_for_brand()),
-            'logs':extra,
-            }
+        'users': lambda: api.get_user_count(),
+        'groups': lambda: len(api.list_groups()),
+        'shares': lambda: len(api.list_shares_for_brand()),
+        'logs': lambda: extra,
+    }
     try:
-        all_items = funcmap[sub]
+        all_items = funcmap[sub]()
     except LookupError:
         return False
 

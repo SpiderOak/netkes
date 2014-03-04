@@ -19,7 +19,7 @@ from interval.forms import IntervalFormField
 
 from blue_mgnt import models
 from netkes.account_mgr import setup_token
-from views import pageit
+from views import pageit, profile
 
 RESULTS_PER_PAGE = 25
 
@@ -60,7 +60,6 @@ class CodeForm(forms.Form):
 @permission_required('blue_mgnt.can_manage_auth_codes', raise_exception=True)
 def auth_codes(request, api, account_info, config, username, saved=False):
     features = api.enterprise_features()
-    opts = api.enterprise_settings()
     page = int(request.GET.get('page', 1))
     show_inactive = int(request.GET.get('show_inactive', 1))
 
@@ -109,10 +108,10 @@ def auth_codes(request, api, account_info, config, username, saved=False):
     ),
     RequestContext(request))
 
+@profile('logs')
 @enterprise_required
 @permission_required('blue_mgnt.can_manage_logs', raise_exception=True)
 def logs(request, api, account_info, config, username, saved=False):
-    features = api.enterprise_features()
     page = int(request.GET.get('page', 1))
     search = request.GET.get('search', '')
 
@@ -136,7 +135,6 @@ def logs(request, api, account_info, config, username, saved=False):
         search=search,
         user=request.user,
         username=username,
-        features=features,
         log_entries=log_entries,
         account_info=account_info,
         all_pages=all_pages,

@@ -68,7 +68,7 @@
     </form>
     <div class="widget-splitactions float">
         <a class="button button-secondary" href="{% url 'blue_mgnt:password' %}">Change Password</a>
-        {% if features.ldap and perms.blue_mgnt.can_manage_settings %}
+        {% if perms.blue_mgnt.can_manage_settings %}
         <form method="post" action="{% url 'blue_mgnt:settings' %}">
             {% csrf_token %}
             <input type='hidden' value='reboot' name='form'>
