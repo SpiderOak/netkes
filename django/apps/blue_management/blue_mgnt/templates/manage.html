@@ -16,7 +16,7 @@
     <div class="widget-manage-blocks">
         <div class="manage-icon"><i class="ss-icon">&#x1F465;</i></div>
         <div class="manage-content">
-            <h3>Groups<span>{{ group_count }} Groups</span></h3>
+            <h3>Groups<span>{{ account_info.total_groups }} Groups</span></h3>
             <p>Set the amount of storage space and other options for groups of users.</p>
             <a href="{% url 'blue_mgnt:groups' %}" class="button button-primary-basic">Manage Groups</a>
         </div>
@@ -24,7 +24,7 @@
     <div class="widget-manage-blocks">
         <div class="manage-icon"><i class="ss-icon">&#x1F511;</i></div>
         <div class="manage-content">
-            <h3>Auth Codes<span>{{ codes_count }} Auth Codes</span></h3>
+            <h3>Auth Codes<span>{{ account_info.total_auth_codes }} Auth Codes</span></h3>
             <p>Can be used instead of passwords to allow adminstrators to set up accounts.</p>
             <a href="{% url 'blue_mgnt:auth_codes' %}" class="button button-primary-basic">Manage Auth Codes</a>
         </div>

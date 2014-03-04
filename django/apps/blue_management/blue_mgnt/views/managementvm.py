@@ -108,7 +108,6 @@ def auth_codes(request, api, account_info, config, username, saved=False):
     ),
     RequestContext(request))
 
-@profile('logs')
 @enterprise_required
 @permission_required('blue_mgnt.can_manage_logs', raise_exception=True)
 def logs(request, api, account_info, config, username, saved=False):

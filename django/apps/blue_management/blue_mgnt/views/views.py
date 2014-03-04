@@ -538,16 +538,11 @@ def reports(request, api, account_info, config, username, saved=False):
 
 @enterprise_required
 def manage(request, api, account_info, config, username):
-    group_count = len(api.list_groups())
-    codes = models.AdminSetupTokensUse.objects.all()
-    codes_count = codes.count()
     account_name = config['api_user'].replace("_", " ")
     return render_to_response('manage.html', dict(
         user=request.user,
         username=username,
         account_info=account_info,
-        group_count=group_count,
-        codes_count=codes_count,
         account_name=account_name,
     ),
     RequestContext(request))
