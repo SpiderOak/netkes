@@ -387,8 +387,9 @@ def user_detail(request, api, account_info, config, username, email, saved=False
                     data.update(user_form.cleaned_data)
                     del data['bonus_gigs']
                 if 'password' in data:
-                    local_source.set_user_password(local_source._get_db_conn(config),
-                                                   email, data['password'])
+                    if data['password']:
+                        local_source.set_user_password(local_source._get_db_conn(config),
+                                                    email, data['password'])
                     del data['password']
                 if request.user.has_perm('blue_mgnt.can_edit_bonus_gigs'):
                     data['bonus_bytes'] = user_form.cleaned_data['bonus_gigs'] * SIZE_OF_GIGABYTE

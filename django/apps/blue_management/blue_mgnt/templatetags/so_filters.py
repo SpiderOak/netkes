@@ -11,8 +11,7 @@ def sofilesizeformat(bytes):
     try:
         bytes = float(bytes)
     except (TypeError, ValueError, UnicodeDecodeError):
-        value = "%(size)d byte", "%(size)d bytes" % {'size': 0}
-        return avoid_wrapping(value)
+        return 'o byte'
 
     filesize_number_format = lambda value: formats.number_format(round(value, 1), 1)
 

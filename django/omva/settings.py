@@ -122,6 +122,14 @@ INSTALLED_APPS = (
     'pagination',
 )
 
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': '/opt/openmanage/django_cache',
+    }
+}
+
+
 AUTHENTICATION_BACKENDS = (
     'blue_mgnt.views.views.NetkesBackend',
 )
