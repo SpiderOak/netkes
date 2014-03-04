@@ -1,9 +1,11 @@
 import datetime
 from base64 import b32encode
+import csv
 
 from views import enterprise_required, render_to_response, log_admin_action
 from views import ReadOnlyWidget, get_base_url, SIZE_OF_GIGABYTE
 from views import pageit
+from groups import get_config_group
 
 from django import forms
 from django.core.urlresolvers import reverse
@@ -81,6 +83,60 @@ def get_user_csv_form(api):
             return data
     return UserCSVForm
 
+def get_plan_id(groups, group_id):
+    return [x for x in groups if \
+            x['group_id'] == int(group_id)][0]['plan_id']
+
+def get_group(groups, group_name):
+    for group in groups:
+        if group['name'].lower() == group_name.lower():
+            return group
+
+def get_new_user_csv_form(api, groups, config, request):
+    class UserCSVForm(forms.Form):
+        csv_file = forms.FileField(label='User CSV')
+
+        def clean_csv_file(self):
+            data = self.cleaned_data['csv_file']
+
+            csv_data = csv.DictReader(data)
+            for x, row in enumerate(csv_data):
+                msg = 'Invalid data in row %s.' % x
+                if 'email' not in row:
+                    raise forms.ValidationError(msg + ' email is required')
+                if 'name' not in row:
+                    raise forms.ValidationError(msg + ' name is required')
+                if 'password' not in row:
+                    raise forms.ValidationError(msg + ' password is required')
+                if 'group_name' not in row:
+                    raise forms.ValidationError(msg + ' group_name is required')
+
+            csv_data = csv.DictReader(data)
+            for x, row in enumerate(csv_data):
+                group = get_group(groups, row['group_name'])
+                group_id = group['group_id']
+                config_group = get_config_group(config, group_id)
+                if config_group['user_source'] != 'local':
+                    msg = 'Invalid data in row %s.' % x
+                    raise forms.ValidationError(msg + ' group_name must be a local group')
+                plan_id = get_plan_id(groups, group_id) 
+                user_info = dict(
+                    email=row['email'],
+                    name=row['name'],
+                    group_id=group_id,
+                    plan_id=plan_id,
+                )
+                try:
+                    api.create_user(user_info)
+                    local_source.set_user_password(local_source._get_db_conn(config),
+                                                   row['email'], row['password'])
+                    log_admin_action(request, 'create user through csv: %s' % user_info)
+                except api.DuplicateEmail:
+                    msg = 'Invalid data in row %s. Email already in use' % x
+                    raise forms.ValidationError(msg)
+            return data
+    return UserCSVForm
+
 def get_new_user_form(api, features, config, local_groups, groups, request):
     class NewUserForm(forms.Form):
         if not features['email_as_username']:
@@ -88,7 +144,7 @@ def get_new_user_form(api, features, config, local_groups, groups, request):
         email = forms.EmailField()
         name = forms.CharField(max_length=45)
         password = forms.CharField(max_length=64, widget=forms.PasswordInput)
-        group_id = forms.ChoiceField(local_groups)
+        group_id = forms.ChoiceField(local_groups, label='Group')
 
         def clean_username(self):
             data = self.cleaned_data['username']
@@ -112,15 +168,15 @@ def get_new_user_form(api, features, config, local_groups, groups, request):
                 valid_username = True
 
             if email and name and group_id and valid_username:
-                plan_id = [x for x in groups if x['group_id'] == int(group_id)][0]['plan_id']
+                plan_id = get_plan_id(groups, group_id) 
                 data = dict(email=email, name=name, group_id=group_id, plan_id=plan_id)
                 if username:
                     data.update(dict(username=username))
                 try:
-                    log_admin_action(request, 'create user: %s' % data)
                     api.create_user(data)
                     local_source.set_user_password(local_source._get_db_conn(config),
                                                    email, password)
+                    log_admin_action(request, 'create user: %s' % data)
                 except api.DuplicateEmail:
                     self._errors['email'] = self.error_class(["Email address already in use"])
                 except api.DuplicateUsername:
@@ -165,7 +221,7 @@ def users(request, api, account_info, config, username, saved=False):
     if not search:
         search = request.POST.get('search', '')
 
-    UserCSVForm = get_user_csv_form(api)
+    UserCSVForm = get_new_user_csv_form(api, groups, config, request)
     NewUserForm = get_new_user_form(api, features, config, local_groups, groups, request)
 
     class BaseUserFormSet(forms.formsets.BaseFormSet):
