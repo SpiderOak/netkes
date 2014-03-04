@@ -37,6 +37,10 @@ $(function() {
             $('.widget-add-user').show();
             $('.widget-add-user-option').hide();
         }
+        if ($('.widget-upload-csv .error-highlight').length) {
+            $('.widget-upload-csv').show();
+            $('.widget-add-user-option').hide();
+        }
     }
 
     $('#add-widget').click(function(){

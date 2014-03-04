@@ -69,24 +69,22 @@
                 <table class="widget-table">
                     <tr>
                         <td class="modal-table-label">
+                        <div class="{{ field.errors|yesno:'error,' }}">
                             {{ field.label_tag }}
-                        </td>
-                        <td>
+                        </div>
+                    </td>
+                    <td>
+                    {% if field.errors %}
+                        {% for error in field.errors %}
+                        <span class="error-highlight">
                             {{ field }}
-                            {% if field.errors %}
-                            <br />
-                            <span class="errors">
-                                {% for error in field.errors %}
-                                    {{ error }}
-                                {% endfor %}
-                            </span>
+                            <span class="error-tag">{{ error }}</span>
+                        </span>
+                        {% endfor %}
+                    {% else %}
+                        {{ field }}
+                    {% endif %}
                         </td>
-                            {% else %}
-                            <label for="id_{{ field.name }}">
-                            </label>
-                        </td>
-                            {% endif %}
-                        
                 {% endfor %}
                 </table>
             </fieldset>
