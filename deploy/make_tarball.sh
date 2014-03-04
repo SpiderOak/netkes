@@ -11,6 +11,7 @@ source_dir=`pwd`
 popd > /dev/null
 
 version=$2
+management_files=$3
 
 echo "Building OpenManage software suite from $source_dir"
 
@@ -41,6 +42,9 @@ cp -r $source_dir/netkes $buildit_dir
 
 # Copy over the django project
 cp -r $source_dir/django $buildit_dir
+
+# Copy fonts
+cp -r $management_files/fonts $buildit_dir/django/apps/blue_management/blue_mgnt/static/fonts
 
 # Setup destination git packages.
 pushd $buildit_dir/django > /dev/null
