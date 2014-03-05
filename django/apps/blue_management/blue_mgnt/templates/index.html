@@ -119,7 +119,7 @@
 	</div>
 	<div class="lhs">
         <a href="{% url 'blue_mgnt:users' %}?show_disabled={{ show_disabled|yesno:"0,1" }}&search={{ search }}#user_table" class="button button-muted">
-            {{ show_disabled|yesno:"Show,Hide" }} Disabled Users
+            {{ show_disabled|yesno:"Hide,Show" }} Disabled Users
         </a>
         <a href="{% url 'blue_mgnt:users_csv_download' %}" class="button button-muted">Download CSV</a>
 	</div>

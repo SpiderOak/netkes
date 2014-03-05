@@ -92,7 +92,7 @@ $(function() {
     //Loading shield for submit buttons
     $('.shield').hide();
     
-    $('input[type=submit]').click(function(e) {
+    $('input[type=submit], body.shares_detail input[type=radio]').click(function(e) {
         e.preventDefault();
         $('body').css({
             'position' : 'relative',
@@ -110,8 +110,8 @@ $(function() {
         if ($('.modal-wrapper').is(':visible')) {
             $('.modal-wrapper').hide();
         }
-    });
 
+    });
 
     // Adjust table widths
 /*    $('td').each(function(){
