@@ -32,17 +32,16 @@ pushd /opt
 tar xjfv $UPDATE_TARBALL
 popd #/opt
 
+echo "updated tarball"
+
 # Bring over configuration into the new stuff.
 cp /opt/openmanage.$CURRENT_DATE/etc/agent_config.json /opt/openmanage/etc
-grep 'DJANGO_SECRET_KEY' /opt/openmanage.$CURRENT_DATE/etc/openmanage_defaults >> /opt/openmanage/etc/openmanage_defaults 
-
-# copy fonts
-cp -r /opt/openmanage.$CURRENT_DATE/django/apps/blue_management/blue_mgnt/static/fonts /opt/openmanage/django/apps/blue_management/blue_mgnt/static/fonts
+# grep 'DJANGO_SECRET_KEY' /opt/openmanage.$CURRENT_DATE/etc/openmanage_defaults >> /opt/openmanage/etc/openmanage_defaults 
 
 # Set the brand in the configuration
 echo "OPENMANAGE_BRAND=$BRAND" > /opt/openmanage/etc/brand
 
-PYTHONPATH=/opt/openmanage python /opt/openmanage/upgrade/apply_sql.py
+/opt/openmanage/upgrade/apply_sql.sh
 sudo bash -c "PYTHONPATH=/opt/openmanage python /opt/openmanage/upgrade/apply_scripts.py"
 
 # Restart services
