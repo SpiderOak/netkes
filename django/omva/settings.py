@@ -8,7 +8,7 @@ PROJECT_DIR = os.path.abspath(os.path.dirname(__file__))
 sys.path += [os.path.join(PROJECT_DIR, '../apps')]
 sys.path += ['/opt/openmanage/django/apps']
 
-DEBUG = True
+DEBUG = False
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = ()
@@ -49,7 +49,7 @@ LOGIN_URL = '/login/'
 # although not all choices may be available on all operating systems.
 # If running in a Windows environment this must be set to the same as your
 # system time zone.
-TIME_ZONE = 'America/Chicago'
+TIME_ZONE = None
 
 # Language code for this installation. All choices can be found here:
 # http://www.i18nguy.com/unicode/language-identifiers.html

@@ -36,7 +36,10 @@ echo "updated tarball"
 
 # Bring over configuration into the new stuff.
 cp /opt/openmanage.$CURRENT_DATE/etc/agent_config.json /opt/openmanage/etc
-# grep 'DJANGO_SECRET_KEY' /opt/openmanage.$CURRENT_DATE/etc/openmanage_defaults >> /opt/openmanage/etc/openmanage_defaults 
+
+random_string=$(pwgen 64 1)
+secret_key="export DJANGO_SECRET_KEY=\"$random_string\""
+echo $secret_key >> /opt/openmanage/etc/openmanage_defaults 
 
 # Set the brand in the configuration
 echo "OPENMANAGE_BRAND=$BRAND" > /opt/openmanage/etc/brand
