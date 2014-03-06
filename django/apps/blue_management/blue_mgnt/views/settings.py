@@ -161,6 +161,8 @@ def settings(request, api, account_info, config, username, saved=False):
                                  stderr=subprocess.STDOUT
                                 )
             sync_output = p.communicate()[0]
+            if not sync_output:
+                return redirect('blue_mgnt:settings_saved')
         elif request.POST.get('form', '') == 'rebuild_db':
             log_admin_action(request, 'Rebuild DB')
             p = subprocess.Popen('/opt/openmanage/bin/rebuild_db.sh', 
@@ -168,6 +170,8 @@ def settings(request, api, account_info, config, username, saved=False):
                                  stderr=subprocess.STDOUT
                                 )
             rebuild_output = p.communicate()[0]
+            if not rebuild_output:
+                return redirect('blue_mgnt:settings_saved')
         elif request.POST.get('form', '') == 'restart_directory':
             log_admin_action(request, 'restart directory')
             config_mgr_ = config_mgr.ConfigManager(config_mgr.default_config())

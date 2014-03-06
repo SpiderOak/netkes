@@ -530,8 +530,10 @@ def share_detail(request, api, account_info, config, username, email,
 
 @enterprise_required
 def reports(request, api, account_info, config, username, saved=False):
+    average_stored = account_info['space_used'] / account_info['total_users']
     return render_to_response('reports.html', dict(
         account_info=account_info,
+        average_stored=average_stored,
     ),
     RequestContext(request))
 

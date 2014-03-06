@@ -13,5 +13,6 @@
 <div id="usage-report">
 {% block usage-info %}{% include "partials/usage-info-widget.html"  with usage_bar="1" %}{% endblock usage-info %}
 </div>
+Average stored per user: {{ average_stored|sofilesizeformat }}
 {% endblock content %}
 

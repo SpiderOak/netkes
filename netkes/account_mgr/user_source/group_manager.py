@@ -101,6 +101,7 @@ def _calculate_changes_against_db(db_conn, config, users):
     ordered_groups = sorted(config['groups'], 
                             key=lambda x: x['priority'],
                             reverse=True)
+
     delete_duplicate_groups = '''
     delete from ldap_users lu1 
     using ldap_users lu2
@@ -115,7 +116,6 @@ def _calculate_changes_against_db(db_conn, config, users):
     cur.execute("SELECT email, count(email) as occurences from ldap_users group by email having ( count(email) > 1 )")
 
     for row in cur.fetchall():
-        print 'Duplicate', row
         log.error("---> Duplicate user %s found %d times in LDAP query!", row[0], row[1])
 
     cur.close()
@@ -228,9 +228,13 @@ def run_db_repair(config, db_conn):
                     "%(group_id)s, %(enabled)s);",
                     spider_users)    
 
-    cur.execute("SELECT email, count(email) as occurences from ldap_users group by email having ( count(email) > 1 )")
-    for row in cur.fetchall():
-        log.error("---> Duplicate user %s found %d times in LDAP query!", row[0], row[1])
+    # Delete duplicate rows
+    cur.execute("DELETE FROM ldap_users "
+                "WHERE ctid NOT IN "
+                "(SELECT MAX(l.ctid) "
+                "FROM ldap_users l "
+                "GROUP BY l.email)"
+               )
 
     # Clear out the current database.
     cur.execute("DELETE FROM users;")
