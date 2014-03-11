@@ -16,7 +16,8 @@ from blue_mgnt import models
 
 def get_plan_choices(plans):
     sorted_plans = sorted(plans, key=lambda x: x['storage_bytes'])
-    return [(p['plan_id'], '%s GB' % (p['storage_bytes'] / SIZE_OF_GIGABYTE)) \
+    return [(p['plan_id'], '%s GB' % (p['storage_bytes'] / SIZE_OF_GIGABYTE \
+            if p['storage_bytes'] / SIZE_OF_GIGABYTE < 1000000001 else 'Unlimited')) \
             for p in sorted_plans]
 
 def get_group_form(request, config, plans, api, show_user_source=True, new_group=True):
@@ -245,8 +246,8 @@ def get_or_create_admin_group(user_group_id):
         django_group = Group.objects.get(pk=admin_group.group_id)
     except ObjectDoesNotExist:
         django_group = Group.objects.create(name=user_group_id)
-        admin_group = models.AdminGroup.objects.create( 
-            group_id=django_group.id, 
+        admin_group = models.AdminGroup.objects.create(
+            group_id=django_group.id,
             user_group_id=user_group_id)
     return django_group, admin_group
 
