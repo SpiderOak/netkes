@@ -131,6 +131,11 @@ def render_to_response(template, data=None, context=None):
         else:
             raise
 
+def get_config_group(config, group_id):
+    for group in config['groups']:
+        if group['group_id'] == group_id:
+            return group
+
 def get_base_url(url=None):
     if not url:
         url = read_config_file()['api_root']
@@ -244,10 +249,15 @@ class NetkesBackend(ModelBackend):
         api = get_api(config)
         if account_mgr.authenticator(config, username, password, False):
             api_user = api.get_user(username)
-            try:
-                admin_group = models.AdminGroup.objects.get(user_group_id=api_user['group_id'])
-            except models.AdminGroup.DoesNotExist:
+            group_id = api_user['group_id']
+            config_group = get_config_group(config, group_id)
+            if not config_group['admin_group']:
                 log.info('Username "%s" is not in an admin group' % username)
+                return None
+            try:
+                admin_group = models.AdminGroup.objects.get(user_group_id=group_id)
+            except models.AdminGroup.DoesNotExist:
+                log.info('Unable to find admin group for group %s' % group_id)
                 return None
             group = Group.objects.get(pk=admin_group.group_id)
             try:

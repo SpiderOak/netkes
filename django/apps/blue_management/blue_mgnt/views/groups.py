@@ -1,5 +1,6 @@
 from views import enterprise_required, render_to_response, log_admin_action
 from views import ReadOnlyWidget, get_base_url, SIZE_OF_GIGABYTE
+from views import get_config_group
 
 from django import forms
 from django.core.urlresolvers import reverse
@@ -79,11 +80,6 @@ def get_group_form(request, config, plans, api, show_user_source=True, new_group
 
 
     return GroupForm
-
-def get_config_group(config, group_id):
-    for group in config['groups']:
-        if group['group_id'] == group_id:
-            return group
 
 def add_config_items(group, config):
     g = get_config_group(config, group['group_id'])
