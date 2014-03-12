@@ -377,6 +377,7 @@ def enterprise_required(fun):
         account_info['total_users'] = user_count
         account_info['total_groups'] = len(config['groups'])
         account_info['total_auth_codes'] = models.AdminSetupTokensUse.objects.count()
+        account_info['api_user'] = config['api_user']
         return fun(request, api, account_info, config,
                    request.session['username'], *args, **kwargs)
     return new_fun
@@ -530,6 +531,7 @@ def share_detail(request, api, account_info, config, username, email,
             return redirect('blue_mgnt:share_detail', email, room_key)
 
     return render_to_response('share_detail.html', dict(
+        username=username,
         share_url=get_base_url(),
         share=share,
         api_user=api_user,
@@ -542,6 +544,7 @@ def share_detail(request, api, account_info, config, username, email,
 def reports(request, api, account_info, config, username, saved=False):
     average_stored = (account_info['space_used'] or  0) / (account_info['total_users'] or 1)
     return render_to_response('reports.html', dict(
+        username=username,
         account_info=account_info,
         average_stored=average_stored,
     ),

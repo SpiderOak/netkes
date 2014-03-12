@@ -358,6 +358,10 @@ def user_detail(request, api, account_info, config, username, email, saved=False
                                        widget=forms.PasswordInput,
                                        required=False
                                       )
+            repeat_password = forms.CharField(max_length=64, 
+                                              widget=forms.PasswordInput,
+                                              required=False
+                                             )
             enabled = forms.BooleanField(required=False)
         else:
             name = forms.CharField(widget=ReadOnlyWidget, required=False, max_length=45)
@@ -369,6 +373,18 @@ def user_detail(request, api, account_info, config, username, email, saved=False
             )
             enabled = forms.BooleanField(widget=ReadOnlyWidget, required=False)
         bonus_gigs = forms.IntegerField(label="Bonus GBs", min_value=0)
+
+        def clean(self):
+            cleaned_data = super(UserForm, self).clean()
+            password = cleaned_data.get("password")
+            repeat_password = cleaned_data.get("repeat_password")
+
+            if password != repeat_password:
+                msg = "must match password"
+                self._errors['repeat_password'] = self.error_class([msg])
+                del cleaned_data['password']
+                del cleaned_data['repeat_password']
+            return cleaned_data
 
     data = dict()
     data.update(user)
@@ -386,6 +402,7 @@ def user_detail(request, api, account_info, config, username, email, saved=False
                 if local_user:
                     data.update(user_form.cleaned_data)
                     del data['bonus_gigs']
+                    del data['repeat_password']
                 if 'password' in data:
                     if data['password']:
                         local_source.set_user_password(local_source._get_db_conn(config),
