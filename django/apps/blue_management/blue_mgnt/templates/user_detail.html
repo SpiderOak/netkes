@@ -90,9 +90,9 @@
                                 <td>{{ device.name }}</td>
                                 <td>{{ device.creation_time|todate }}</td>
                                 <td>{% if device.last_login %}
-                                        {{ device.last_login|todate }}
+                                    {{ device.last_login|todate }}
                                     {% else %}
-                                        No login recorded
+                                    No login recorded
                                     {% endif %}
                                 </td>
                             </tr>
@@ -102,9 +102,9 @@
                 </td>
             </tr>
             {% else %}
-                <td></td>
-            </tr>
-            {% endif %}
+            <td></td>
+        </tr>
+        {% endif %}
             <tr>
                 <td><label>Shares</label></td>
                 <td>{{ shares|length }}</td>
@@ -178,7 +178,13 @@
             </tr>
             <tr>
                 <td><label>Storage Login</label></td>
-                <td><a href="{{ storage_login }}">storage login</a></td>
+                <td>
+                    {% if devices|length > 0 %}
+                    <a href="{{ storage_login }}" target="_blank">storage login</a>
+                    {% else %}
+                    No devices created.
+                    {% endif %}
+                </td>
                 <td></td>
             </tr>
         </tbody>

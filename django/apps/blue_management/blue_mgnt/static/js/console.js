@@ -43,7 +43,8 @@ $(function() {
         }
     }
 
-    $('#add-widget').click(function(){
+    $('#add-widget').click(function(e){
+        e.preventDefault();
         $('.modal-wrapper').show().css('height', $(document).height());
         posModal('.modal-content');
     });
