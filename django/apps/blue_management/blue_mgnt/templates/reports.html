@@ -8,10 +8,44 @@
 {% block navtab %}{% include "partials/navtab-widget.html" with active="reports" %}{% endblock navtab %}
 {% block content %}
 <h1 class="page-header">
-	<i class="ss-icon">&#xEE00;</i> Reports
+	<i class="ss-icon">&#x1F4CA;</i> Reports
 </h1>
-<div id="usage-report">
-{% block usage-info %}{% include "partials/usage-info-widget.html"  with usage_bar="1" %}{% endblock usage-info %}
+<div class="spacer"><!--ZKP--></div>
+<div class="row">
+    <div class="report-stat">
+        <p class="stat-number">3.2</p>
+        <p class="stat-description">Average Number of Devices Per User</p>
+    </div>
+    <div class="report-stat">
+        <p class="stat-number">435</p>
+        <p class="stat-description">Total Number of ShareRooms</p>
+    </div>
+    <div class="widget-manage-blocks">
+        <div class="manage-icon"><i class="ss-icon">&#xED50;</i></div>
+        <div class="manage-content">
+            <h3>Logs</h3>
+            <p>Logs of admin actions within the management console.</p>
+            <a href="{% url 'blue_mgnt:logs' %}" class="button button-primary-basic">Manage Logs</a>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="report-stat">
+        <p class="stat-number">56.4</p>
+        <p class="stat-description">Average Number of GB's Stored</p>
+    </div>
+    <div class="report-stat">
+        <p class="stat-number">3,203</p>
+        <p class="stat-description">Total Number of Devices</p>
+    </div>
+    <div class="widget-manage-blocks">
+        <div class="manage-icon"><i class="ss-icon">&#xF000;</i></div>
+        <div class="manage-content">
+            <h3>Backup Activity</h3>
+            <p>We need a desctiption here</p>
+            <a href="" class="button button-primary-basic">Edit Account</a>
+        </div>
+    </div>
 </div>
 Average stored per user: {{ average_stored|sofilesizeformat }}
 {% endblock content %}

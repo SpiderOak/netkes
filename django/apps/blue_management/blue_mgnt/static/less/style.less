@@ -1261,3 +1261,42 @@ body.password {
          margin-left: 60px;
      }
  }
+
+ .row {
+     display: block;
+     margin: 20px auto;
+     height: 127px;
+     width: 855px;
+     &:first-of-type {
+         margin-top: 0;
+     }
+     div {
+         display: inline-block;
+     }
+
+     .widget-manage-blocks {
+         margin: 0 10px;
+     }
+
+ }
+
+ .report-stat {
+     border: 1px solid @NAVTAB_BORDER_COLOR;
+     width: 180px;
+     height: 100%;
+     border-radius: 4px;
+     margin: 0 10px;
+     text-align: center;
+     padding: 18px 5px; 
+     background-color: #fff;
+     vertical-align: top;
+
+     .stat-number {
+         font: 50px~"/"55px ProximaNova-Light;
+         color: darken(@NAVTAB_BORDER_COLOR, 10%);
+     }
+
+     .stat-description {
+         font: 14px~"/"16px @FONTFAMILY_B;
+     }
+ }
