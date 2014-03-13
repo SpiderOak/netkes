@@ -34,6 +34,7 @@
     {{ tmp_user_formset.management_form }}
 <table class="widget-table">
     <thead>
+        <th>&nbsp;</th>
         {% if not features.email_as_username %}
         <th>Username</th>
         {% endif %}
@@ -53,11 +54,6 @@
             {% for hidden in delete_form.hidden_fields %}
                 {{ hidden }}
             {% endfor %}
-
-            {% if not features.email_as_username %}
-                <td>{{ curr_user.username }}</td>
-            {% endif %}
-
             <td>
                 <i class="ss-icon edit-status">
                     {% if curr_user.is_local_user %}
@@ -66,6 +62,12 @@
                         &#xE071;
                     {% endif %}
                 </i>
+            </td>
+            {% if not features.email_as_username %}
+                <td>{{ curr_user.username }}</td>
+            {% endif %}
+
+            <td>
                 {{ curr_user.name }}
             </td>
             <td>{{ curr_user.email }}</td>
