@@ -167,7 +167,7 @@ class NetkesBackend(ModelBackend):
         log.info('Attempting to log "%s" in as a superuser' % username)
 
         config = read_config_file()
-        if username != config['api_user']:
+        if config['api_user'] and (username != config['api_user']):
             log.info('Username "%s" does not match superuser username' % username)
             return None
 
@@ -189,11 +189,6 @@ class NetkesBackend(ModelBackend):
                 content_type__app_label='blue_mgnt',
                 content_type__model='AccountsApi'
             )
-            if not config['api_password']:
-                config_mgr_ = config_mgr.ConfigManager(config_mgr.default_config())
-                config_mgr_.config['api_password'] = password
-                config_mgr_.apply_config()
-
 
             return user
         except urllib2.HTTPError:
@@ -291,20 +286,36 @@ class LoginForm(forms.Form):
     username = forms.CharField(max_length=90)
     password = forms.CharField(widget=forms.PasswordInput)
 
+def initial_setup(username, password):
+    print 'in initial'
+    config_mgr_ = config_mgr.ConfigManager(config_mgr.default_config())
+    config_mgr_.config['api_user'] = username
+    config_mgr_.config['api_password'] = password
+    config_mgr_.apply_config()
+
+    call(['/opt/openmanage/bin/first_setup.sh', username])
+
 def login_user(request):
     form = LoginForm()
     if request.method == 'POST':
         form = LoginForm(request.POST)
         if form.is_valid():
-            user = authenticate(username=form.cleaned_data['username'],
-                                password=form.cleaned_data['password'])
+            password = form.cleaned_data['password']
+            username = form.cleaned_data['username']
+            user = authenticate(username=username,
+                                password=password)
             if user and user.is_active:
                 login(request, user)
                 remote_addr = request.META['REMOTE_ADDR']
                 log_admin_action(request, 'logged in')# from ip: %s' % remote_addr)
                 config = read_config_file()
 
-                request.session['username'] = form.cleaned_data['username']
+                print 'pass', config['api_password']
+                if not config['api_password']:
+                    initial_setup(username, password)
+
+                request.session['username'] = username
+
                 return redirect('blue_mgnt:index')
             else:
                 errors = form._errors.setdefault(NON_FIELD_ERRORS , ErrorList())
