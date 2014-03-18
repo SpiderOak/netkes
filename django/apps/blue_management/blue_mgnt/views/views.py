@@ -598,7 +598,7 @@ def pageit(sub, api, page, extra):
         return False
 
     limit = 25
-    item_count = math.ceil(all_items / float(limit))
+    item_count = int(math.ceil(all_items / float(limit)))
     if page > item_count:
         page = item_count
     elif page < 1:
