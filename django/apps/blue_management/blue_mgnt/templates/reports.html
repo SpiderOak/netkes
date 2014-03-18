@@ -13,11 +13,11 @@
 <div class="spacer"><!--ZKP--></div>
 <div class="row">
     <div class="report-stat">
-        <p class="stat-number">3.2</p>
+        <p class="stat-number">{{ average_num_devices }}</p>
         <p class="stat-description">Average Number of Devices Per User</p>
     </div>
     <div class="report-stat">
-        <p class="stat-number">435</p>
+        <p class="stat-number">{{ share_count }}</p>
         <p class="stat-description">Total Number of ShareRooms</p>
     </div>
     <div class="widget-manage-blocks">
@@ -31,11 +31,11 @@
 </div>
 <div class="row">
     <div class="report-stat">
-        <p class="stat-number">56.4</p>
-        <p class="stat-description">Average Number of GB's Stored</p>
+        <p class="stat-number">{{ average_stored|sofilesizeformat }}</p>
+        <p class="stat-description">Average Stored Per User</p>
     </div>
     <div class="report-stat">
-        <p class="stat-number">3,203</p>
+        <p class="stat-number">{{ device_count }}</p>
         <p class="stat-description">Total Number of Devices</p>
     </div>
     <div class="widget-manage-blocks">
@@ -47,6 +47,5 @@
         </div>
     </div>
 </div>
-Average stored per user: {{ average_stored|sofilesizeformat }}
 {% endblock content %}
 

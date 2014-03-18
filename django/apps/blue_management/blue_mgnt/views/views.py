@@ -363,6 +363,8 @@ def enterprise_required(fun):
         if not quota:
             quota = api.quota()
             cache.set('quota', quota, 60 * 15)
+        account_info['device_count'] = quota['device_count']
+        account_info['share_count'] = quota['share_count']
         account_info['space_used'] = quota['bytes_used']
         account_info['space_allocated'] = quota['bytes_allocated']
         account_info['space_available'] = (quota['bytes_available'] or 0) / (10.0 ** 9)
@@ -542,11 +544,17 @@ def share_detail(request, api, account_info, config, username, email,
 
 @enterprise_required
 def reports(request, api, account_info, config, username, saved=False):
-    average_stored = (account_info['space_used'] or  0) / (account_info['total_users'] or 1)
+    total_users = float(account_info['total_users'] or 1)
+    average_stored = (account_info['space_used'] or  0) / total_users
+    #average_stored = round(average_stored / SIZE_OF_GIGABYTE, 2)
+    average_num_devices = round((account_info['device_count'] or 0) / total_users, 2)
     return render_to_response('reports.html', dict(
         username=username,
         account_info=account_info,
         average_stored=average_stored,
+        average_num_devices=average_num_devices,
+        device_count=account_info['device_count'],
+        share_count=account_info['share_count'],
     ),
     RequestContext(request))
 
