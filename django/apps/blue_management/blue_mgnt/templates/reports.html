@@ -31,13 +31,14 @@
 </div>
 <div class="row">
     <div class="report-stat">
-        <p class="stat-number">{{ average_stored|sofilesizeformat }}</p>
-        <p class="stat-description">Average Stored Per User</p>
+        <p class="stat-number">{{ average_stored }}</p>
+        <p class="stat-description">Average GB's Stored Per User</p>
     </div>
     <div class="report-stat">
         <p class="stat-number">{{ device_count }}</p>
         <p class="stat-description">Total Number of Devices</p>
     </div>
+    {% comment %}
     <div class="widget-manage-blocks">
         <div class="manage-icon"><i class="ss-icon">&#xF000;</i></div>
         <div class="manage-content">
@@ -46,6 +47,7 @@
             <a href="" class="button button-primary-basic">Edit Account</a>
         </div>
     </div>
+    {% endcomment %}
 </div>
 {% endblock content %}
 

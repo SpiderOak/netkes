@@ -68,10 +68,10 @@ def profile(log_file):
     for later processing and examination.
 
     It takes one argument, the profile log name. If it's a relative path, it
-    places it under the PROFILE_LOG_BASE. It also inserts a time stamp into the 
-    file name, such that 'my_view.prof' become 'my_view-20100211T170321.prof', 
-    where the time stamp is in UTC. This makes it easy to run and compare 
-    multiple trials.     
+    places it under the PROFILE_LOG_BASE. It also inserts a time stamp into the
+    file name, such that 'my_view.prof' become 'my_view-20100211T170321.prof',
+    where the time stamp is in UTC. This makes it easy to run and compare
+    multiple trials.
     """
 
     if not os.path.isabs(log_file):
@@ -546,7 +546,7 @@ def share_detail(request, api, account_info, config, username, email,
 def reports(request, api, account_info, config, username, saved=False):
     total_users = float(account_info['total_users'] or 1)
     average_stored = (account_info['space_used'] or  0) / total_users
-    #average_stored = round(average_stored / SIZE_OF_GIGABYTE, 2)
+    average_stored = round(average_stored / SIZE_OF_GIGABYTE, 2)
     average_num_devices = round((account_info['device_count'] or 0) / total_users, 2)
     return render_to_response('reports.html', dict(
         username=username,
