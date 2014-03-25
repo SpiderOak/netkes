@@ -5,6 +5,7 @@
 {% block modal_options %}{% include "partials/add-ip-blocks-widget.html" with active="manage" %}{% endblock modal_options %}
 {% block navtab %}{% include "partials/navtab-widget.html" with active="manage" %}{% endblock navtab %}
 {% block content %}
+<div class="timeout-test"></div>
 {% if sync_output or rebuild_output %}
 <div class="status-message">
     <div class="status-content">
@@ -32,6 +33,7 @@
     <p>{{ options.errors|length }} errors have been detected. Please see below for more information.</p>
 </div>
 {% endif %}
+<div class="reboot-message"></div>
     <form method="post" action="{% url 'blue_mgnt:settings' %}">
     {% csrf_token %}
         <fieldset>
@@ -72,7 +74,7 @@
         <form method="post" action="{% url 'blue_mgnt:settings' %}">
             {% csrf_token %}
             <input type='hidden' value='reboot' name='form'>
-            <input type='submit' value="Reboot Virtual Appliance" class="button button-muted">
+            <button type='submit' id="reboot" class="button button-muted">Reboot Virtual Appliance</button>
         </form>
         <form method="post" action="{% url 'blue_mgnt:settings' %}">
             {% csrf_token %}
@@ -94,3 +96,24 @@
         {% endif %}
     </div>
 {% endblock content %}
+{% block js_templates %}
+<script>
+    $(function() {
+        $('.reboot-message').hide();
+        $ajax = $.ajax({
+                    url: "{% url 'blue_mgnt:settings' %}",
+                    type: "GET",
+                    success: function(status){
+                        $('.reboot-message').html("Reboot Complete");
+                    }
+                });
+        $('#reboot').click(function(e){
+            e.preventDefault();
+            $('.reboot-message').html("Rebooting Virtual Appliance").show();
+            posModal('.reboot-message');
+            setInterval($ajax, 1000);
+            $(this).closest('form').submit();
+        });
+    });
+</script>
+{% endblock js_templates %}
