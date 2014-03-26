@@ -1,0 +1,37 @@
+<%inherit file="main.html" />
+
+<%def name="title()">SpiderOak Online Backup and Sync White Label Program - ${parent.title()}</%def>
+
+<%def name="head()"></%def>
+
+<%def name="top_of_head()">
+    <link rel="stylesheet" href="/static/styles/bootstrap.min.css" />
+    <link rel="stylesheet" href="/static/styles/enterprise.css" />
+</%def>
+
+<%def name="scripts()">
+<script type="text/javascript"> 
+</script>
+</%def>
+
+<%def name="body_classes()">csv ${parent.body_classes()} grassy</%def>
+
+<div class="top_right">
+    <a href="${reverse('logout')}" class="logout"><span>Logout</span></a>
+</div>
+
+<h1>CSV Format</h1>
+
+email_addr: required - The user's current email address. This uniquely identifies the user.<br>
+new_email: optional - This email must be available (not be in use by another SpiderOak user).<br>
+given_name: optional - Must be between 1 and 45 characters.<br>
+surname: optional - Must be between 1 and 45 characters.<br>
+group_id: optional - Must match an existing group.<br>
+
+<br><br>
+<h2>Example CSV File</h2>
+
+email_addr,given_name,surname,group_id,new_email<br>
+so+1@spideroak.com,,,10,<br>
+so+2@spideroak.com,b,c,,<br>
+so+3@spideroak.com,d,d,5,so+4@spideroak.com<br>

@@ -18,3 +18,4 @@ cd resources
 
 pip install --download=. pip==1.4.1
 pip install --download=. Django==1.5.5
+pip install --download=. pytz==2013.8

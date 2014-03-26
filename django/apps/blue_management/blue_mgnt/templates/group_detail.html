@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% load filter_todate %}
+
+{% block title %}Group Detail - Management Console{{ block.super }}{% endblock %}
+
+{% block body_classes %}group_detail {{ block.super }}{% endblock body_classes %}
+{% block breadcrumb %}<a href="{% url 'blue_mgnt:groups' %}">Back to Groups</a>{% endblock breadcrumb %}
+{% block modal_options %}{% include "partials/delete-group-widget.html" %}{% endblock modal_options %}
+{% block navtab %}{% include "partials/navtab-widget.html" with active="manage" %}{% endblock navtab %}
+{% block content %}
+<h1 class="page-header">
+	<i class="ss-icon">&#xEE00;</i> Group Details
+</h1>
+{% if saved %}
+<p id="saved">Changes saved successfully!</p>
+{% endif %}
+{% if group_form.errors %}
+<div class="error-alert">
+    <p>{{ group_form.errors|length }} errors have been detected. Please see below for more information.</p>
+    {% for error in group_form.non_field_errors %}
+    <p>{{ error }}</p>
+    {% endfor %}
+</div>
+{% endif %}
+<form method="POST" action="{% url 'blue_mgnt:group_detail' group_id %}">
+{% csrf_token %}
+<table id="group" class="widget-table">
+    <tbody>
+        {% for field in group_form.hidden_fields %}
+            {{ field }}
+        {% endfor %}
+        {% for field in group_form.visible_fields %}
+        {% if field.html_name not in fields_not_to_show %}
+        <tr {% if field.html_name == 'permissions' %}class="permissions"{% endif %}>
+            <td class="widget-table-label">
+                <div class="{{ field.errors|yesno:'error,' }}">
+                    {{ field.label_tag }}
+                </div>
+            </td>
+            <td {% if field.html_name == 'permissions' %}colspan="2"{% endif %}>
+                    {% if field.errors %}
+                    {% for error in field.errors %}
+                    <span class="error-highlight">
+                        {{ field }}
+                        <span class="error-tag">{{ error }}</span>
+                    </span>
+                    {% endfor %}
+                    {% else %}
+                        {{ field }}
+                    {% endif %}
+            </td>
+            {% if field.html_name != 'permissions' %}
+            <td></td>
+            {% endif %}
+        </tr>
+        {% endif %}
+        {% endfor %}
+    </tbody>
+</table>
+<div class="spacer"><!--ZXP--></div>
+<div class="widget-actions short-right">
+    <input type='submit' value="Save Changes" class="rhs button button-primary-basic" id="edit_group">
+    <input type='hidden' value='edit_group' name='form'>
+</div>
+</form>
+<div class="widget-splitactions float">
+    <button class="button button-secondary" id="add-widget">Delete Group</button>
+    {% if show_force %}
+    <input type='submit' value="Force Plan Change" class="button button-secondary" name="force_plan_change">
+    <input type='hidden' value='force_change' name='force_change'>
+    {% endif %}
+</div>
+{% endblock content %}
+

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Manage - Management Console{{ block.super }}{% endblock %}
+{% block body_classes %}manage {{ block.super }}{% endblock body_classes %}
+{% block breadcrumb %}{% endblock breadcrumb %}
+{% block modal_options %}{% include "partials/add-user-widget.html" with active="manage" %}{% endblock modal_options %}
+{% block navtab %}{% include "partials/navtab-widget.html" with active="manage" %}{% endblock navtab %}
+{% block content %}
+<h1 class="page-header">
+    <i class="ss-icon">&#x1F464;</i> {{ account_name|title }}
+    <div class="actions">
+        {% block usage-info %}{% include "partials/usage-info-widget.html"  with usage_bar="1" %}{% endblock usage-info %}
+	</div>
+</h1>
+<div class="spacer"></div>
+<div class="left-col">
+    <div class="widget-manage-blocks">
+        <div class="manage-icon"><i class="ss-icon">&#x1F465;</i></div>
+        <div class="manage-content">
+            <h3>Groups<span>{{ account_info.total_groups }} Groups</span></h3>
+            <p>Set the amount of storage space and other options for groups of users.</p>
+            <a href="{% url 'blue_mgnt:groups' %}" class="button button-primary-basic">Manage Groups</a>
+        </div>
+    </div>
+    <div class="widget-manage-blocks">
+        <div class="manage-icon"><i class="ss-icon">&#x1F511;</i></div>
+        <div class="manage-content">
+            <h3>Auth Codes<span>{{ account_info.total_auth_codes }} Auth Codes</span></h3>
+            <p>Can be used instead of passwords to allow adminstrators to set up accounts.</p>
+            <a href="{% url 'blue_mgnt:auth_codes' %}" class="button button-primary-basic">Manage Auth Codes</a>
+        </div>
+    </div>
+</div>
+<div class="right-col">
+    <div class="widget-manage-blocks">
+        <div class="manage-icon"><i class="ss-icon">&#x1F464;</i></div>
+        <div class="manage-content">
+            <h3>Account<span>{{ account_name|title }}</span></h3>
+            <p>Settings for your account.</p>
+            <a href="{% url 'blue_mgnt:settings' %}" class="button button-primary-basic">Edit Account</a>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+

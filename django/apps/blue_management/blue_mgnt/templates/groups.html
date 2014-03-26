@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Groups - Management Console{{ block.super }}{% endblock %}
+{% block body_classes %}home {{ block.super }}{% endblock body_classes %}
+{% block breadcrumb %}<a href="{% url 'blue_mgnt:manage' %}">Back to Manage</a>{% endblock breadcrumb %}
+{% block modal_options %}{% include "partials/add-group-widget.html" with active="manage" %}{% endblock modal_options %}
+{% block navtab %}{% include "partials/navtab-widget.html" with active="manage" %}{% endblock navtab %}
+{% block content %}
+<h1 class="page-header">
+	<i class="ss-icon">&#x1F465;</i> Groups
+    <div class="actions">
+		<button id="add-widget" class="button button-primary-basic">Add Group</button>
+        <form action="{% url 'blue_mgnt:groups' %}" method="GET">
+            <input name="show_disabled" type="hidden" value="{{ show_disabled }}">
+            {% if search %}
+                <a id="clear-search" href="{% url 'blue_mgnt:groups' %}" class="">Clear Search</a>
+            {% endif %}
+            <input type="text" id="input_search" name="search" class="widget-search-input" value="{{ search }}" placeholder="Find Groups">
+            <input type="submit" class="search-button ss-icon" value="&#x1F50E;">
+        </form>
+	</div>
+</h1>
+{% if saved and not search_back %}
+<p id="saved">Changes saved successfully!</p>
+{% endif %}
+{% if groups.errors %}
+<div class="error-alert">
+    <p>{{ groups.errors|length }} errors have been detected. Please see below for more information.</p>
+</div>
+{% endif %}
+{% if perms.blue_mgnt.can_manage_groups %}
+<form action="{% url 'blue_mgnt:groups' %}" method="post" action="">
+{% csrf_token %}
+{{ groups.management_form }}
+<table id="groups" class="widget-table">
+    <thead>
+        <tr>
+            <th>&nbsp;</th>
+            <th>Group Name</th>
+            <th>Plan</th>
+            <th>Group Details</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% if groups.non_form_errors %}
+        <tr><td colspan="5">{{ groups.non_form_errors }}</td></tr>
+        {% endif %}
+        {% for group, data in groups_and_data %}
+        {{ group.group_id }}
+        <tr>
+            <td>
+                <i class="ss-icon edit-status">
+                    {% if data.user_source == 'local' %}
+                        &#x270E;
+                    {% else %}
+                        &#xE071;
+                    {% endif %}
+                </i>
+            </td>
+            <td>
+                {{ data.name }}
+            </td>
+            <td>{{ data.plan_name }}</td>
+            <td><a href="{% url 'blue_mgnt:group_detail' data.group_id %}">Details</a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<div class="widget-splitactions space-20none">
+    {% if perms.blue_mgnt.can_manage_groups %}
+        {% if show_force %}
+        <input type='submit' value="Force Plan Change" class="button button-warning" name="force_plan_change">
+        {% endif %}
+    <input type='hidden' value='management' name='form'>
+    <input type='hidden' value='{{ search }}' name='search'>
+    {% endif %}
+</div>
+</form>
+{% endif %}
+{% endblock content %}

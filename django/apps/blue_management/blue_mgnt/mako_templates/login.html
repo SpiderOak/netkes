@@ -1,0 +1,62 @@
+<%inherit file="main.html" />
+
+<%def name="title()">Login - ${parent.title()}</%def>
+
+<%def name="head()">
+    <!--[if lt IE 8]>
+        <style type="text/css">
+            #options{float:left;}
+        </style>
+    <![endif]-->
+</%def>
+
+<%def name="top_of_head()">
+</%def>
+
+<%def name="scripts()">
+<script type="text/javascript"> 
+</script>
+</%def>
+
+<%def name="body_classes()">login ${parent.body_classes()}</%def>
+<%def name="container()">
+<p>&nbsp;</p>
+<div class="recenter">
+<div class="section" style="width:460px; margin:100px auto">
+<form method="post" action="">
+    <h2>Log In</h2>
+    <div class="" id="options" style="">
+    <fieldset>
+        <table class="table" style="width:400px">
+        % if form.non_field_errors():
+        <tr><td style="color:#FF0000; font-size:1.3em">${form.non_field_errors()}</td></tr>
+        % endif
+        %for field in form:
+        <tr><td>
+        <div class="${'error' if field.errors else ''}" style="width:200px">
+            ${field.label_tag()}
+        </td><td>
+                ${field}
+        </td></tr>
+        </div>
+                <span class="help-inline">
+                %if field.errors:
+                    %for error in field.errors:
+                        ${error}
+                    %endfor
+                %else:
+                    <label for="id_${field.name}">
+                    </label>
+                %endif
+                </span>
+                
+        %endfor
+        </table>
+    </fieldset>
+    <input type='submit' value="Login" class="btn btn-primary" id="login" style="display: inline-block">
+    </div>
+</div>
+<input type='hidden' value='management' name='form'>
+</form>
+</div>
+</%def>

@@ -1,0 +1,109 @@
+<div class="modal-wrapper">
+    <div class="modal-content">
+        <h2 class="page-header"><i class="ss-icon">&#x1F464;</i>Add User
+            <span class="actions"><i class="ss-icon">&#x2421;</i></span>
+        </h2>
+            <div class="spacer"><!--ZXP--></div>
+        <div class="widget-add-user-option">
+            <div class="lower-content">
+            <p class="description">You can either import users via a CSV file or manually add them.
+            If you are using LDAP for user management, users will be added automatically.</p>
+
+            <div class="option-box" id="option-upload-csv">
+                <p>Upload from<br />a CSV file.</p>
+                <button class="button button-primary-basic">Upload CSV</button>
+            </div>
+            <div class="option-box" id="option-add-user">
+                <p>Manually<br />add users.</p>
+                <button class="button button-primary-basic">Create User</button>
+            </div>
+            </div>
+        </div>
+
+{% if config.enable_local_users %}
+        <div class="widget-add-user" style="display:none">
+            <form action="{% url 'blue_mgnt:users' %}" enctype="multipart/form-data" method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="form" value="new_user">
+            <table class="widget-table">
+            {% for field in new_user.visible_fields %}
+                <tr>
+                    <td class="modal-table-label">
+                        <div class="{{ field.errors|yesno:'error,' }}">
+                            {{ field.label_tag }}
+                        </div>
+                    </td>
+                    <td>
+                    {% if field.errors %}
+                        {% for error in field.errors %}
+                        <span class="error-highlight">
+                            {{ field }}
+                            <span class="error-tag">{{ error }}</span>
+                        </span>
+                        {% endfor %}
+                    {% else %}
+                        {{ field }}
+                    {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            <tr>
+                <td colspan="2"></td>
+            </tr>
+        </table>
+            <div class="widget-actions">
+                <input type="submit" value="Create User" class="rhs button button-primary-basic">
+                <input type='hidden' value='new_user' name='form'>
+                {% for hidden in new_user.hidden_fields %}
+                    {{ hidden }}
+                {% endfor %}
+            </div>
+        </form>
+    </div>
+{% endif %}
+    <div class="widget-upload-csv" style="display: none">
+        <form action="{% url 'blue_mgnt:users' %}" enctype="multipart/form-data" method="post">
+        {% csrf_token %}
+            <fieldset>
+                {% for field in user_csv %}
+                <table class="widget-table">
+                    <tr>
+                        <td class="modal-table-label">
+                        <div class="{{ field.errors|yesno:'error,' }}">
+                            {{ field.label_tag }}
+                        </div>
+                    </td>
+                    <td>
+                    {% if field.errors %}
+                        {% for error in field.errors %}
+                        <span class="error-highlight">
+                            {{ field }}
+                            <span class="error-tag">{{ error }}</span>
+                        </span>
+                        {% endfor %}
+                    {% else %}
+                        {{ field }}
+                    {% endif %}
+                        </td>
+                {% endfor %}
+                    </tr>
+                </table>
+                <div class="csv-note">
+                    <p>Note: CSV uploads should be comma delimited and need to contain
+                    email address, name, password, and group name which should appear as follows:</p>
+                    <p>
+                        <pre>email,name,password,group_name
+jane@foo.com,Jane Doe,passworD,Local 20 GB</pre>
+                    </p>
+                    <p>For additional information, please don't hesitate to reach out to
+                    <a href="mailto:bluesupport@spideroak.com">bluesupport@spideroak.com</a></p>
+                </div>
+            </fieldset>
+            <div class="widget-actions">
+                <input type='submit' value="Upload CSV" class="rhs button button-primary-basic">
+                <input type='hidden' value='csv' name='form'>
+            </div>
+        </form>
+    </div>
+    </div>
+</div>

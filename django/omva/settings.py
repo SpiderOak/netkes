@@ -49,7 +49,7 @@ LOGIN_URL = '/login/'
 # although not all choices may be available on all operating systems.
 # If running in a Windows environment this must be set to the same as your
 # system time zone.
-TIME_ZONE = 'America/Chicago'
+TIME_ZONE = None
 
 # Language code for this installation. All choices can be found here:
 # http://www.i18nguy.com/unicode/language-identifiers.html
@@ -89,6 +89,7 @@ TEMPLATE_LOADERS = (
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.middleware.transaction.TransactionMiddleware',
     'pagination.middleware.PaginationMiddleware',
@@ -108,6 +109,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     'django.core.context_processors.i18n',
     'django.core.context_processors.media',
     'django.core.context_processors.request',
+    'blue_mgnt.context_processors.blue_common',
 )
 
 INSTALLED_APPS = (
@@ -120,8 +122,16 @@ INSTALLED_APPS = (
     'pagination',
 )
 
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': '/opt/openmanage/django_cache',
+    }
+}
+
+
 AUTHENTICATION_BACKENDS = (
-    'blue_mgnt.views.views.LdapBackend',
+    'blue_mgnt.views.views.NetkesBackend',
 )
 
 LOG_DIR = '/var/log/admin_console/'

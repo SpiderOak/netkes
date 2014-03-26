@@ -6,8 +6,12 @@ Provides self-contained user management functionality on the virtual appliance.
 (c) 2012, SpiderOak, Inc.
 '''
 
+import itertools
 import logging
 import psycopg2
+import uuid
+
+from netkes.account_mgr import get_api
 
 log = logging.getLogger('local_source')
 try:
@@ -15,19 +19,21 @@ try:
 except ImportError:
     log.warn('no bcrypt; ldap only this system')
 
-from common import get_config
-
 # This is only filled in the event of hitting authenticator and needing to connect to a DB.
 _AUTHENTICATOR_DB_CONN = None
 
 _PW_HASH_SELECT='''
 SELECT email, pw_hash
 FROM passwords WHERE email=%s;'''
-def check_local_auth(db_conn, username, password):
+def check_local_auth(db_conn, config, username, password):
     log = logging.getLogger("check_local_auth")
-    log.info('login: %s %s' % (username, password,))
+    api = get_api(config)
+    user = api.get_user(username)
+    email = user['email']
+
+    log.info('login: %s' % (email, ))
     cur = db_conn.cursor()
-    cur.execute(_PW_HASH_SELECT, (username,))
+    cur.execute(_PW_HASH_SELECT, (email,))
     if cur.rowcount != 1:
         return False
 
@@ -49,7 +55,7 @@ def _get_db_conn(config):
     return _AUTHENTICATOR_DB_CONN
 
 def can_auth(config, username, password):
-    return check_local_auth(_get_db_conn(config), username, password)
+    return check_local_auth(_get_db_conn(config), config, username, password)
 
 def set_user_password(db_conn, email, password):
     """

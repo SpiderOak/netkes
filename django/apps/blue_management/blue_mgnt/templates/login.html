@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Login - Management Console{{ block.super }}{% endblock %}
+{% block body_classes %}login {{ block.super }}{% endblock body_classes %}
+{% block content %}
+<div class="image-wrapper">
+    <img src="/static/blue_mgnt/img/logo_large.png" />
+</div>
+<h1>Welcome back.</h1>
+<h2>Login below to access your management console.</h2>
+<div class="login-wrapper">
+    <div class="left-col">
+    <form method="post" action="" id="log_in">
+        {% csrf_token %}
+        <fieldset>
+            {% if form.non_field_errors %}
+            <div class="error">{{ form.non_field_errors }}</div>
+            {% endif %}
+            <div class="widget-login">
+                {% for field in form %}
+                    <div {% if field.errors %}class="error"{% endif %}>
+                        {{ field.label_tag }}
+                        {{ field }}
+                    </div>
+                <span class="help-inline error">
+                    {% if field.errors %}
+                        {% for error in field.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    {% else %}
+                        <label for="id_{{ field.name }}"></label>
+                    {% endif %}
+                </span>
+                {% endfor %}
+            </div>
+        </fieldset>
+        <div class="widget-actions">
+        <input type='submit' value="Login" class="button button-primary-basic" id="login">
+        <input type='hidden' value='management' name='form'>
+    </div>
+    </form>
+    </div>
+<div class="right-col">
+    <div>
+        <img src="/static/blue_mgnt/img/login_safe.png" />
+        <h3>Always 'Zero-Knowledge'</h3>
+        <p>SpiderOak retains full 'zero-knowledge' to
+        the data being backed up, synced, and
+        shared through your account.</p>
+    </div>
+    <div>
+        <img src="/static/blue_mgnt/img/login_head.png" />
+        <h3>Powerful User Management</h3>
+        <p>SpiderOak Blue provides a powerful central
+        management console for provisioning and
+        managing accounts, setting group policies
+        &amp; permissions, and accessing and
+        controlling company data.</p>
+    </div>
+</div>
+
+</div>
+{% endblock content %}

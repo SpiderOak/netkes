@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+{% load filter_todate %}
+{% load so_filters %}
+
+{% block title %}User Detail - Management Console{{ block.super }}{% endblock %}
+
+{% block body_classes %}user_detail {{ block.super }}{% endblock body_classes %}
+{% block breadcrumb %}<a href="{% url 'blue_mgnt:users' %}">Back to Users</a>{% endblock breadcrumb %}
+{% block modal_options %}{% include "partials/delete-user-widget.html" %}{% endblock modal_options %}
+{% block navtab %}{% include "partials/navtab-widget.html" with active="users" %}{% endblock navtab %}
+{% block content %}
+<h1 class="page-header">
+	<i class="ss-icon">&#x1F464;</i> User Details
+</h1>
+
+{% if saved %}
+<p id="saved">Changes saved successfully!</p>
+{% endif %}
+{% if user_form.errors %}
+<div class="error-alert">
+    <p>{{ user_form.errors|length }} errors have been detected. Please see below for more information.</p>
+</div>
+{% endif %}
+<form method="POST" action="{% url 'blue_mgnt:user_detail' email %}">
+    {% csrf_token %}
+    <div class="" id="options">
+        <fieldset>
+            <table class="widget-table widget-table-details">
+                <tbody>
+            {% if not features.email_as_username %}
+            <tr>
+                <td><label>Username</label></td>
+                <td>{{ api_user.username }}</td>
+            </tr>
+            <td></td>
+            {% endif %}
+            {% for field in user_form %}
+            <tr>
+                <td>
+                    <div class="{{ field.errors|yesno:'error,' }}">
+                        {{ field.label_tag }}
+                    </div>
+                </td>
+                <td {{ field.errors|yesno:'style=overflow:visible,' }}>
+                    {% if field.errors %}
+                        {% for error in field.errors %}
+                        <span class="error-highlight">
+                            {{ field }}
+                            <span class="error-tag">{{ error }}</span>
+                        </span>
+                        {% endfor %}
+                    {% else %}
+                        {{ field }}
+                    {% endif %}
+                </td>
+                {% if field.html_name == 'group_id' %}
+                <td id="hint">
+                    <span>To change this users group, click on the
+                        Manage Groups button on the 
+                        <a href="{% url 'blue_mgnt:manage' %}">Manage page</a>.
+                    </span>
+                </td>
+                {% elif field.html_name == 'bonus_gigs' %}
+                <td id="hint">
+                    <span>Add extra space for this specific user.</span>
+                </td>
+                {% else %}
+                <td></td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+            <tr>
+                <td><label>Devices</label></td>
+                <td>{{ devices|length }}</td>
+                {% if devices|length > 0 %}
+                <td class="toggle-controller link-primary"><span></span> all devices</td>
+            </tr>
+            <tr class="widget-overview">
+                <td></td>
+                <td colspan="2">
+                    <table class="widget-table">
+                        <thead>
+                            <th>Name</th>
+                            <th>Creation Time</th>
+                            <th>Last Logged In</th>
+                        </thead>
+                        <tbody>
+                            {% for device in devices %}
+                            <tr>
+                                <td>{{ device.name }}</td>
+                                <td>{{ device.creation_time|todate }}</td>
+                                <td>{% if device.last_login %}
+                                    {{ device.last_login|todate }}
+                                    {% else %}
+                                    No login recorded
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </td>
+            </tr>
+            {% else %}
+            <td></td>
+        </tr>
+        {% endif %}
+            <tr>
+                <td><label>Shares</label></td>
+                <td>{{ shares|length }}</td>
+            {% if shares|length > 0 %}
+                <td class="toggle-controller link-primary"><span></span> all ShareRooms</td>
+            </tr>
+            <tr class="widget-overview">
+                <td></td>
+                <td colspan="2">
+                    <table class="widget-table">
+                        <thead>
+                            <th>Name</th>
+                            <th>Creation Time</th>
+                            <th>Last Logged In</th>
+                        </thead>
+                        <tbody>
+                            {% for share in shares %}
+                            <tr>
+                                <td>
+                                    <a class="link-primary" 
+                                        href="{{ share_url }}/browse/share/{{ api_user.share_identifier }}/{{ share.room_key }}">{{ share.name }}
+                                    </a>
+                                </td>
+                                <td>{{ share.creation_time|todate }}</td>
+                                <td>{% if share.last_login %}
+                                        {{ share.last_login|todate }}
+                                    {% else %}
+                                        No login recorded
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </td>
+            </tr>
+            {% else %}
+                <td></td>
+            </tr>
+            {% endif %}
+            <tr>
+                <td><label>GBs Stored</label></td>
+                <td>{{ api_user.bytes_stored|sofilesizeformat }}</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td><label>Storage GBs</label></td>
+                <td>{{ api_user.storage_bytes|sofilesizeformat }}</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td><label>Creation Time</label></td>
+                <td>{{ api_user.creation_time|todate }}</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td><label>Last Login</label></td>
+                <td>
+                    {% if api_user.last_login %}
+                    {{ api_user.last_login|todate }}
+                    {% else %}
+                    No login recorded
+                    {% endif %}
+                </td>
+                <td></td>
+            </tr>
+            <tr>
+                <td><label>Enabled</label></td>
+                <td>{{ api_user.enabled }}</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td><label>Storage Login</label></td>
+                <td>
+                    {% if devices|length > 0 %}
+                    <a href="{{ storage_login }}" target="_blank">storage login</a>
+                    {% else %}
+                    No devices created.
+                    {% endif %}
+                </td>
+                <td></td>
+            </tr>
+        </tbody>
+    </table>
+        </fieldset>
+        </div>
+            <div class="widget-actions short-right">
+                <input type='submit' value="Save Changes" class="rhs button button-primary-basic" id="edit_user">
+                <input type='hidden' value='edit_user' name='form'>
+            </div>
+            <div class="widget-splitactions float">
+                <button id="add-widget" class="button button-secondary">Delete User</button>
+            </div>
+    </form>
+{% endblock content %}

@@ -1,0 +1,58 @@
+<div class="modal-wrapper">
+    <div class="modal-content">
+        <h2 class="page-header"><i class="ss-icon">&#x1F512;</i>Add Admin Group
+            <span class="actions"><i class="ss-icon">&#x2421;</i></span>
+        </h2>
+            <div class="spacer"><!--ZXP--></div>
+<form action="{% url 'blue_mgnt:admin_groups' %}" enctype="multipart/form-data" method="post">
+    {% csrf_token %}
+    <table class="widget-table">
+        {% for field in new_admin_group.visible_fields %}
+        <tr>
+            <td class="modal-table-label{% if field.name == "permissions" %} set-top{% endif %}">
+                {{ field.label_tag }}
+            </td>
+            <td>
+                {% if field.name == "permissions" %}
+                    <!-- MOCKUP -->
+                    <div class="permissions-options">
+                        <input type="checkbox"> Can edit bonus GB's
+                        <br /><input type="checkbox"> Can manage groups
+                        <br /><input type="checkbox"> Can manage settings
+                        <br /><input type="checkbox"> Can manage users
+                        <br /><input type="checkbox"> Can view settings
+                    </div>
+                    <div class="permissions-options">
+                        <input type="checkbox"> Can manage admins
+                        <br /><input type="checkbox"> Can manage auth codes
+                        <br /><input type="checkbox"> Can enable/disable shares
+                        <br /><input type="checkbox"> Can view groups
+                        <br /><input type="checkbox"> Can view user data
+                    </div>
+                    <!-- END MOCKUP -->
+                {% else %}
+                    {{ field }}
+                {% endif %}
+            {% if field.errors %}
+                <br />
+                {% for error in field.errors %}
+                    <span class="errors">
+                            {{ error }}
+                    </span>
+                {% endfor %}
+            {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    <div class="widget-actions">
+        <input type='submit' value="Create Admin Group" class="rhs button button-primary-basic">
+    </div>
+    <input type='hidden' value='new_admin_group' name='form'>
+    {% for hidden in new_admin_group.hidden_fields %}
+        {{ hidden }}
+    {% endfor %}
+</form>
+</div>
+</div>
+

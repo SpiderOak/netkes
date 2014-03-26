@@ -1,0 +1,23 @@
+<div class="modal-wrapper">
+    <div class="modal-content confirm">
+        <form method="POST" action="{% url 'blue_mgnt:user_detail' email %}">
+            {% csrf_token %}
+            <input type='hidden' value='delete_user' name='form'>
+            <h2 class="page-header">
+                <span class="actions"><i class="ss-icon">&#x2421;</i></span>
+            </h2>
+            <div class="spacer"><!--ZXP--></div>
+            <div class="delete-notice">
+                <p>You are about to delete user {{api_user.name}}.</p>
+                <p>Are you sure you want to do this?</p>
+            </div>
+            <div class="widget-actions center-right">
+                <input type='submit'  name="proceed" value="Yes, Proceed" class="rhs button button-primary-basic" id="proceed">
+            </div>
+        </form>
+        <div class="widget-actions center-left">
+            <button class="cancel-action button button-muted">Cancel</button>
+        </div>
+    </div>
+</div>
+

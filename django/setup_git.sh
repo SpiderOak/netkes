@@ -1,36 +1,18 @@
 #!/bin/bash
 
 set -e
-#set -x
+set -x
 set -o pipefail
 
-pushd ${1:?}/django > /dev/null
+pushd ${1:?}/django
 
-echo
-echo Downloading other git modules:
-echo
 git clone https://github.com/jimfunk/django-postgresql-netfields.git
 
-mkdir apps
-pushd apps > /dev/null
-
-git clone https://spideroak.com/dist/blue_management.git
-git clone https://spideroak.com/dist/so_common.git
-pushd blue_management > /dev/null
-
-echo Initializing submodules...
-git submodule init
-git submodule update
-
-ln -s templates/base ../so_common/templates/base
-
-popd > /dev/null # blue_management
-popd > /dev/null #apps
-
+pwd
 # Setup the static content
 mkdir static
 
-ln -s /opt/openmanage/django/apps/so_common/static static/blue_common
+ln -s /opt/openmanage/django/apps/blue_management/blue_mgnt/static static/blue_mgnt
 
-popd > /dev/null
+popd
 
