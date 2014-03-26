@@ -1,0 +1,15 @@
+{% extends "error_base.html" %}
+{% block title %}404 - Management Console{{ block.super }}{% endblock %}
+{% block body_classes %}errors {{ block.super }}{% endblock body_classes %}
+{% block content %}
+<div class="image-wrapper">
+    <img src="/static/blue_mgnt/img/logo_large.png" />
+</div>
+
+<h1>Error 500 : Server Error</h1>
+<p>The server encountered an error or misconfiguration and was<br />
+unable to complete your request.<br />
+</p>
+
+{% endblock content %}
+

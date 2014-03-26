@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% load filter_todate %}
+{% block title %}Auth Codes - Management Console{{ block.super }}{% endblock %}
+{% block body_classes %}authcodes {{ block.super }}{% endblock body_classes %}
+{% block breadcrumb %}<a href="{% url 'blue_mgnt:manage' %}">Back to Manage</a>{% endblock breadcrumb %}
+{% block modal_options %}{% include "partials/add-authcode-widget.html" with active="manage" %}{% endblock modal_options %}
+{% block navtab %}{% include "partials/navtab-widget.html" with active="manage" %}{% endblock navtab %}
+{% block content %}
+<h1 class="page-header">
+	<i class="ss-icon">&#x1F511;</i> Auth Codes
+    <div class="actions">
+		<button id="add-widget" class="button button-primary-basic">Create Code</button>
+        <form action="{% url 'blue_mgnt:auth_codes' %}" method="GET">
+            <input name="show_disabled" type="hidden" value="{{ show_disabled }}">
+            {% if search %}
+                <a id="clear-search" href="{% url 'blue_mgnt:auth_codes' %}" class="">Clear Search</a>
+            {% endif %}
+            <input type="text" class="widget-search-input" value="{{ search }}" placeholder="Find Auth Codes">
+            <input type="submit" class="search-button ss-icon" value="&#x1F50E;">
+        </form>
+	</div>
+</h1>
+<div class="spacer"><!--ZXP--></div>
+{% if saved %}
+    <p id="saved">Changes saved successfully!</p>
+{% endif %}
+{% if new_code.errors %}
+<div class="error-alert">
+    <p>{{ new_code.errors|length }} errors have been detected. Please see below for more information.</p>
+</div>
+{% endif %}
+    <table id="groups" class="widget-table">
+        <thead>
+            <tr class="bigger">
+                <th>Token</th>
+                <th>Created/Expires</th>
+                <th>Single Use?</th>
+                <th>No Devices?</th>
+                <th>Used</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for code in codes %}
+            <tr{% if code.new_token %} class="success"{% endif %}>
+                <td>{{ code.token }}
+                    <div class="code-extra-info">
+                        {% if code.active %}
+                        <form method="post" action="{% url 'blue_mgnt:auth_codes' %}?show_inactive={{show_inactive }}">
+                            {% csrf_token %}
+                            <input type='submit' 
+                                value="Disable Code" 
+                                class="button button-muted thin" 
+                                id="edit_share" 
+                                style="display: inline-block">
+                            <input type='hidden' value='disable_code' name='form'>
+                            <input type='hidden' value='{{ code.token }}' name='token'>
+                        </form>
+                        {% else %}
+                            <span style="color:#ff0000">Disabled</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td>{{ code.date_created|todate }}<br />
+                    {{ code.expiry|todate }}</td>
+                    <td>{{ code.no_devices_only }}</td>
+                    <td>{{ code.single_use_only }}</td>
+                    <td>{{ code.used }}</td>
+                    </tr><tr>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if page > 1 %}
+    {% block pagination %}{% include "partials/pagination-widget.html" %}{% endblock pagination %}
+    {% endif %}
+    <div class="widget-actions">
+        <a href="{% url 'blue_mgnt:auth_codes' %}?show_inactive={{ show_inactive|yesno:"0, 1" }}" 
+            class="button button-muted">
+            {{ show_inactive|yesno:"Hide Disabled, Show Disabled" }} Auth Codes
+        </a>
+    </div>
+{% endblock content %}

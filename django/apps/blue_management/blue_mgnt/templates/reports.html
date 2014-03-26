@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% load filter_todate %}
+{% load so_filters %}
+
+{% block title %}Reports - Management Console{{ block.super }}{% endblock %}
+
+{% block body_classes %}reports {{ block.super }}{% endblock body_classes %}
+{% block navtab %}{% include "partials/navtab-widget.html" with active="reports" %}{% endblock navtab %}
+{% block content %}
+<h1 class="page-header">
+	<i class="ss-icon">&#x1F4CA;</i> Reports
+</h1>
+<div class="spacer"><!--ZKP--></div>
+<div class="row">
+    <div class="report-stat">
+        <p class="stat-number">{{ average_num_devices }}</p>
+        <p class="stat-description">Average Number of Devices Per User</p>
+    </div>
+    <div class="report-stat">
+        <p class="stat-number">{{ share_count }}</p>
+        <p class="stat-description">Total Number of ShareRooms</p>
+    </div>
+    <div class="widget-manage-blocks">
+        <div class="manage-icon"><i class="ss-icon">&#xED50;</i></div>
+        <div class="manage-content">
+            <h3>Logs</h3>
+            <p>Logs of admin actions within the management console.</p>
+            <a href="{% url 'blue_mgnt:logs' %}" class="button button-primary-basic">Manage Logs</a>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="report-stat">
+        <p class="stat-number">{{ average_stored }}</p>
+        <p class="stat-description">Average GB Stored Per User</p>
+    </div>
+    <div class="report-stat">
+        <p class="stat-number">{{ device_count }}</p>
+        <p class="stat-description">Total Number of Devices</p>
+    </div>
+    {% comment %}
+    <div class="widget-manage-blocks">
+        <div class="manage-icon"><i class="ss-icon">&#xF000;</i></div>
+        <div class="manage-content">
+            <h3>Backup Activity</h3>
+            <p>We need a desctiption here</p>
+            <a href="" class="button button-primary-basic">Edit Account</a>
+        </div>
+    </div>
+    {% endcomment %}
+</div>
+{% endblock content %}
+

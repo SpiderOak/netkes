@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Logs - Management Console{{ block.super }}{% endblock %}
+{% block body_classes %}logs {{ block.super }}{% endblock body_classes %}
+{% block breadcrumb %}<a href="{% url 'blue_mgnt:manage' %}">Back to Manage</a>{% endblock breadcrumb %}
+{% block modal_options %}{% include "partials/add-user-widget.html" with active="users" %}{% endblock modal_options %}
+{% block navtab %}{% include "partials/navtab-widget.html" with active="manage" %}{% endblock navtab %}
+{% block content %}
+<h1 class="page-header">
+	<i class="ss-icon">&#xED50;</i> Logs
+    <div class="actions">
+        <form action="{% url 'blue_mgnt:logs' %}" method="GET">
+            <input name="show_disabled" type="hidden" value="{{ show_disabled }}">
+            {% if search %}
+                <a id="clear-search" href="{% url 'blue_mgnt:logs' %}" class="">Clear Search</a>
+            {% endif %}
+            <input type="text" id="input_search" name="search" class="widget-search-input" value="{{ search }}" placeholder="Find Logs">
+            <input type="submit" class="search-button ss-icon" value="&#x1F50E;">
+        </form>
+	</div>
+</h1>
+<table id="groups" class="widget-table">
+    <thead>
+        <tr class="bigger">
+            <th>Log</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for log in log_entries %}
+        <tr>
+            <td>
+                <span class="start-pos">{{ log }}<span class="end-pos"></span></span>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% if page >= 1 %}
+{% block pagination %}{% include "partials/pagination-widget.html" %}{% endblock pagination %}
+{% endif %}
+
+<div class="widget-actions">
+    <a class="rhs button button-primary-basic" href="/logs/download/">Download Logs</a>
+</div>
+</div>
+{% endblock content %}

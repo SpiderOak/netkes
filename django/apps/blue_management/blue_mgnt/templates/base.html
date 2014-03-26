@@ -1,0 +1,98 @@
+<!doctype html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<title>{% block title %}{% endblock title %}</title>
+	<meta name="description" content="{% block meta_description %}{% endblock meta_description %}" />
+	<meta name="keywords" content="{% block meta_keywords %}{% endblock meta_keywords %}" />
+	<meta name="robots" content="{% block meta_bots %}noindex, nofollow{% endblock meta_bots %}" />
+
+	{% block base_styles %}
+	{% endblock base_styles %}
+
+    {% block styles %}
+    <link rel="stylesheet" href="/static/blue_mgnt/css/ss-standard.css" />
+	<link rel="stylesheet/less" href="/static/blue_mgnt/less/style.less" type="text/css" />
+    {% endblock styles %}
+
+	{% block jquery %}
+	<script src="/static/blue_mgnt/vendor/jquery-1.10.2.min.js" type="text/javascript"></script>
+	<script type="text/javascript" src="/static/blue_mgnt/vendor/less-1.5.0.min.js"></script>
+	<script src="/static/blue_mgnt/js/console.js" type="text/javascript"></script>
+	{% endblock jquery %}
+	<!--[if lt IE 9]>
+		<script src="/static/blue_common/scripts/html5shiv.js"></script>
+	<![endif]--> 
+	<!--[if lt IE 8]>
+		<link rel="stylesheet" href="/static/blue_common/styles/soblue_ie7.css" type="text/css" />
+	<![endif]--> 
+</head>
+<body class="{% block body_classes %}{% endblock body_classes %}">
+    <div class="shield">
+        <img src="/static/blue_mgnt/img/loading.gif" class="loader" />
+    </div>
+{% if not request_login %}
+    {% block modal_options %}{% endblock modal_options %}
+	<div id="bg-gradient">
+		<div><!--ZKP--></div>
+	</div>
+
+	<header>
+		<div>
+			<h1>
+				<a href="/">
+					<img src="/static/blue_mgnt/img/logo.png" alt="logo" />
+				</a>
+			</h1>
+			<ul>
+                <li>( {{ account_info.api_user|title }} )</li>
+				<li>{{ username }}</li>
+				<li class="line"><a href=""><i class="ss-icon">&#x2753;</i>Help</a></li>
+				<li class="line"><a href="{% url "blue_mgnt:logout" %}"><i class="ss-icon">&#x1F512;</i>Logout</a></li>
+			</ul>
+		</div>
+	</header>
+
+	<div class="overlord">
+		{% block navtab %}{% include "partials/navtab-widget.html" %}{% endblock navtab %}
+		<div class="account-overview">
+			<ul>
+				<li>
+                <i class="ss-icon">&#x1F464;</i> <strong>Total Users:</strong> {{account_info.total_users}}</li>
+				<li>
+                <i class="ss-icon">&#x1F465;</i> <strong>Total Groups:</strong> {{account_info.total_groups}}</li>
+				<li>
+                <i class="ss-icon">&#x1F511;</i> <strong>Total Auth Codes:</strong> {{account_info.total_auth_codes }}</li>
+			</ul>
+		</div>
+		<div class="spacer"><!--ZKP--></div>
+		<div class="breadcrumb">{% block breadcrumb %}{% endblock breadcrumb%}</div>
+		<div class="spacer"><!--ZKP--></div>
+{% endif %}
+{% if request_login %}
+        <div class="overlord">
+{% endif %}
+		<div class="content">{% block content %}{% endblock content %}</div>
+        <div class="spacer"><!--ZKP--></div>
+		<div class="footer">
+			<p>Copyright &copy; 2014 Spideroak. All Rights Reserved.</p>
+			<ul>
+				<li><a href="https://spideroak.com/about/">About</a></li>
+				<li><a href="https://spideroak.com/privacy_policy">Privacy Policy</a></li>
+				<li><a href="https://spideroak.com/terms_of_use">Terms of Use</a></li>
+			</ul>
+			<div class="spacer"><!--ZKP--></div>
+		</div>
+	</div>
+
+	<noscript>
+		<div class="javascript-required">
+			<h3>Error: Scripting Disabled</h3>
+			<p>This page requires JavaScript to operate properly.</p>
+			<p>Please use a compatible browser or enable JavaScript.</p>
+		</div>
+	</noscript>
+	{% block js_templates %}{% endblock js_templates %}
+	{% block js_main %}{% endblock js_main %}
+</body>
+</html>

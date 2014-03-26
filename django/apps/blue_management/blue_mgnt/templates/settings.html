@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}Account - Management Console{{ block.super }}{% endblock %}
+{% block body_classes %}settings {{ block.super }}{% endblock body_classes %}
+{% block breadcrumb %}<a href="{% url 'blue_mgnt:manage' %}">Back to Manage</a>{% endblock breadcrumb %}
+{% block modal_options %}{% include "partials/add-ip-blocks-widget.html" with active="manage" %}{% endblock modal_options %}
+{% block navtab %}{% include "partials/navtab-widget.html" with active="manage" %}{% endblock navtab %}
+{% block content %}
+{% if sync_output or rebuild_output %}
+<div class="status-message">
+    <div class="status-content">
+        <h2 class="page-header"><i class="ss-icon">&#x2699;</i>Status
+            <span class="actions"><i class="ss-icon">&#x2421;</i></span>
+        </h2>
+            <div class="spacer"><!--ZXP--></div>
+            <code>{{ sync_output }}</code>
+            <code>{{ rebuild_output }}</code>
+    </div>
+</div>
+{% endif %}
+<h1 class="page-header">
+	<i class="ss-icon">&#x1F464;</i> Accounts
+    <div class="actions">
+		<button id="add-widget" class="button button-primary-basic">Add IP Blocks</button>
+	</div>
+</h1>
+<div class="spacer"></div>
+{% if saved %}
+    <p id="saved">Changes saved successfully!</p>
+{% endif %}
+{% if options.errors %}
+<div class="error-alert">
+    <p>{{ options.errors|length }} errors have been detected. Please see below for more information.</p>
+</div>
+{% endif %}
+    <form method="post" action="{% url 'blue_mgnt:settings' %}">
+    {% csrf_token %}
+        <fieldset>
+            <table class="widget-table">
+            {% for field in options %}
+                <tr>
+                    <td class="widget-table-label">
+                        <div class="{{ field.errors|yesno:'error,' }}">
+                            {{ field.label_tag }}
+                        </div>
+                    </td>
+                    <td>
+                    {% if field.errors %}
+                    {% for error in field.errors %}
+                    <span class="error-highlight">
+                        {{ field }}
+                        <span class="error-tag">{{ error }}</span>
+                    </span>
+                    {% endfor %}
+                    {% else %}
+                        {{ field }}
+                    {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </table>
+        </fieldset>
+        <div class="widget-actions short-right">
+            {% if perms.blue_mgnt.can_manage_settings %}
+            <input type='submit' value="Save Changes" class="rhs button button-primary-basic" id="">
+            {% endif %}
+        </div>
+        <input type='hidden' value='management' name='form'>
+    </form>
+    <div class="widget-splitactions float">
+        <a class="button button-secondary" href="{% url 'blue_mgnt:password' %}">Change Password</a>
+        {% if perms.blue_mgnt.can_manage_settings %}
+        <form method="post" action="{% url 'blue_mgnt:settings' %}">
+            {% csrf_token %}
+            <input type='hidden' value='reboot' name='form'>
+            <input type='submit' value="Reboot Virtual Appliance" class="button button-muted">
+        </form>
+        <form method="post" action="{% url 'blue_mgnt:settings' %}">
+            {% csrf_token %}
+            <input type='hidden' value='restart_directory' name='form'>
+            <input type='submit' value="Restart Directory / Services" class="button button-muted">
+        </form>
+        <div class="space-20none">
+            <form method="post" action="{% url 'blue_mgnt:settings' %}">
+                {% csrf_token %}
+                <input type='hidden' value='sync' name='form'>
+                <input type='submit' value="Sync Virtual Appliance" class="button button-muted">
+            </form>
+            <form method="post" action="{% url 'blue_mgnt:settings' %}">
+                {% csrf_token %}
+                <input type='hidden' value='rebuild_db' name='form'>
+                <input type='submit' value="Rebuild DB" class="button button-muted">
+            </form>
+        </div>
+        {% endif %}
+    </div>
+{% endblock content %}

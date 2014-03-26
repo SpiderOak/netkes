@@ -1,0 +1,61 @@
+<div class="modal-wrapper">
+    <div class="modal-content">
+        <h2 class="page-header"><i class="ss-icon">&#x1F511;</i>Create New Setup Code
+            <span class="actions"><i class="ss-icon">&#x2421;</i></span>
+        </h2>
+            <div class="spacer"><!--ZXP--></div>
+<form action="{% url 'blue_mgnt:auth_codes' %}?show_inactive={{ show_inactive }}" enctype="multipart/form-data" method="post">
+    {% csrf_token %}
+    <table class="widget-table">
+        {% for field in new_code.visible_fields %}
+        <tr>
+            <td class="modal-table-label">
+                <div class="{{ field.errors|yesno:'error,' }}">
+                    {{ field.label_tag }}
+                </div>
+            </td>
+            <td>
+                {% if field.errors %}
+                    {% for error in field.errors %}
+                    <span class="error-highlight">
+                        {{ field }}
+                        <span class="error-tag">{{ error }}</span>
+                    </span>
+                    {% endfor %}
+                {% else %}
+                    {{ field }}
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+        {% comment %}
+        <!-- MOCKUP -->
+        <tr>
+            <td>
+                <label>Actions</label>
+            </td>
+            <td>
+                <input type="radio" class="radio-submit"name="action-select" id=""> Global
+                <input type="radio" class="radio-submit" name="action-select" id=""> By Group:
+                <select>
+                    <option>Select Group</option>
+                    <option value="a">a</option>
+                    <option value="b">b</option>
+                    <option value="c">c</option>
+                    <option value="d">d</option>
+                </select>
+            </td>
+        </tr>
+        <!-- END MOCKUP -->
+        {% endcomment %}
+    </table>
+    <div class="widget-actions">
+        <input type='submit' value="Create Auth Code" class="rhs button button-primary-basic">
+    </div>
+    <input type='hidden' value='new_code' name='form'>
+    {% for hidden in new_code.hidden_fields %}
+        {{ hidden }}
+    {% endfor %}
+</form>
+</div>
+</div>

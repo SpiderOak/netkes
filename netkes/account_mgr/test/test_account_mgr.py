@@ -64,5 +64,6 @@ class TestAdminTokenAuth(unittest.TestCase):
                                          sentinel.username, 
                                          sentinel.password)
         )
+
 if __name__ == '__main__':
     unittest.main()

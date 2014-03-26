@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<title>{% block title %}{% endblock title %}</title>
+	<meta name="description" content="{% block meta_description %}{% endblock meta_description %}" />
+	<meta name="keywords" content="{% block meta_keywords %}{% endblock meta_keywords %}" />
+	<meta name="robots" content="{% block meta_bots %}noindex, nofollow{% endblock meta_bots %}" />
+
+	{% block base_styles %}
+	{% endblock base_styles %}
+
+    {% block styles %}
+    <link rel="stylesheet" href="/static/blue_mgnt/css/ss-standard.css" />
+	<link rel="stylesheet/less" href="/static/blue_mgnt/less/style.less" type="text/css" />
+    {% endblock styles %}
+
+	{% block jquery %}
+	<script type="text/javascript" src="/static/blue_mgnt/vendor/less-1.5.0.min.js"></script>
+	{% endblock jquery %}
+	<!--[if lt IE 9]>
+		<script src="/static/blue_common/scripts/html5shiv.js"></script>
+	<![endif]--> 
+	<!--[if lt IE 8]>
+		<link rel="stylesheet" href="/static/blue_common/styles/soblue_ie7.css" type="text/css" />
+	<![endif]--> 
+</head>
+<body class="{% block body_classes %}{% endblock body_classes %}">
+    <div class="overlord">
+		<div class="content">{% block content %}{% endblock content %}</div>
+        <div class="spacer"><!--ZKP--></div>
+		<div class="footer">
+			<p>Copyright &copy; 2014 Spideroak. All Rights Reserved.</p>
+			<ul>
+				<li><a href="https://spideroak.com/about/">About</a></li>
+				<li><a href="https://spideroak.com/privacy_policy">Privacy Policy</a></li>
+				<li><a href="https://spideroak.com/terms_of_use">Terms of Use</a></li>
+			</ul>
+			<div class="spacer"><!--ZKP--></div>
+		</div>
+	</div>
+</body>
+</html>
+

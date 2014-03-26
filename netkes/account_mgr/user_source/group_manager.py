@@ -80,7 +80,7 @@ def _process_query(db_conn, query, extras=None):
 
     return results
 
-def _calculate_changes_against_db(db_conn, users):
+def _calculate_changes_against_db(db_conn, config, users):
     """
     Calculates the changes necessary by comparing our groups from LDAP to the DB.
     """
@@ -98,7 +98,23 @@ def _calculate_changes_against_db(db_conn, users):
         cur.executemany("INSERT INTO ldap_users (uniqueid, email, givenname, surname, group_id) VALUES (%(uniqueid)s, %(email)s, %(firstname)s, %(lastname)s, %(group_id)s);",
                     users)
 
+    ordered_groups = sorted(config['groups'], 
+                            key=lambda x: x['priority'],
+                            reverse=True)
+
+    delete_duplicate_groups = '''
+    delete from ldap_users lu1 
+    using ldap_users lu2
+    where lu1.email = lu2.email and lu1.group_id != lu2.group_id 
+        and lu1.group_id != %s
+    '''
+
+    for group in ordered_groups:
+        group_id = group['group_id']
+        cur.execute(delete_duplicate_groups, [group['group_id']])
+
     cur.execute("SELECT email, count(email) as occurences from ldap_users group by email having ( count(email) > 1 )")
+
     for row in cur.fetchall():
         log.error("---> Duplicate user %s found %d times in LDAP query!", row[0], row[1])
 
@@ -144,7 +160,7 @@ def run_group_management(config, db_conn):
     ldap_conn = ldap_source.OMLDAPConnection(config["dir_uri"], config["dir_base_dn"], config["dir_user"], config["dir_password"])
 
     ldap_users = ldap_source.collect_groups(ldap_conn, config)
-    change_groups = _calculate_changes_against_db(db_conn, ldap_users)
+    change_groups = _calculate_changes_against_db(db_conn, config, ldap_users)
 
     runner = account_runner.AccountRunner(config, db_conn)
     runner.runall(change_groups)
@@ -212,9 +228,13 @@ def run_db_repair(config, db_conn):
                     "%(group_id)s, %(enabled)s);",
                     spider_users)    
 
-    cur.execute("SELECT email, count(email) as occurences from ldap_users group by email having ( count(email) > 1 )")
-    for row in cur.fetchall():
-        log.error("---> Duplicate user %s found %d times in LDAP query!", row[0], row[1])
+    # Delete duplicate rows
+    cur.execute("DELETE FROM ldap_users "
+                "WHERE ctid NOT IN "
+                "(SELECT MAX(l.ctid) "
+                "FROM ldap_users l "
+                "GROUP BY l.email)"
+               )
 
     # Clear out the current database.
     cur.execute("DELETE FROM users;")

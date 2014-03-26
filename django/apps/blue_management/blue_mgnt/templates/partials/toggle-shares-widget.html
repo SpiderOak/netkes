@@ -1,0 +1,25 @@
+<div class="modal-wrapper">
+    <div class="modal-content confirm">
+        <form method="POST" action="{% url 'blue_mgnt:shares' %}">
+            {% csrf_token %}
+            <h2 class="page-header">
+                <span class="actions"><i class="ss-icon">&#x2421;</i></span>
+            </h2>
+            <div class="spacer"><!--ZXP--></div>
+            <div class="delete-notice">
+                <p>You are about to {{ sharing_enabled|yesno:"disable, enable" }} all shares.</p>
+                <p>Are you sure you want to do this?</p>
+            </div>
+            <div class="widget-actions center-right">
+                <input type='submit' value="Yes, Proceed" class="rhs button button-primary-basic" id="proceed" />
+            </div>
+            <input type='hidden' value='{{ sharing_enabled }}' name='sharing_enabled'>
+            <input type='hidden' value='edit_shares' name='form'>
+        </form>
+        <div class="widget-actions center-left">
+            <button class="cancel-action button button-muted">Cancel</button>
+        </div>
+    </div>
+</div>
+
+

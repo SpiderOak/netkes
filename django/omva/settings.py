@@ -1,6 +1,7 @@
 import os
 import sys
 from netkes import common
+import logging
 
 PROJECT_DIR = os.path.abspath(os.path.dirname(__file__))
 
@@ -17,6 +18,16 @@ MANAGERS = ADMINS
 common.set_config(common.read_config_file())
 config = common.get_config()
 
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'openmanage',
+        'USER': 'admin_console',
+        'PASSWORD': 'iexyjtso',
+        'HOST': 'localhost',
+    }
+}
+
 DATABASE_ENGINE = 'postgresql_psycopg2'           # 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
 DATABASE_NAME = 'openmanage'             # Or path to database file if using sqlite3.
 DATABASE_USER = 'admin_console'             # Not used with sqlite3.
@@ -31,12 +42,14 @@ EMAIL_PORT = 25
 
 MANAGEMENT_VM = True
 
+LOGIN_URL = '/login/'
+
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 # although not all choices may be available on all operating systems.
 # If running in a Windows environment this must be set to the same as your
 # system time zone.
-TIME_ZONE = 'America/Chicago'
+TIME_ZONE = None
 
 # Language code for this installation. All choices can be found here:
 # http://www.i18nguy.com/unicode/language-identifiers.html
@@ -57,6 +70,8 @@ MEDIA_ROOT = ''
 # Examples: "http://media.lawrence.com", "http://example.com/media/"
 MEDIA_URL = ''
 
+ALLOWED_HOSTS = ['*']
+
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
 # Examples: "http://foo.com/media/", "/media/".
@@ -67,14 +82,14 @@ SECRET_KEY = os.environ['DJANGO_SECRET_KEY']
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.load_template_source',
-    'django.template.loaders.app_directories.load_template_source',
-#     'django.template.loaders.eggs.load_template_source',
+    'django.template.loaders.filesystem.Loader',
+    'django.template.loaders.app_directories.Loader'
 )
 
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.middleware.transaction.TransactionMiddleware',
     'pagination.middleware.PaginationMiddleware',
@@ -94,6 +109,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     'django.core.context_processors.i18n',
     'django.core.context_processors.media',
     'django.core.context_processors.request',
+    'blue_mgnt.context_processors.blue_common',
 )
 
 INSTALLED_APPS = (
@@ -106,8 +122,16 @@ INSTALLED_APPS = (
     'pagination',
 )
 
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': '/opt/openmanage/django_cache',
+    }
+}
+
+
 AUTHENTICATION_BACKENDS = (
-    'blue_mgnt.views.views.LdapBackend',
+    'blue_mgnt.views.views.NetkesBackend',
 )
 
 LOG_DIR = '/var/log/admin_console/'
@@ -124,10 +148,7 @@ LOGGING = {
             'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
         },
         'simple': {
-            'format': '%(levelname)s %(message)s'
-        },
-        'admin_actions': {
-            'format': '%(asctime)s-%(levelname)s-%(message)s'
+            'format': '%(levelname)s %(asctime)s %(message)s'
         },
     },
     'handlers': {
@@ -145,7 +166,7 @@ LOGGING = {
         'admin_actions_files':{
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
-            'formatter': 'admin_actions',
+            'formatter': 'simple',
             'filename': os.path.join(LOG_DIR, ADMIN_ACTIONS_LOG_FILENAME)
         },
     },
@@ -160,6 +181,8 @@ LOGGING = {
             'propagate': True,
             'level': 'DEBUG',
         },
+    },
+    'root': {
+        'handlers': ['console']
     }
 }
-

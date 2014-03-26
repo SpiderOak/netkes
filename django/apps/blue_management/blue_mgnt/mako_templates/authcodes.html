@@ -1,0 +1,114 @@
+<%inherit file="main.html" />
+
+<%def name="title()">Auth Codes - ${parent.title()}</%def>
+
+<%def name="head()"></%def>
+
+<%def name="top_of_head()">
+</%def>
+
+<%def name="scripts()">
+<script src="/static/blue_common/scripts/jquery.form.js"></script>
+<script type="text/javascript"> 
+$(function(){
+});
+</script>
+</%def>
+
+<%def name="body_classes()">auth_codes ${parent.body_classes()}</%def>
+<%def name="container()">
+<h1 class="header">Enterprise Partner: <span>${username}</span></h1>
+<div class="recenter">
+<div class="division">
+${parent.progressbar()}
+</div>
+</div>
+<div style="margin:0 auto; width:950px"
+<div id="" class="section">
+<h2>Create New Setup Code</h2>
+<form action="${reverse('blue_mgnt:auth_codes')}?show_inactive=${show_inactive}" enctype="multipart/form-data" method="post">
+    <table class="table" style="max-width:100%">
+        <tr>
+        %for field in new_code.visible_fields():
+            <td>
+                ${field.label_tag()}
+                ${field}
+            %if field.errors:
+                <br />
+                %for error in field.errors:
+                    <span class="errors">
+                            ${error}
+                    </span>
+                %endfor
+            %endif
+            </td>
+
+        %endfor
+            <td style="padding-top:30px">
+            <input type='submit' value="+ Create Code" class="btn btn-primary">
+            </td>
+        </tr>
+    </table>
+    <input type='hidden' value='new_code' name='form'>
+    %for hidden in new_code.hidden_fields():
+        ${hidden}
+    %endfor
+</form>
+</div>
+<div class="section" style="clear:both">
+    <h2 style="float:left">Auth Codes</h2>
+    <a href="${reverse('blue_mgnt:auth_codes')}?show_inactive=${0 if show_inactive else 1}" 
+        class="btn btn-primary" 
+        style="display:inline; float:right; padding:0 10px; margin-right:12px">
+        <i class="${'icon-eye-close' if show_inactive else 'icon-eye-open'} icon-white" style="margin-top:3px"></i>
+        ${'Hide Inactive' if show_inactive else 'Show Inactive'}
+    </a>
+    <table id="groups" class="table">
+        <thead>
+            <tr class="bigger">
+                <th>Token</th>
+                <th>Created</th>
+                <th>Expires</th>
+                <th>Single Use Only</th>
+                <th>No Devices Only</th>
+                <th>Used</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            % for code in codes:
+                <tr${' class="success"' if code.new_token() else ''}>
+                    <td>${code.token}</td>
+                    <td>${code.date_created.strftime('%Y-%m-%d %H:%M:%S')}</td>
+                    <td>${code.expiry.strftime('%Y-%m-%d %H:%M:%S')}</td>
+                    <td>${code.no_devices_only}</td>
+                    <td>${code.single_use_only}</td>
+                    <td>${code.used}</td>
+                    <td>
+                        % if code.active:
+                        <form method="post" action="${reverse('blue_mgnt:auth_codes')}?show_inactive=${show_inactive}">
+                            <input type='submit' 
+                                value="Disable Code" 
+                                class="btn btn-primary" 
+                                id="edit_share" 
+                                style="display: inline-block">
+                            <input type='hidden' value='disable_code' name='form'>
+                            <input type='hidden' value='${code.token}' name='token'>
+                        </form>
+                        % endif
+                    </td>
+                </tr>
+            % endfor
+        </tbody>
+    </table>
+    <div id="pagination" class="bigger" style="text-align:center">
+        % if page > 1:
+            <a href="${reverse('blue_mgnt:auth_codes')}?page=${page - 1}">previous</a>
+        % endif
+        Page ${page}
+        % if next_page:
+            <a href="${reverse('blue_mgnt:auth_codes')}?page=${page + 1}">next</a>
+        % endif
+    </div>
+</div>
+</%def>

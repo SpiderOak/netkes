@@ -1,0 +1,15 @@
+{% extends "error_base.html" %}
+{% block title %}404 - Management Console{{ block.super }}{% endblock %}
+{% block body_classes %}errors {{ block.super }}{% endblock body_classes %}
+{% block content %}
+<div class="image-wrapper">
+    <img src="/static/blue_mgnt/img/logo_large.png" />
+</div>
+
+<h1>Error 404 : Page Not Found</h1>
+<p>The page you are trying to access can not be found.<br />
+The page may have moved or no longer exist.<br />
+Try starting <a href="/">at the homepage</a> to reorient yourself.
+</p>
+
+{% endblock content %}

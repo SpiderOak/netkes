@@ -60,51 +60,55 @@ def get_layers(environ, start_response):
 
     return SuperSimple(layer_data, ctype="application/octet-stream")(environ, start_response)
 
+def login_required(fun):
+    def decorator(environ, start_response):
+        log = logging.getLogger('login_required')
+        log.debug("start")
+        try:
+            brand_identifier = environ['query_data']['brand_id'][0]
+            username = environ['query_data']['username'][0]
+            password = environ['query_data']['password'][0]
+            crypt_pw = environ['query_data'].get('crypt_pw', ["True"])[0]
+        except KeyError:
+            log.error("Got bad request.")
+            return BadRequest()(environ, start_response)
+
+        decoded_user = unquote(username)
+
+        # If we get anything OTHER than explicitly "False" in the request, we will assume it's an encrypted password.
+        if crypt_pw == "False":
+            plaintext_password = password
+        else:
+            try:
+                plaintext_password = server.read_escrow_data(
+                    brand_identifier, password)
+            except KeyError:
+                log.warn("missing identifier %s" % (brand_identifier,))
+                return NotFound()(environ, start_response)
+            except ValueError:
+                log.warn("bad values for authenticating user %s" % (decoded_user,))
+                return BadRequest()(environ, start_response)
+            except Exception:
+                log.exception("server.read_escrow_data failed for user %s brand %s"
+                        % (decoded_user, brand_identifier,))
+                return ServerError()(environ, start_response)
+
+        if not authenticator(get_config(), decoded_user, plaintext_password):
+            log.info("Auth failed for %s" % (decoded_user,))
+            return Forbidden()(environ, start_response)
+
+        log.info("Auth OK for brand %s with user %s" % (brand_identifier, decoded_user, ))
+        return fun(environ, start_response)
+    return decorator
 
 @read_querydata
+@login_required
 def authenticate_user(environ, start_response):
-    log = logging.getLogger('authenticate_user')
-    log.debug("start")
-
-    try:
-        brand_identifier = environ['query_data']['brand_id'][0]
-        username = environ['query_data']['username'][0]
-        password = environ['query_data']['password'][0]
-        crypt_pw = environ['query_data'].get('crypt_pw', ["True"])[0]
-    except KeyError:
-        log.error("Got bad request.")
-        return BadRequest()(environ, start_response)
-
-    decoded_user = unquote(username)
-
-    # If we get anything OTHER than explicitly "False" in the request, we will assume it's an encrypted password.
-    if crypt_pw == "False":
-        plaintext_password = password
-    else:
-        try:
-            plaintext_password = server.read_escrow_data(
-                brand_identifier, password)
-        except KeyError:
-            log.warn("missing identifier %s" % (brand_identifier,))
-            return NotFound()(environ, start_response)
-        except ValueError:
-            log.warn("bad values for authenticating user %s" % (decoded_user,))
-            return BadRequest()(environ, start_response)
-        except Exception:
-            log.exception("server.read_escrow_data failed for user %s brand %s"
-                      % (decoded_user, brand_identifier,))
-            return ServerError()(environ, start_response)
-
-    if not authenticator(get_config(), decoded_user, plaintext_password):
-        log.info("Auth failed for %s" % (decoded_user,))
-        return Forbidden()(environ, start_response)
-
-    log.info("Auth OK for brand %s with user %s" % (brand_identifier, decoded_user, ))
     return SuperSimple("OK")(environ, start_response)
-
 
 @read_querydata
 @read_postdata
+@login_required
 def read_data(environ, start_response):
     log = logging.getLogger("read_data")
 
@@ -129,11 +133,14 @@ def read_data(environ, start_response):
 
     try:
         if layer_count is None:
-            plaintext_data = server.read_escrow_data(brand_identifier, escrowed_data, sign_key=sign_key)
+            plaintext_data = server.read_escrow_data(brand_identifier, 
+                                                     escrowed_data, 
+                                                     sign_key=sign_key)
         else:
-            plaintext_data = server.read_escrow_data(brand_identifier, escrowed_data,
+            plaintext_data = server.read_escrow_data(brand_identifier, 
+                                                     escrowed_data,
                                                      layer_count=layer_count,
-                                                     sign_key = sign_key)
+                                                     sign_key=sign_key)
     except ValueError:
         log.warn("ValueError at reading escrow data")
         return BadRequest()(environ, start_response)

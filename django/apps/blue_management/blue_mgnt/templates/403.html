@@ -1,0 +1,14 @@
+{% extends "error_base.html" %}
+{% block title %}404 - Management Console{{ block.super }}{% endblock %}
+{% block body_classes %}errors {{ block.super }}{% endblock body_classes %}
+{% block content %}
+<div class="image-wrapper">
+    <img src="/static/blue_mgnt/img/logo_large.png" />
+</div>
+
+<h1>Error 403 : Permission Denied</h1>
+<p>You do not have permission to access this page. 
+Please contact your administrator if you believe you should have access.
+</p>
+
+{% endblock content %}

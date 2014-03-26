@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% load filter_todate %}
+{% block title %}Shares - Management Console{{ block.super }}{% endblock %}
+
+{% block body_classes %}shares {{ block.super }}{% endblock body_classes %}
+{% block modal_options %}{% include "partials/toggle-shares-widget.html" %}{% endblock modal_options %}
+{% block navtab %}{% include "partials/navtab-widget.html" with active="shares" %}{% endblock navtab %}
+{% block content %}
+<h1 class="page-header">
+	<i class="ss-icon">&#xEE00;</i> Shares
+    <div class="actions">
+        <form action="{% url 'blue_mgnt:shares' %}" method="GET">
+            <input name="show_disabled" type="hidden" value="{{ show_disabled }}">
+            {% if search %}
+                <a id="clear-search" href="{% url 'blue_mgnt:shares' %}" class="">Clear Search</a>
+            {% endif %}
+            <input type="text" class="widget-search-input" value="{{ search }}" placeholder="Find Shares">
+            <input type="submit" class="search-button ss-icon" value="&#x1F50E;">
+        </form>
+	</div>
+</h1>
+<form action="{% url 'blue_mgnt:shares' %}" method="POST" action="">
+    {% csrf_token %}
+    <table id="groups" class="widget-table">
+        <thead>
+            <tr class="bigger">
+                <th>Name</th>
+                <th>Creator</th>
+                {% if features.email_as_username %}
+                <th>Email</th>
+                {% else %}:
+                <th>Username</th>
+                {% endif %}
+                <th>Creation Time</th>
+                <th>Details</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+                {% for share in user.shares %}
+                <tr>
+                    <td>{{ share.name }}</td>
+                    <td>{{ user.name }}</td><!-- Switch for "created by" -->
+                    {% if features.email_as_username %}
+                    <td>{{ user.email }}</td>
+                    {% else %}
+                    <td>{{ user.username }}</td>
+                    {% endif %}
+                    <td>{{ share.creation_time|todate }}</td>
+                    <td><a href="{% url 'blue_mgnt:share_detail' user.email share.room_key %}">
+                            Details
+                    </a></td>
+                </tr>
+                {% endfor %}
+            {% endfor %}
+        </tbody>
+    </table>
+{% if page > 1 %}
+{% block pagination %}{% include "partials/pagination-widget.html" %}{% endblock pagination %}
+{% endif %}
+<div class="widget-actions">
+    <div>
+        <button class="button button-muted" id="add-widget">{{ sharing_enabled|yesno:"Disable, Enable" }} All ShareRooms</button>
+    </div>
+</form>
+</div>
+{% endblock content %}

@@ -11,16 +11,14 @@ source_dir=`pwd`
 popd > /dev/null
 
 version=$2
+management_files=$3
 
-brand_identifier=$3
-ldap=$4
-echo "Building OpenManage software suite from $source_dir for $3"
-if [ $4 == "ldap" ]; then
-    echo "Enabling LDAP integration in this build."
-fi
+echo "Building OpenManage software suite from $source_dir"
 
 deploy_dir=$source_dir/deploy
 buildit_dir=$deploy_dir/openmanage
+
+$HOME/netkes/upgrade/gather_resources.sh
 
 if [ -f $deploy_dir/openmanage.tar.bz2 ]; then
     rm $deploy_dir/openmanage.tar.bz2
@@ -45,6 +43,9 @@ cp -r $source_dir/netkes $buildit_dir
 # Copy over the django project
 cp -r $source_dir/django $buildit_dir
 
+# Copy fonts
+cp -r $management_files/fonts $buildit_dir/django/apps/blue_management/blue_mgnt/static/fonts
+
 # Setup destination git packages.
 pushd $buildit_dir/django > /dev/null
 ./setup_git.sh $buildit_dir
@@ -64,8 +65,6 @@ for file in $included_management; do
     cp $source_dir/etc/$file $buildit_dir/etc
 done
 
-# Set the brand in the configuration
-echo "OPENMANAGE_BRAND=$3" > $buildit_dir/etc/brand
 
 # Configure the runsv service.
 mkdir -p $buildit_dir/etc/service/openmanage
@@ -81,7 +80,7 @@ echo "Commit `git log -n 1 --pretty=format:%H`" >> $buildit_dir/etc/OpenManage_v
 
 # Zip it
 pushd $deploy_dir
-tar cjf openmanage.tar.bz2 openmanage
+tar cjf openmanage-$version.tar.bz2 openmanage
 popd
 
 cat $buildit_dir/etc/OpenManage_version.txt
