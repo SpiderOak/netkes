@@ -71,7 +71,7 @@ echo "updated tarball"
 # Bring over configuration into the new stuff.
 cp /opt/openmanage.$CURRENT_DATE/etc/agent_config.json /opt/openmanage/etc
 
-random_string=$(pwgen 64 1)
+random_string=$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c${1:-64};echo;)
 secret_key="export DJANGO_SECRET_KEY=\"$random_string\""
 echo $secret_key >> /opt/openmanage/etc/openmanage_defaults 
 
