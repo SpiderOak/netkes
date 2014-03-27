@@ -80,7 +80,7 @@
         <form method="post" action="{% url 'blue_mgnt:settings' %}">
             {% csrf_token %}
             <input type='hidden' value='restart_directory' name='form'>
-            <input type='submit' value="Restart Directory / Services" class="button button-muted">
+            <button type='submit' id="restart" class="button button-muted">Restart Directory / Services</button>
         </form>
         <div class="space-20none">
             <form method="post" action="{% url 'blue_mgnt:settings' %}">
@@ -99,15 +99,30 @@
 {% endblock content %}
 {% block js_templates %}
 <script>
+    var $complete;
     function clearCheck(){
         clearInterval(ajax_check);
     }
+
+    function sendMessage(str, start){
+        $('.reboot-message > p').html(str);
+        if ( start == 1 ){
+            $('.reboot-message-wrapper').show();
+            posModal('.reboot-message');
+            $('#processing').not(':visible').toggle();
+        } else {
+            $('.reboot-message-close').show();
+            $('#processing').hide();
+        }
+    }
+
 
     $('.reboot-message-close').click(function(){
         $('.reboot-message-wrapper').hide();
         $(this).hide();
     });
-     $('#reboot').click(function(e){
+
+    $('#reboot').click(function(e){
          e.preventDefault();
          $.ajax({
              url: "{% url 'blue_mgnt:settings' %}",
@@ -117,15 +132,36 @@
                  csrfmiddlewaretoken: '{{ csrf_token }}'
              },
              complete: function(){
-                $('.reboot-message-wrapper').show();
-                posModal('.reboot-message');
+                sendMessage("Rebooting Virtual Appliance", 1);
+                $complete = "Reboot Completed";
+            }
+        });
+        ajax_check = setInterval(function(){
+            $.get("{% url 'blue_mgnt:settings' %}", function(){
+                sendMessage($complete, 0);
+                clearCheck();
+            });
+        }, 5000);
+    });
+
+     $('#restart').click(function(e){
+         e.preventDefault();
+         $.ajax({
+             url: "{% url 'blue_mgnt:settings' %}",
+             type: "POST",
+             data: {
+                 form: 'restart_directory',
+                 csrfmiddlewaretoken: '{{ csrf_token }}'
+             },
+             complete: function(){
+                sendMessage("Restarting Directory / Services", 1);
+                $complete = "Restart Completed";
             }
         });
         
         ajax_check = setInterval(function(){
             $.get("{% url 'blue_mgnt:settings' %}", function(){
-                $('.reboot-message > p').html("Reboot Complete");
-                $('.reboot-message-close').show();
+                sendMessage($complete, 0);
                 clearCheck();
             });
         }, 5000);
