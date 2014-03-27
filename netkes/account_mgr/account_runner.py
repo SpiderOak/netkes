@@ -8,7 +8,7 @@ The functions here are meant to be quasi-transactional; if there's an error rais
 billing API handling functions, we will write out what we can to the DB to keep state consistent.
 """
 import inspect
-
+import time
 import logging
 
 import account_mgr
@@ -79,7 +79,13 @@ class AccountRunner(object):
 
             try:
                 self._api.create_user(tmp_user)
-                result = self._api.get_user(user['email'])
+                time.sleep(.5)
+                try:
+                    result = self._api.get_user(user['email'])
+                except self._api.Error, e:
+                    time.sleep(10)
+                    print 'try 2 getting:', user['email']
+                    result = self._api.get_user(user['email'])
             except self._api.Error, e:
                 msg = 'Unable to create %s. %s' % (tmp_user, e)
                 print msg
