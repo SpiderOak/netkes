@@ -1,3 +1,17 @@
+function posModal(obj) {
+    obj = $(obj);
+    if ( obj.is(':visible') ) {
+
+        pos_left = Math.round(($(window).width() - obj.outerWidth()) / 2) + ($(document).scrollLeft());
+        pos_top = Math.round(($(window).height() - obj.outerHeight()) / 2) + ($(document).scrollTop());
+
+        obj.css({
+            'left' : pos_left,
+            'top' : pos_top
+        });
+    }
+}
+
 $(function() {
     // Shorten numeric inputs
     $(window).load(function() {
@@ -15,20 +29,6 @@ $(function() {
     });
 
     // Workings for the modal wrapper and widgets
-
-    function posModal(obj) {
-        obj = $(obj);
-        if ( obj.is(':visible') ) {
-
-            pos_left = Math.round(($(window).width() - obj.outerWidth()) / 2) + ($(document).scrollLeft());
-            pos_top = Math.round(($(window).height() - obj.outerHeight()) / 2) + ($(document).scrollTop());
-
-            obj.css({
-                'left' : pos_left,
-                'top' : pos_top
-            });
-        }
-    }
 
     if ( $('.modal-content span').hasClass('error-highlight') ) {
         $('.modal-wrapper').show().css('height', $(document).height());
