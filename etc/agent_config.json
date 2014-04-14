@@ -1,7 +1,7 @@
 {
     "api_password": "",
     "api_root": "https://spideroak.com/apis/accounts/v1/",
-    "api_user": "{{BRAND}}",
+    "api_user": "",
     "auth_method": "local",
     "db_pass": "initial",
     "dir_auth_source": "",
