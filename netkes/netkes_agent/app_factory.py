@@ -1,6 +1,8 @@
 import logging
 import os
 import re
+import nacl.secret
+import bcrypt
 
 from urllib import unquote
 from wsgi_util.router import router
@@ -12,6 +14,10 @@ from account_mgr import authenticator
 from key_escrow import server
 from Pandora import serial
 
+SESSION = {}
+CHALLENGE_EXPIRATION_TIME = 60
+KEYLEN = nacl.secret.SecretBox.KEY_SIZE
+ITERATIONS = 100    # from py-bcrypt readme, maybe need to tweak this
 
 def setup_logging():
     handler = logging.StreamHandler()
@@ -40,15 +46,19 @@ setup_application()
 serial.register_all()
 
 @read_querydata
-def get_layers(environ, start_response):
+def start_auth_session(environ, start_response):
     log = logging.getLogger("get_layers")
 
     log.debug("start")
     try:
         brand_identifier = environ['query_data']['brand_id'][0]
+        username = environ['query_data']['username'][0]
     except KeyError:
         log.error("Got bad request.")
         return BadRequest()(environ, start_response)
+
+    challenge = b2a_base64(os.urandom(32))
+    SESSION[username] = (challenge, time.time())
 
     try:
         layer_data = server.get_escrow_layers(brand_identifier)
@@ -58,7 +68,19 @@ def get_layers(environ, start_response):
 
     log.info("Returning escrow keys for %s" % (brand_identifier,))
 
-    return SuperSimple(layer_data, ctype="application/octet-stream")(environ, start_response)
+    data = dict(layer_data=b2a_base64(layer_data),
+                challenge=challenge)
+
+    return SuperSimple(json.dumps(data))(environ, start_response)
+
+def valid_challenge(username, challenge):
+    if username not in SESSION:
+        return False
+    session_challenge = SESSION[username]
+    if session_challenge[1] + CHALLENGE_EXPIRATION_TIME > time.time(): 
+        return False
+
+    return session_challenge[0] == challenge #TODO make this compare constant time
 
 def login_required(fun):
     def decorator(environ, start_response):
@@ -67,33 +89,31 @@ def login_required(fun):
         try:
             brand_identifier = environ['query_data']['brand_id'][0]
             username = environ['query_data']['username'][0]
-            password = environ['query_data']['password'][0]
-            crypt_pw = environ['query_data'].get('crypt_pw', ["True"])[0]
+            auth = environ['query_data']['auth'][0]
         except KeyError:
             log.error("Got bad request.")
             return BadRequest()(environ, start_response)
 
         decoded_user = unquote(username)
 
-        # If we get anything OTHER than explicitly "False" in the request, we will assume it's an encrypted password.
-        if crypt_pw == "False":
-            plaintext_password = password
-        else:
-            try:
-                plaintext_password = server.read_escrow_data(
-                    brand_identifier, password)
-            except KeyError:
-                log.warn("missing identifier %s" % (brand_identifier,))
-                return NotFound()(environ, start_response)
-            except ValueError:
-                log.warn("bad values for authenticating user %s" % (decoded_user,))
-                return BadRequest()(environ, start_response)
-            except Exception:
-                log.exception("server.read_escrow_data failed for user %s brand %s"
-                        % (decoded_user, brand_identifier,))
-                return ServerError()(environ, start_response)
+        try:
+            plaintext_auth = json.loads(
+                server.read_escrow_data(
+                    brand_identifier, auth))
+        except KeyError:
+            log.warn("missing identifier %s" % (brand_identifier,))
+            return NotFound()(environ, start_response)
+        except ValueError:
+            log.warn("bad values for authenticating user %s" % (decoded_user,))
+            return BadRequest()(environ, start_response)
+        except Exception:
+            log.exception("server.read_escrow_data failed for user %s brand %s"
+                    % (decoded_user, brand_identifier,))
+            return ServerError()(environ, start_response)
 
-        if not authenticator(get_config(), decoded_user, plaintext_password):
+        challenge = valid_challenge(username, plaintext_auth['challenge'])
+        authenticated = authenticator(get_config(), decoded_user, plaintext_password)
+        if not challenge or not authenticated:
             log.info("Auth failed for %s" % (decoded_user,))
             return Forbidden()(environ, start_response)
 
@@ -151,8 +171,17 @@ def read_data(environ, start_response):
         log.exception('500 error in reading escrow data')
         return ServerError()(environ, start_response,)
 
+    key = bcrypt.kdf(
+        password.encode('utf-8'),
+        SESSION[username][0],                # this is the salt
+        KEYLEN, ITERATIONS
+    )
+    
+    nonce = nacl.utils.random(nacl.secret.SecretBox.NONCE_SIZE)
+    response = nacl.secret.SecretBox(key).encrypt(plaintext_data, nonce)
+
     log.info("Read data for brand %s" % (brand_identifier,))
-    return SuperSimple(plaintext_data, ctype="application/octet-stream")(environ, start_response)
+    return SuperSimple(response, ctype="application/octet-stream")(environ, start_response)
 
 def app_factory(environ, start_response):
     # rx, methods, app
