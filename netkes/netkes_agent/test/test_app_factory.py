@@ -1,5 +1,6 @@
 import unittest
 from mock import Mock, MagicMock, sentinel, patch
+import urllib 
 
 patch('wsgi_util.post_util.read_querydata', lambda x: x).start()
 patch('wsgi_util.post_util.read_postdata', lambda x: x).start()
@@ -103,10 +104,6 @@ class TestDecrypt(unittest.TestCase):
         sign_key = RSA.generate(2048, random_string)
         escrowed_data = encrypt_with_layers(escrow_data, sign_key, brand_identifier)
 
-        from Crypto import Random
-        for key in _ESCROW_KEYS_CACHE.values():
-            key._randfunc = Random.new().read
-
         layer_count = 2
         plaintext_data = server.read_escrow_data(brand_identifier, 
                                                  escrowed_data,
@@ -115,72 +112,135 @@ class TestDecrypt(unittest.TestCase):
 
         self.assertEqual(escrow_data, plaintext_data) 
 
-class TestReadData(unittest.TestCase):
+class TestAppFactory(unittest.TestCase):
     def setUp(self):
+        self.sign_key = RSA.generate(2048, random_string)
+        self.config = common.read_config_file()
+        self.brand_identifier = self.config['api_user']
+        self.auth = {
+            'password': 'password',
+            'challenge': 'challenge',
+            
+        }
+        auth = encrypt_with_layers(json.dumps(self.auth), self.sign_key, 
+                                   self.brand_identifier)
+        username = urllib.quote('test_username')
         self.environ = {
             'query_data': {
-                'brand_id': [sentinel.brand_id],
+                'brand_id': [self.brand_identifier],
+                'username': [username],
+                'auth': [auth],
             },
             'post_data': {
                 'escrow_data': [sentinel.escrow_data],
-                'sign_key': [sentinel.sign_key]
+                'sign_key': [dumps(self.sign_key)],
+                'layer_count': [2],
             }
+        }
+        self.session_environ = {
+            'query_data': {
+                'brand_id': [self.brand_identifier],
+                'username': [username],
+            },
         }
 
     @patch('netkes.netkes_agent.app_factory.BadRequest')
-    def test_authentication_required(self, BadRequest):
-        app_factory.read_data(self.environ, MagicMock())
+    def test_authentication_required(self, BadRequest, ):
+        del self.environ['query_data']
+        app_factory.authenticate_user(self.environ, MagicMock())
         self.assertTrue(BadRequest.called)
 
-    @patch('netkes.netkes_agent.app_factory.server.read_escrow_data')
-    @patch('netkes.netkes_agent.app_factory.serial.loads')
-    @patch('netkes.netkes_agent.app_factory.unquote')
+    @patch('netkes.netkes_agent.app_factory.valid_challenge')
     @patch('netkes.netkes_agent.app_factory.authenticator')
     @patch('netkes.netkes_agent.app_factory.Forbidden')
-    def test_authentication_fails_on_bad_password(self, Forbidden, authenticator, 
-                                                  unquote, loads, read_escrow_data):
-        self.environ['query_data']['username'] = [sentinel.username]
-        self.environ['query_data']['password'] = [sentinel.invalid_password]
-        self.environ['query_data']['crypt_pw'] = ['False']
+    def test_authentication_fails_on_bad_password(self, Forbidden, 
+                                                  authenticator, 
+                                                  valid_challenge,
+                                                 ):
+        valid_challenge.return_value = True
         authenticator.return_value = False
-        app_factory.read_data(self.environ, MagicMock())
+        app_factory.authenticate_user(self.environ, MagicMock())
         self.assertTrue(Forbidden.called)
         
-    @patch('netkes.netkes_agent.app_factory.server.read_escrow_data')
-    @patch('netkes.netkes_agent.app_factory.serial.loads')
-    @patch('netkes.netkes_agent.app_factory.unquote')
+    @patch('netkes.netkes_agent.app_factory.valid_challenge')
     @patch('netkes.netkes_agent.app_factory.authenticator')
     @patch('netkes.netkes_agent.app_factory.SuperSimple')
-    def test_authentication_succeeds_on_good_password(self, SuperSimple, authenticator, 
-                                                      unquote, loads, read_escrow_data):
-        self.environ['query_data']['username'] = [sentinel.username]
-        self.environ['query_data']['password'] = [sentinel.valid_password]
-        self.environ['query_data']['crypt_pw'] = ['False']
+    def test_authentication_succeeds_on_good_password(self, SuperSimple, 
+                                                      authenticator, 
+                                                      valid_challenge):
+        valid_challenge.return_value = True
         authenticator.return_value = True
-        app_factory.read_data(self.environ, MagicMock())
+        app_factory.authenticate_user(self.environ, MagicMock())
         self.assertTrue(SuperSimple.called)
 
-    @patch('netkes.netkes_agent.app_factory.unquote')
+    @patch('netkes.netkes_agent.app_factory.authenticator')
+    @patch('netkes.netkes_agent.app_factory.Forbidden')
+    def test_authentication_fails_with_invalid_challenge(self, Forbidden, 
+                                                         authenticator, ):
+        authenticator.return_value = True
+        app_factory.authenticate_user(self.environ, MagicMock())
+        self.assertTrue(Forbidden.called)
+
+    @patch('netkes.netkes_agent.app_factory.authenticator')
+    @patch('netkes.netkes_agent.app_factory.Forbidden')
+    @patch('netkes.netkes_agent.app_factory.SuperSimple')
+    def test_authentication_fails_when_challenge_expires(self, SuperSimple,
+                                                         Forbidden, 
+                                                         authenticator, ):
+        app_factory.start_auth_session(self.session_environ, MagicMock())
+        data = json.loads(SuperSimple.call_args[0][0])
+        authenticator.return_value = True
+        self.auth['challenge'] = data['challenge']
+        auth = encrypt_with_layers(json.dumps(self.auth), self.sign_key, 
+                                   self.brand_identifier)
+        self.environ['query_data']['auth'] = [auth]
+        app_factory.CHALLENGE_EXPIRATION_TIME = .00001
+        time.sleep(.001)
+        app_factory.authenticate_user(self.environ, MagicMock())
+        app_factory.CHALLENGE_EXPIRATION_TIME = 60
+        self.assertTrue(Forbidden.called)
+
+    @patch('netkes.netkes_agent.app_factory.authenticator')
+    @patch('netkes.netkes_agent.app_factory.SuperSimple')
+    def test_authentication_succeeds_with_valid_challenge(self, SuperSimple, 
+                                                          authenticator, ):
+        app_factory.start_auth_session(self.session_environ, MagicMock())
+        data = json.loads(SuperSimple.call_args[0][0])
+        authenticator.return_value = True
+        self.auth['challenge'] = data['challenge']
+        auth = encrypt_with_layers(json.dumps(self.auth), self.sign_key, 
+                                   self.brand_identifier)
+        self.environ['query_data']['auth'] = [auth]
+        app_factory.authenticate_user(self.environ, MagicMock())
+        self.assertEqual(SuperSimple.call_count, 2)
+
     @patch('netkes.netkes_agent.app_factory.authenticator')
     @patch('netkes.netkes_agent.app_factory.SuperSimple')
     def test_read_data_successfully_decrypts_escrow_data(self, SuperSimple, 
-                                                         authenticator, unquote):
-        config = common.read_config_file()
-        brand_identifier = config['api_user']
+                                                         authenticator, ):
+        app_factory.start_auth_session(self.session_environ, MagicMock())
+        data = json.loads(SuperSimple.call_args[0][0])
+        authenticator.return_value = True
+        self.auth['challenge'] = data['challenge']
+        auth = encrypt_with_layers(json.dumps(self.auth), self.sign_key, 
+                                   self.brand_identifier)
+        self.environ['query_data']['auth'] = [auth]
+
+        brand_identifier = self.config['api_user']
         escrow_data = "test data"
-        sign_key = RSA.generate(2048, random_string)
-        escrowed_data = encrypt_with_layers(escrow_data, sign_key, brand_identifier)
-        self.environ['post_data']['sign_key'] = [dumps(sign_key)]
+        escrowed_data = encrypt_with_layers(escrow_data, self.sign_key, brand_identifier)
+        self.environ['post_data']['sign_key'] = [dumps(self.sign_key)]
         self.environ['post_data']['escrow_data'] = [escrowed_data]
-        self.environ['post_data']['layer_count'] = [2]
-        self.environ['query_data']['username'] = [sentinel.username]
-        self.environ['query_data']['password'] = [sentinel.valid_password]
-        self.environ['query_data']['crypt_pw'] = ['False']
         authenticator.return_value = True
 
         app_factory.read_data(self.environ, MagicMock())
 
-        SuperSimple.assert_called_with(escrow_data, ctype='application/octet-stream')
+        username = self.environ['query_data']['username'][0]
+        secret_box, nonce = app_factory.create_secret_box(self.auth['password'], 
+                                                          self.auth['challenge'])
+        plaintext = secret_box.decrypt(SuperSimple.call_args[0][0])
+
+        SuperSimple.assertEqual(escrow_data, plaintext)
 
 if __name__ == "__main__":
     unittest.main()
