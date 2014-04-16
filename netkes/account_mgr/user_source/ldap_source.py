@@ -357,8 +357,8 @@ def get_auth_username(config, username):
     # just return here.
     log = logging.getLogger("get_auth_username")
 
-    if (config.get('dir_auth_username') is None and 
-        config.get('dir_auth_source') is None):
+    if (config.get('dir_auth_username') in (None, '',) and 
+        config.get('dir_auth_source') in (None, '',)):
         return username
 
     my_ldap = OMLDAPConnection(config['dir_uri'], config['dir_base_dn'],
