@@ -57,7 +57,7 @@ def load_escrow_key_cache():
             assert filename_key_id == key_id
             
             # The below is necessary to get around a cerealizer issue in Python 2.7.
-            if not key._randfunc:                      # pylint: disable=W0212
+            if getattr(key, '_randfunc', None) is None:
                 key._randfunc = Random.new().read      # pylint: disable=W0212
             _ESCROW_KEYS_CACHE[key_id] = key
             #print "Loaded %s" % key_id
