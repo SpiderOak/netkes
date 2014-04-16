@@ -1,4 +1,5 @@
 import os
+from Crypto import Random
 from key_escrow.read import read_escrow_layer
 
 from Pandora.serial import load
@@ -54,6 +55,7 @@ def load_escrow_key_cache():
         with open(keypath, "rb") as fobj:
             key_id, key = load(fobj)
             assert filename_key_id == key_id
+            key._randfunc = Random.new().read
             _ESCROW_KEYS_CACHE[key_id] = key
             #print "Loaded %s" % key_id
 
