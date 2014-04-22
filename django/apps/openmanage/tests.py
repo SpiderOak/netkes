@@ -116,29 +116,15 @@ class TestStartAuthSession(unittest.TestCase):
     def setUp(self):
         self.config = common.read_config_file()
         self.brand_identifier = self.config['api_user']
-        self.username = urllib.quote('test_username')
         self.client = Client()
         
     def test_fails_with_bad_params(self):
         response = self.client.post('/openmanage/authsession/', {})
         self.assertEqual(response.status_code, 400)
 
-        data = {
-            'brand_id': self.brand_identifier,
-        }
-        response = self.client.post('/openmanage/authsession/', data)
-        self.assertEqual(response.status_code, 400)
-
-        data = {
-            'username': [self.username],
-        }
-        response = self.client.post('/openmanage/authsession/', data)
-        self.assertEqual(response.status_code, 400)
-
     def test_succeeds_with_good_params(self):
         data = {
             'brand_id': self.brand_identifier,
-            'username': [self.username],
         }
         response = self.client.post('/openmanage/authsession/', data)
         self.assertEqual(response.status_code, 200)
@@ -169,7 +155,6 @@ class TestOpenmanage(unittest.TestCase):
         }
         self.session_post_data = {
             'brand_id': self.brand_identifier,
-            'username': username,
         }
 
     def test_authentication_required(self):
