@@ -66,6 +66,9 @@ def start_auth_session(request):
 
     challenge = b2a_base64(os.urandom(32))
     request.session['challenge'] = (challenge, time.time())
+    auth = request.session.get('auth', False)
+    if auth:
+        del request.session['auth']
 
     try:
         layer_data = server.get_escrow_layers(brand_identifier)
@@ -80,67 +83,99 @@ def start_auth_session(request):
 
     return HttpResponse(json.dumps(data))
 
-def valid_challenge(request, challenge):
-    session_challenge = request.session.get('challenge', False)
+def active_challenge(session_challenge):
     if not session_challenge:
         return False
     if session_challenge[1] + CHALLENGE_EXPIRATION_TIME < time.time(): 
         return False
+    return True
 
-    return constant_time_compare(session_challenge[0], challenge)
+def valid_challenge(request, challenge):
+    session_challenge = request.session.get('challenge', False)
+
+    if active_challenge(session_challenge):
+        return constant_time_compare(session_challenge[0], challenge)
+    return False
+
+def valid_auth_session(request):
+    session_challenge = request.session.get('challenge', False)
+
+    if active_challenge(session_challenge):
+        auth = request.session.get('auth', False)
+        if auth:
+            return auth['time'] + CHALLENGE_EXPIRATION_TIME > time.time()
+    return False
+    
+def get_challenge(request):
+    return request.session['challenge']
 
 def login_required(fun):
     def decorator(request):
         log = logging.getLogger('login_required')
         log.debug("start")
-        try:
-            brand_identifier = request.POST['brand_id']
-            username = request.POST['username']
-            auth = a2b_base64(request.POST['auth'])
-            serial_sign_key = request.POST['sign_key']
-            layer_count = int(request.POST['layer_count'])
-        except KeyError:
-            log.error("Got bad request.")
-            return HttpResponseBadRequest()
+        if valid_auth_session(request):
+            return fun(request)
+        else:
+            try:
+                brand_identifier = request.POST['brand_id']
+                username = request.POST['username']
+                auth = a2b_base64(request.POST['auth'])
+                serial_sign_key = request.POST['sign_key']
+                layer_count = int(request.POST['layer_count'])
+            except KeyError:
+                log.error("Got bad request.")
+                return HttpResponseBadRequest()
 
-        sign_key = serial.loads(serial_sign_key)
-        decoded_user = urllib.unquote(username)
+            sign_key = serial.loads(serial_sign_key)
+            decoded_user = urllib.unquote(username)
 
-        try:
-            data =  server.read_escrow_data(
-                brand_identifier, 
-                auth, 
-                sign_key=sign_key, 
-                layer_count=layer_count,
-            )
+            try:
+                data =  server.read_escrow_data(
+                    brand_identifier, 
+                    auth, 
+                    sign_key=sign_key, 
+                    layer_count=layer_count,
+                )
 
-            plaintext_auth = json.loads(data)
-        except KeyError:
-            log.warn("missing identifier %s" % (brand_identifier,))
-            return HttpResponseNotFound()
-        except ValueError:
-            log.warn("bad values for authenticating user %s" % (decoded_user,))
-            return HttpResponseBadRequest()
-        except Exception:
-            log.exception("server.read_escrow_data failed for user %s brand %s"
-                    % (decoded_user, brand_identifier,))
-            return HttpResponseServerError()
+                plaintext_auth = json.loads(data)
+            except KeyError:
+                log.warn("missing identifier %s" % (brand_identifier,))
+                return HttpResponseNotFound()
+            except ValueError:
+                log.warn("bad values for authenticating user %s" % (decoded_user,))
+                return HttpResponseBadRequest()
+            except Exception:
+                log.exception("server.read_escrow_data failed for user %s brand %s"
+                        % (decoded_user, brand_identifier,))
+                return HttpResponseServerError()
 
-        challenge = valid_challenge(request, plaintext_auth['challenge'])
-        authenticated = authenticator(get_config(), 
-                                      decoded_user, 
-                                      plaintext_auth['password'])
+            challenge = valid_challenge(request, plaintext_auth['challenge'])
+            authenticated = authenticator(get_config(), 
+                                        decoded_user, 
+                                        plaintext_auth['password'])
 
-        if not challenge or not authenticated:
-            log.info("Auth failed for %s" % (decoded_user,))
-            return HttpResponseForbidden()
+            if not challenge or not authenticated:
+                log.info("Auth failed for %s" % (decoded_user,))
+                return HttpResponseForbidden()
 
-        log.info("Auth OK for brand %s with user %s" % (brand_identifier, decoded_user, ))
-        return fun(request, decoded_user, plaintext_auth)
+            session_challenge = get_challenge(request)
+            secret_box, nonce = create_secret_box(plaintext_auth['password'], 
+                                                  session_challenge[0])
+            request.session['auth'] = {
+                'secret_box': secret_box,
+                'nonce': nonce,
+                'time': session_challenge[1],
+                'brand_identifier': brand_identifier,
+                'sign_key': sign_key,
+                'layer_count': layer_count,
+            }
+
+            log.info("Auth OK for brand %s with user %s" % (brand_identifier, decoded_user, ))
+            return fun(request)
     return decorator
 
 @login_required
-def authenticate_user(request, username, auth):
+def authenticate_user(request):
     return HttpResponse('OK')
 
 def create_secret_box(password, username):
@@ -154,20 +189,21 @@ def create_secret_box(password, username):
     return nacl.secret.SecretBox(key), nonce
 
 @login_required
-def read_data(request, username, auth):
+def read_data(request):
     log = logging.getLogger("read_data")
 
     log.debug("start")
+    auth = request.session['auth']
+    brand_identifier = auth['brand_identifier']
+    sign_key = auth['sign_key']
+    layer_count = auth['layer_count']
+
     try:
-        brand_identifier = request.POST['brand_id']
         escrowed_data = a2b_base64(request.POST['escrow_data'])
-        serial_sign_key = request.POST['sign_key']
-        layer_count = int(request.POST['layer_count'])
     except KeyError:
         log.warn("KeyError at start")
         return BadRequest()(environ, start_response)
     
-    sign_key = serial.loads(serial_sign_key)
     log.debug("Being sent:")
     log.debug("brand_identifier: %r" % brand_identifier)
     log.debug("layer_count: %r" % layer_count)
@@ -187,9 +223,7 @@ def read_data(request, username, auth):
         log.exception('500 error in reading escrow data')
         return HttpResponseServerError()
 
-    session_challenge = request.session['challenge']
-    secret_box, nonce = create_secret_box(auth['password'], session_challenge[0])
-    response = secret_box.encrypt(plaintext_data, nonce)
+    response = auth['secret_box'].encrypt(plaintext_data, auth['nonce'])
 
     log.info("Read data for brand %s" % (brand_identifier,))
     return HttpResponse(response, content_type="application/octet-stream")

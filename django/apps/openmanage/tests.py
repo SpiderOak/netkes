@@ -5,7 +5,6 @@ import urllib
 from django.test.client import Client
 from openmanage import views
 
-from netkes.netkes_agent import app_factory
 from netkes import common
 from Pandora.serial import dumps, loads, register_all
 from key_escrow import server
@@ -186,9 +185,11 @@ class TestOpenmanage(unittest.TestCase):
         response = self.client.post('/openmanage/auth/', self.post_data)
         self.assertEqual(response.status_code, 403)
         
+    @patch('openmanage.views.get_challenge', return_value=['test', time.time()])
     @patch('openmanage.views.valid_challenge')
     @patch('openmanage.views.authenticator')
-    def test_authentication_succeeds_on_good_password(self, authenticator, valid_challenge):
+    def test_authentication_succeeds_on_good_password(self, authenticator, 
+                                                      valid_challenge, get_challenge):
         valid_challenge.return_value = True
         authenticator.return_value = True
 
@@ -247,11 +248,45 @@ class TestOpenmanage(unittest.TestCase):
         response = self.client.post('/openmanage/data/', self.post_data)
 
         username = self.post_data['username']
-        secret_box, nonce = app_factory.create_secret_box(self.auth['password'], 
+        secret_box, nonce = views.create_secret_box(self.auth['password'], 
                                                           self.auth['challenge'])
         plaintext = secret_box.decrypt(response.content)
 
         self.assertEqual(escrow_data, plaintext)
+
+    @patch('openmanage.views.authenticator')
+    def test_authentication_not_required_during_auth_window(self, authenticator, ):
+        response = self.client.post('/openmanage/authsession/', self.session_post_data)
+        data = json.loads(response.content)
+        authenticator.return_value = True
+        self.auth['challenge'] = data['challenge']
+        auth = encrypt_with_layers(json.dumps(self.auth), self.sign_key, 
+                                   self.brand_identifier)
+        self.post_data['auth'] = b2a_base64(auth)
+        response = self.client.post('/openmanage/auth/', self.post_data)
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.post('/openmanage/auth/')
+        self.assertEqual(response.status_code, 200)
+
+    @patch('openmanage.views.authenticator')
+    def test_authentication_fails_with_expired_auth(self, authenticator, ):
+        response = self.client.post('/openmanage/authsession/', self.session_post_data)
+        data = json.loads(response.content)
+        authenticator.return_value = True
+        self.auth['challenge'] = data['challenge']
+        auth = encrypt_with_layers(json.dumps(self.auth), self.sign_key, 
+                                   self.brand_identifier)
+        self.post_data['auth'] = b2a_base64(auth)
+        response = self.client.post('/openmanage/auth/', self.post_data)
+        self.assertEqual(response.status_code, 200)
+
+        views.CHALLENGE_EXPIRATION_TIME = .00001
+        time.sleep(.001)
+
+        response = self.client.post('/openmanage/auth/')
+        self.assertEqual(response.status_code, 400)
+        views.CHALLENGE_EXPIRATION_TIME = 60
 
 if __name__ == "__main__":
     unittest.main()
