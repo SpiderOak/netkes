@@ -52,7 +52,8 @@ def setUpAuth(codenames=[]):
     user = User.objects.get_or_create(username='test', password='not_used')[0]
     user.user_permissions = Permission.objects.filter(codename__in=codenames)
     group = Group.objects.get_or_create(name='test_group')[0]
-    admin_group = models.AdminGroup.objects.get_or_create(pk=group.id)[0]
+    admin_group = models.AdminGroup.objects.get_or_create(pk=group.id,
+                                                          user_group_id=group.id)[0]
     user.groups.add(group)
     views.LdapBackend.authenticate = MagicMock()
     views.LdapBackend.authenticate.return_value = user 
@@ -79,27 +80,17 @@ class TestViewAuth(unittest.TestCase):
     def test_auth_codes_access_denied_without_permission(self):
         self.login()
         response = self.client.get('/codes/')
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 403)
 
     def test_auth_codes_access_granted_with_permission(self):
         self.login(['can_manage_auth_codes'])
         response = self.client.get('/codes/')
         self.assertEqual(response.status_code, 200)
 
-    def test_admin_groups_access_denied_without_permission(self):
-        self.login()
-        response = self.client.get('/admingroups/')
-        self.assertEqual(response.status_code, 302)
-
-    def test_admin_groups_access_granted_with_permission(self):
-        self.login(['can_manage_admins'])
-        response = self.client.get('/admingroups/')
-        self.assertEqual(response.status_code, 200)
-
     def test_view_groups_access_denied_without_permission(self):
         self.login()
         response = self.client.get('/groups/')
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 403)
 
     def test_view_groups_access_granted_with_permission(self):
         self.login(['can_view_groups'])
@@ -109,7 +100,7 @@ class TestViewAuth(unittest.TestCase):
     def test_shares_access_denied_without_permission(self):
         self.login()
         response = self.client.get('/shares/')
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 403)
 
     def test_shares_access_granted_with_permission(self):
         self.login(['can_manage_shares'])
@@ -119,7 +110,7 @@ class TestViewAuth(unittest.TestCase):
     def test_view_settings_access_denied_without_permission(self):
         self.login()
         response = self.client.get('/settings/')
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 403)
 
     def test_view_settings_access_granted_with_permission(self):
         self.login(['can_view_settings'])
@@ -129,7 +120,7 @@ class TestViewAuth(unittest.TestCase):
     def test_password_access_denied_without_permission(self):
         self.login()
         response = self.client.get('/settings/password/')
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 403)
 
     def test_password_access_granted_with_permission(self):
         self.login(['can_manage_settings'])
@@ -138,13 +129,13 @@ class TestViewAuth(unittest.TestCase):
 
     def test_escrow_login_unavailable_without_permission(self):
         self.login()
-        response = self.client.get('/users/')
-        self.assertFalse('escrowlogin' in response.content)
+        response = self.client.get('/escrowlogin/test/')
+        self.assertEqual(response.status_code, 403)
 
     def test_escrow_login_available_with_permission(self):
         self.login(['can_view_user_data'])
-        response = self.client.get('/users/')
-        self.assertTrue('escrowlogin' in response.content)
+        response = self.client.get('/escrowlogin/test/')
+        self.assertEqual(response.status_code, 302)
 
     @patch.object(Api, 'delete_user')
     def test_unable_to_edit_users_without_permission(self, delete_user):
@@ -179,9 +170,11 @@ class TestViewAuth(unittest.TestCase):
                                                       list_devices, list_shares,
                                                       list_groups, enterprise_features,
                                                       render_to_response):
-        mock = MagicMock()
-        mock.__getitem__.return_value = 1
-        get_user.return_value = mock
+        get_user.return_value = {
+            'username': 'test', 
+            'group_id': 1, 
+            'bonus_bytes': 1,
+        }
         self.login(['can_manage_users'])
         response = self.client.post('/users/test@test/', USER_DETAIL_USER_DATA)
 
