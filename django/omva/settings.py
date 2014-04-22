@@ -119,6 +119,7 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.admin',
     'blue_mgnt',
+    'openmanage',
     'pagination',
 )
 
