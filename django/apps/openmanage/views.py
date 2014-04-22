@@ -59,7 +59,6 @@ def start_auth_session(request):
     log.debug("start")
     try:
         brand_identifier = request.POST['brand_id']
-        username = request.POST['username']
     except KeyError:
         log.error("Got bad request.")
         return HttpResponseBadRequest()
