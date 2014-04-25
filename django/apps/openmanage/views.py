@@ -125,7 +125,14 @@ def login_required(fun):
                 log.error("Got bad request.")
                 return HttpResponseBadRequest()
 
-            sign_key = serial.loads(serial_sign_key)
+            try:
+                sign_key = serial.loads(serial_sign_key)
+            except (serial.EndOfFile, 
+                    serial.NotSerializerFileError, 
+                    serial.NotSerializableObjectError):
+                log.error("Got bad request. Unable to load sign key")
+                return HttpResponseBadRequest()
+
             decoded_user = urllib.unquote(username)
 
             try:
@@ -137,6 +144,10 @@ def login_required(fun):
                 )
 
                 plaintext_auth = json.loads(data)
+                if ('challenge' not in plaintext_auth or 
+                    'password' not in plaintext_auth):
+                    log.warn("missing auth key %s" % (brand_identifier,))
+                    return HttpResponseBadRequest()
             except KeyError:
                 log.warn("missing identifier %s" % (brand_identifier,))
                 return HttpResponseNotFound()

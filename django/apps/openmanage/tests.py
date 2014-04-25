@@ -8,7 +8,7 @@ from openmanage import views
 from netkes import common
 from Pandora.serial import dumps, loads, register_all
 from key_escrow import server
-from key_escrow.write import escrow_binary
+from key_escrow.write import escrow_binary, random_string
 
 import os
 import time
@@ -127,6 +127,13 @@ class TestOpenmanage(unittest.TestCase):
         self.assertEqual(response.status_code, 403)
 
     @patch('openmanage.views.authenticator')
+    def test_authentication_fails_with_invalid_sign_key(self, authenticator, ):
+        authenticator.return_value = True
+        self.post_data['sign_key'] = 'bad'
+        response = self.client.post('/openmanage/auth/', self.post_data)
+        self.assertEqual(response.status_code, 400)
+
+    @patch('openmanage.views.authenticator')
     def test_authentication_fails_when_challenge_expires(self, authenticator, ):
         response = self.client.post('/openmanage/authsession/', self.session_post_data)
         data = json.loads(response.content)
@@ -141,6 +148,19 @@ class TestOpenmanage(unittest.TestCase):
         response = self.client.post('/openmanage/auth/', self.post_data)
         views.CHALLENGE_EXPIRATION_TIME = 60
         self.assertEqual(response.status_code, 403)
+
+    @patch('openmanage.views.authenticator')
+    def test_authentication_fails_when_missing_auth_key(self, authenticator, ):
+        response = self.client.post('/openmanage/authsession/', self.session_post_data)
+        data = json.loads(response.content)
+        authenticator.return_value = True
+        del self.auth['challenge']
+        auth = encrypt_with_layers(json.dumps(self.auth), self.sign_key, 
+                                   self.brand_identifier)
+
+        self.post_data['auth'] = b2a_base64(auth)
+        response = self.client.post('/openmanage/auth/', self.post_data)
+        self.assertEqual(response.status_code, 400)
 
     @patch('openmanage.views.authenticator')
     def test_authentication_succeeds_with_valid_challenge(self, authenticator, ):
