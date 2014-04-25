@@ -12,16 +12,17 @@ from django.http import (
     HttpResponse, HttpResponseForbidden, HttpResponseBadRequest, 
     HttpResponseNotFound, HttpResponseServerError
 )
+from django.shortcuts import get_object_or_404
 
 import urllib
-from wsgi_util.router import router
-from wsgi_util.http import BadRequest, SuperSimple, NotFound, Forbidden, ServerError
-from wsgi_util.post_util import read_postdata, read_querydata
 
 from common import get_config, read_config_file, set_config, validate_config, NetKesConfigError
 from account_mgr import authenticator
 from key_escrow import server
 from Pandora import serial
+from netkes.account_mgr.user_source import local_source
+
+from openmanage import models
 
 CHALLENGE_EXPIRATION_TIME = 60
 KEYLEN = nacl.secret.SecretBox.KEY_SIZE
@@ -212,7 +213,7 @@ def read_data(request):
         escrowed_data = a2b_base64(request.POST['escrow_data'])
     except KeyError:
         log.warn("KeyError at start")
-        return BadRequest()(environ, start_response)
+        return HttpResponseBadRequest()
     
     log.debug("Being sent:")
     log.debug("brand_identifier: %r" % brand_identifier)
@@ -237,3 +238,43 @@ def read_data(request):
 
     log.info("Read data for brand %s" % (brand_identifier,))
     return HttpResponse(response, content_type="application/octet-stream")
+
+def password(request):
+    log = logging.getLogger('password')
+    if request.method == 'GET':
+        try:
+            email = request.GET['email']
+        except KeyError:
+            log.error("Got bad request.")
+            return HttpResponseBadRequest()
+
+        password = get_object_or_404(models.Password, pk=email)
+        response = dict(password_set=password.password_set())
+        return HttpResponse(json.dumps(response))
+
+    elif request.method == 'POST':
+        try:
+            email = request.POST['email']
+            new_password = request.POST['password']
+        except KeyError:
+            log.error("Got bad request.")
+            return HttpResponseBadRequest()
+        password = get_object_or_404(models.Password, pk=email)
+
+        if password.password_set():
+            log.error("Cannot set password. Password already set.")
+            return HttpResponseForbidden()
+
+        password.pw_hash = new_password
+        password.save()
+
+        return HttpResponse()
+
+
+
+
+
+
+
+
+

@@ -3,7 +3,7 @@ from mock import Mock, MagicMock, sentinel, patch
 import urllib 
 
 from django.test.client import Client
-from openmanage import views
+from openmanage import models, views
 
 from netkes import common
 from Pandora.serial import dumps, loads, register_all
@@ -231,6 +231,56 @@ class TestOpenmanage(unittest.TestCase):
         response = self.client.post('/openmanage/auth/')
         self.assertEqual(response.status_code, 400)
         views.CHALLENGE_EXPIRATION_TIME = 60
+
+
+class TestPassword(unittest.TestCase):
+    def setUp(self):
+        self.client = Client()
+
+    def test_get_password_fails_with_missing_arguments(self, ):
+        response = self.client.get('/openmanage/password/')
+        self.assertEqual(response.status_code, 400)
+
+    def test_get_password_fails_when_user_does_not_exist(self, ):
+        data = dict(email='dne')
+        response = self.client.get('/openmanage/password/', data)
+        self.assertEqual(response.status_code, 404)
+
+    def test_get_password_returns_correct_data(self, ):
+        models.Password.objects.create(email='unset1', pw_hash='')
+        data = dict(email='unset1')
+        response = self.client.get('/openmanage/password/', data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(json.loads(response.content)['password_set'], False)
+
+        models.Password.objects.create(email='set1', pw_hash='t')
+        data = dict(email='set1')
+        response = self.client.get('/openmanage/password/', data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(json.loads(response.content)['password_set'], True)
+
+    def test_set_password_fails_with_missing_arguments(self, ):
+        response = self.client.post('/openmanage/password/', {})
+        self.assertEqual(response.status_code, 400)
+
+    def test_set_password_fails_when_user_does_not_exist(self, ):
+        data = dict(email='dne', password='new')
+        response = self.client.post('/openmanage/password/', data)
+        self.assertEqual(response.status_code, 404)
+
+    def test_set_password_fails_when_password_set(self, ):
+        models.Password.objects.create(email='set', pw_hash='t')
+        data = dict(email='set', password='new')
+        response = self.client.post('/openmanage/password/', data)
+        self.assertEqual(response.status_code, 403)
+
+    def test_set_password_succeeds(self, ):
+        models.Password.objects.create(email='unset', pw_hash='')
+        data = dict(email='unset', password='new')
+        response = self.client.post('/openmanage/password/', data)
+        self.assertEqual(response.status_code, 200)
+        p = models.Password.objects.get(email='unset')
+        self.assertEqual(p.pw_hash, 'new')
 
 if __name__ == "__main__":
     unittest.main()
