@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 {% block title %}Logs - Management Console{{ block.super }}{% endblock %}
 {% block body_classes %}logs {{ block.super }}{% endblock body_classes %}
-{% block breadcrumb %}<a href="{% url 'blue_mgnt:manage' %}">Back to Manage</a>{% endblock breadcrumb %}
+{% block breadcrumb %}<a href="{% url 'blue_mgnt:reports' %}">Back to Reports</a>{% endblock breadcrumb %}
 {% block modal_options %}{% include "partials/add-user-widget.html" with active="users" %}{% endblock modal_options %}
-{% block navtab %}{% include "partials/navtab-widget.html" with active="manage" %}{% endblock navtab %}
+{% block navtab %}{% include "partials/navtab-widget.html" with active="reports" %}{% endblock navtab %}
 {% block content %}
 <h1 class="page-header">
 	<i class="ss-icon">&#xED50;</i> Logs

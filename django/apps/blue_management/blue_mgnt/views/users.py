@@ -372,7 +372,7 @@ def user_detail(request, api, account_info, config, username, email, saved=False
                 widget=ReadOnlyWidget, required=False
             )
             enabled = forms.BooleanField(widget=ReadOnlyWidget, required=False)
-        bonus_gigs = forms.IntegerField(label="Bonus GBs", min_value=0)
+        bonus_gigs = forms.IntegerField(label="Bonus GBs")
 
         def clean(self):
             cleaned_data = super(UserForm, self).clean()
