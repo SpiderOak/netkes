@@ -241,29 +241,23 @@ def read_data(request):
 
 def password(request):
     log = logging.getLogger('password')
-    if request.method == 'GET':
-        try:
-            email = request.GET['email']
-        except KeyError:
-            log.error("Got bad request.")
-            return HttpResponseBadRequest()
-
-        password = get_object_or_404(models.Password, pk=email)
-        response = dict(password_set=password.password_set())
-        return HttpResponse(json.dumps(response))
-
-    elif request.method == 'POST':
+    if request.method == 'POST':
         try:
             email = request.POST['email']
             new_password = request.POST['password']
         except KeyError:
-            log.error("Got bad request.")
-            return HttpResponseBadRequest()
-        password = get_object_or_404(models.Password, pk=email)
+            log.error("Got bad request. Missing arguments.")
+            return HttpResponse()
+
+        try:
+            password = models.Password.objects.get(pk=email)
+        except models.Password.DoesNotExist:
+            log.error("Password not found for user")
+            return HttpResponse()
 
         if password.password_set():
             log.error("Cannot set password. Password already set.")
-            return HttpResponseForbidden()
+            return HttpResponse()
 
         password.pw_hash = new_password
         password.save()
