@@ -236,43 +236,27 @@ class TestOpenmanage(unittest.TestCase):
 class TestPassword(unittest.TestCase):
     def setUp(self):
         self.client = Client()
-
-    def test_get_password_fails_with_missing_arguments(self, ):
-        response = self.client.get('/openmanage/password/')
-        self.assertEqual(response.status_code, 400)
-
-    def test_get_password_fails_when_user_does_not_exist(self, ):
-        data = dict(email='dne')
-        response = self.client.get('/openmanage/password/', data)
-        self.assertEqual(response.status_code, 404)
-
-    def test_get_password_returns_correct_data(self, ):
-        models.Password.objects.create(email='unset1', pw_hash='')
-        data = dict(email='unset1')
-        response = self.client.get('/openmanage/password/', data)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(json.loads(response.content)['password_set'], False)
-
-        models.Password.objects.create(email='set1', pw_hash='t')
-        data = dict(email='set1')
-        response = self.client.get('/openmanage/password/', data)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(json.loads(response.content)['password_set'], True)
+        self.log = MagicMock()
+        views.logging = MagicMock()
+        views.logging.getLogger.return_value = self.log
 
     def test_set_password_fails_with_missing_arguments(self, ):
         response = self.client.post('/openmanage/password/', {})
-        self.assertEqual(response.status_code, 400)
+        self.log.error.assert_called_with("Got bad request. Missing arguments.")
+        self.assertEqual(response.status_code, 200)
 
     def test_set_password_fails_when_user_does_not_exist(self, ):
         data = dict(email='dne', password='new')
         response = self.client.post('/openmanage/password/', data)
-        self.assertEqual(response.status_code, 404)
+        self.log.error.assert_called_with("Password not found for user")
+        self.assertEqual(response.status_code, 200)
 
     def test_set_password_fails_when_password_set(self, ):
         models.Password.objects.create(email='set', pw_hash='t')
         data = dict(email='set', password='new')
         response = self.client.post('/openmanage/password/', data)
-        self.assertEqual(response.status_code, 403)
+        self.log.error.assert_called_with("Cannot set password. Password already set.")
+        self.assertEqual(response.status_code, 200)
 
     def test_set_password_succeeds(self, ):
         models.Password.objects.create(email='unset', pw_hash='')
