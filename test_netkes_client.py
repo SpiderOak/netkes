@@ -1,9 +1,11 @@
 import os
+import logging
 import json
 from base64 import b64decode, b64encode
 import unittest
 from mock import patch, Mock
 
+from hashlib import md5
 from Crypto.PublicKey import RSA
 
 os.environ['SPIDEROAK_ESCROW_LAYERS_PATH'] = ''
@@ -14,6 +16,8 @@ from Pandora import serial
 serial.register(RSA._RSAobj)
 
 import netkes_client
+
+logging.disable(logging.CRITICAL)
 
 
 class TestNetkesClient(unittest.TestCase):
@@ -44,6 +48,7 @@ class TestNetkesClient(unittest.TestCase):
         layer._randfunc = os.urandom
         self.layers = [('keyid', layer)]
         _ESCROW_KEYS_CACHE['keyid'] = layer
+        self.layer_fingerprint = '4575-85F4-12DA-ADC7-231A-26AF-8F24-39FA'
 
         self.sign_key = serial.loads(
             'cereal1\n2\ndict\nCrypto.PublicKey.RSA._RSAobj\n6\nl65537L'
@@ -72,114 +77,90 @@ class TestNetkesClient(unittest.TestCase):
 
     def _get_client_with_dummy_credentials(self):
         client = netkes_client.NetkesClient('url')
+        client.session = Mock()
         client.brand = 'brand'
         client.username = 'username'
-        client.password = 'password'
         client.challenge = 'challenge'
         client.challenge_b64 = b64encode(client.challenge)
         client.layers = self.layers
+        client.password = 'password'
+        client.session_key = 'x' * netkes_client.SecretBox.KEY_SIZE
         return client
 
+    def test_layer_fingerprint(self):
+        client = netkes_client.NetkesClient('url')
+        fingerprint = client._layer_fingerprint(self.layers)
+        self.assertEqual(fingerprint, self.layer_fingerprint)
+
+    @patch('netkes_client.requests.Session')
+    def test_start_login(self, session):
+        post = session.return_value.post
+        post.return_value.json.return_value = {
+            'layer_data': serial.dumps(self.layers).encode('base64'),
+            'challenge': 'challenge'.encode('base64')
+        }
+
+        client = netkes_client.NetkesClient('url')
+        fingerprint = client.start_login('brand', 'username')
+
+        self.assertEqual(fingerprint, self.layer_fingerprint)
+
+        post.assert_called_once_with(
+            'url/authsession/',
+            data={'brand_id': 'brand', 'username': 'username'}
+        )
+        self.assertEqual(client.brand, 'brand')
+        self.assertEqual(client.username, 'username')
+        self.assertEqual(client.layers, self.layers)
+        self.assertEqual(client.challenge, 'challenge')
+        self.assertEqual(client.challenge_b64, 'challenge'.encode('base64'))
+
     @patch('netkes_client.RSA.generate')
-    def test_get_auth_params(self, gen):
+    def test_get_auth_data(self, gen):
         gen.return_value = self.sign_key
 
         client = self._get_client_with_dummy_credentials()
-        params = client.get_auth_params()
-        auth = b64decode(params.pop('auth'))
+        auth_data = client._get_auth_data()
+        auth = b64decode(auth_data.pop('auth'))
         auth = json.loads(read_escrow_data('brand', auth, 1))
 
         self.assertEqual(auth, {
             'challenge': b64encode('challenge'),
             'password': 'password',
         })
-        self.assertEqual(params, {
+        self.assertEqual(auth_data, {
             'brand_id': 'brand',
             'username': 'username',
+            'sign_key': serial.dumps(self.sign_key.publickey()),
+            'layer_count': len(self.layers),
         })
 
-    @unittest.skip('sign_key disabled')
     @patch('netkes_client.RSA.generate')
     def test_that_sign_key_has_no_priv_key(self, gen):
         gen.return_value = self.sign_key
 
         client = self._get_client_with_dummy_credentials()
-        params = client.get_auth_params()
-        sign_key = serial.loads(params['sign_key'])
+        auth_data = client._get_auth_data()
+        sign_key = serial.loads(auth_data['sign_key'])
 
         self.assertFalse(sign_key.has_private())
         with self.assertRaises(TypeError):
             sign_key.sign('x' * 32, 'x' * 32)
 
-    @patch('netkes_client.requests.get')
-    def test_login_without_verification(self, get):
-        client = netkes_client.NetkesClient('url')
-
-        get.return_value.json.return_value = {
-            'layer_data': serial.dumps(self.layers).encode('base64'),
-            'challenge': 'challenge'.encode('base64')
-        }
-
-        client.login('brand', 'username', 'password', False)
-
-        self.assertEqual(get.call_args_list, [
-            (
-                (('url/authsession',),
-                {'params': {'brand_id': 'brand', 'username': 'username'}})
-            )
-        ])
-
-        self.assertEqual(client.brand, 'brand')
-        self.assertEqual(client.username, 'username')
-        self.assertEqual(client.password, 'password')
-        self.assertEqual(client.layers, self.layers)
-        self.assertEqual(client.challenge, 'challenge')
-        self.assertEqual(client.challenge_b64, 'challenge'.encode('base64'))
-
-    @patch('netkes_client.requests.get')
-    def test_login_with_verification(self, get):
-        client = netkes_client.NetkesClient('url')
-        client.get_auth_params = Mock()
-
-        get.return_value.json.return_value = {
-            'layer_data': serial.dumps(self.layers).encode('base64'),
-            'challenge': 'challenge'.encode('base64')
-        }
-        get.return_value.content = 'OK'
-
-        client.login('brand', 'username', 'password')
-
-        self.assertEqual(get.call_args_list, [
-            (
-                (('url/authsession',),
-                {'params': {'brand_id': 'brand', 'username': 'username'}})
-            ),
-            (
-                (('url/auth',),
-                {'params': client.get_auth_params.return_value})
-            ),
-        ])
-
-        self.assertEqual(client.brand, 'brand')
-        self.assertEqual(client.username, 'username')
-        self.assertEqual(client.password, 'password')
-        self.assertEqual(client.layers, self.layers)
-        self.assertEqual(client.challenge, 'challenge')
-        self.assertEqual(client.challenge_b64, 'challenge'.encode('base64'))
-
-    @patch('netkes_client.requests.post')
     @patch('netkes_client.bcrypt.kdf')
-    def test_read_data(self, kdf, post):
+    def test_finish_login(self, kdf):
         client = self._get_client_with_dummy_credentials()
+        client.password = None
+        client.session_key = None
+        client._get_auth_data = Mock()
+        client.session.post.return_value.content = 'OK'
 
-        kdf.return_value = 'x' * netkes_client.SecretBox.KEY_SIZE
-        nonce = 'x' * netkes_client.SecretBox.NONCE_SIZE
-        box = netkes_client.SecretBox(kdf.return_value)
-        boxed_data = box.encrypt('secrat data', nonce)
-        post.return_value.content = boxed_data
+        client.finish_login('password')
 
-        result = client.read_data('escrow data', self.sign_key)
-        self.assertEqual(result, 'secrat data')
+        client.session.post.assert_called_once_with(
+            'url/auth/',
+            data=client._get_auth_data.return_value
+        )
 
         kdf.assert_called_once_with(
             client.password.encode('utf-8'),
@@ -187,6 +168,78 @@ class TestNetkesClient(unittest.TestCase):
             netkes_client.SecretBox.KEY_SIZE,
             netkes_client.ITERATIONS
         )
+
+        self.assertEqual(client.password, 'password')
+        self.assertEqual(client.session_key, kdf.return_value)
+
+    def test_finish_login_incorrect_credentials(self):
+        client = self._get_client_with_dummy_credentials()
+        client.password = None
+        client.session_key = None
+        client._get_auth_data = Mock()
+        client.session.post.return_value.status_code = 403
+
+        with self.assertRaises(client.IncorrectCredentialsError):
+            client.finish_login('password')
+
+        client.session.post.assert_called_once_with(
+            'url/auth/',
+            data=client._get_auth_data.return_value
+        )
+
+    def test_read_data(self):
+        client = self._get_client_with_dummy_credentials()
+        post = client.session.post
+
+        nonce = 'x' * netkes_client.SecretBox.NONCE_SIZE
+        box = netkes_client.SecretBox(client.session_key)
+        boxed_data = box.encrypt('secrat data', nonce)
+        post.return_value.content = boxed_data
+
+        result = client.read_data('escrow data', self.sign_key)
+        self.assertEqual(result, 'secrat data')
+
+    def test_logged_in_returns_False_when_login_not_started(self):
+        client = netkes_client.NetkesClient('url')
+        self.assertFalse(client.logged_in())
+
+    @patch('netkes_client.requests.Session')
+    def test_logged_in_returns_False_when_login_not_finished(self, session):
+        post = session.return_value.post
+        post.return_value.json.return_value = {
+            'layer_data': serial.dumps(self.layers).encode('base64'),
+            'challenge': 'challenge'.encode('base64')
+        }
+
+        client = netkes_client.NetkesClient('url')
+        client.start_login('brand', 'username')
+
+        self.assertFalse(client.logged_in())
+
+    @patch('netkes_client.bcrypt.kdf')
+    @patch('netkes_client.requests.Session')
+    def test_logged_in_returns_True_when_logged_in(self, session, kdf):
+        post = session.return_value.post
+        post.return_value.json.return_value = {
+            'layer_data': serial.dumps(self.layers).encode('base64'),
+            'challenge': 'challenge'.encode('base64')
+        }
+        post.return_value.content = 'OK'
+
+        client = netkes_client.NetkesClient('url')
+        client._get_auth_data = Mock()
+
+        client.start_login('brand', 'username')
+        client.finish_login('password')
+
+        self.assertTrue(client.logged_in())
+
+    def test_read_data_fails_when_not_logged_in(self):
+        client = netkes_client.NetkesClient('url')
+        client.logged_in = Mock()
+        client.logged_in.return_value = False
+        with self.assertRaises(client.NotLoggedInError):
+            client.read_data('escrow data', self.sign_key)
 
 
 if __name__ == '__main__':
