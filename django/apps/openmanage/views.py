@@ -169,11 +169,10 @@ def login_required(fun):
                 return HttpResponseForbidden()
 
             session_challenge = get_challenge(request)
-            secret_box, nonce = create_secret_box(plaintext_auth['password'], 
-                                                  session_challenge[0])
+            secret_box = create_secret_box(plaintext_auth['password'],
+                                           session_challenge[0])
             request.session['auth'] = {
                 'secret_box': secret_box,
-                'nonce': nonce,
                 'time': session_challenge[1],
                 'brand_identifier': brand_identifier,
                 'sign_key': sign_key,
@@ -195,8 +194,7 @@ def create_secret_box(password, username):
         KEYLEN, ITERATIONS
     )
     
-    nonce = nacl.utils.random(nacl.secret.SecretBox.NONCE_SIZE)
-    return nacl.secret.SecretBox(key), nonce
+    return nacl.secret.SecretBox(key)
 
 @login_required
 def read_data(request):
@@ -233,7 +231,8 @@ def read_data(request):
         log.exception('500 error in reading escrow data')
         return HttpResponseServerError()
 
-    response = auth['secret_box'].encrypt(plaintext_data, auth['nonce'])
+    nonce = nacl.utils.random(nacl.secret.SecretBox.NONCE_SIZE)
+    response = auth['secret_box'].encrypt(plaintext_data, nonce)
 
     log.info("Read data for brand %s" % (brand_identifier,))
     return HttpResponse(response, content_type="application/octet-stream")
