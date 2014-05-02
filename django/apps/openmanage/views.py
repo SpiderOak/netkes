@@ -187,13 +187,8 @@ def login_required(fun):
 def authenticate_user(request):
     return HttpResponse('OK')
 
-def create_secret_box(password, username):
-    key = bcrypt.kdf(
-        password.encode('utf-8'),
-        username,                # this is the salt
-        KEYLEN, ITERATIONS
-    )
-    
+def create_secret_box(password, salt):
+    key = bcrypt.kdf(password.encode('utf-8'), salt, KEYLEN, ITERATIONS)
     return nacl.secret.SecretBox(key)
 
 @login_required
