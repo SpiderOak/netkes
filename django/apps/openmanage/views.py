@@ -7,6 +7,7 @@ import json
 from binascii import b2a_base64, a2b_base64
 import time
 
+from django.views.decorators.csrf import csrf_exempt
 from django.utils.crypto import constant_time_compare
 from django.http import (
     HttpResponse, HttpResponseForbidden, HttpResponseBadRequest, 
@@ -54,6 +55,7 @@ setup_logging()
 setup_application()
 serial.register_all()
 
+@csrf_exempt
 def start_auth_session(request):
     log = logging.getLogger("get_layers")
 
@@ -185,6 +187,7 @@ def login_required(fun):
             return fun(request)
     return decorator
 
+@csrf_exempt
 @login_required
 def authenticate_user(request):
     return HttpResponse('OK')
@@ -199,6 +202,7 @@ def create_secret_box(password, username):
     nonce = nacl.utils.random(nacl.secret.SecretBox.NONCE_SIZE)
     return nacl.secret.SecretBox(key), nonce
 
+@csrf_exempt
 @login_required
 def read_data(request):
     log = logging.getLogger("read_data")
@@ -239,6 +243,7 @@ def read_data(request):
     log.info("Read data for brand %s" % (brand_identifier,))
     return HttpResponse(response, content_type="application/octet-stream")
 
+@csrf_exempt
 def password(request):
     log = logging.getLogger('password')
     if request.method == 'POST':
