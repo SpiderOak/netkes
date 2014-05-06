@@ -40,7 +40,7 @@ class DeleteUserForm(forms.Form):
 
 def get_user_form(local_groups):
     class UserForm(forms.Form):
-        group_id = forms.ChoiceField(local_groups)
+        group_id = forms.ChoiceField(local_groups, label='Group')
         orig_email = forms.CharField(widget=forms.HiddenInput)
     return UserForm
 
@@ -347,13 +347,14 @@ def user_detail(request, api, account_info, config, username, email, saved=False
     devices = api.list_devices(email)
     features = api.enterprise_features()
     local_user = is_local_user(config, user['group_id'])
-    local_groups = get_local_groups(config, api.list_groups())
+    groups = api.list_groups()
+    local_groups = get_local_groups(config, groups)
 
     class UserForm(forms.Form):
         if local_user:
             name = forms.CharField(max_length=45)
             email = forms.EmailField()
-            group_id = forms.ChoiceField(local_groups, label='Group ID')
+            group_id = forms.ChoiceField(local_groups, label='Group')
             password = forms.CharField(max_length=64, 
                                        widget=forms.PasswordInput,
                                        required=False
@@ -368,7 +369,7 @@ def user_detail(request, api, account_info, config, username, email, saved=False
             email = forms.EmailField(widget=ReadOnlyWidget, required=False)
             group_id = forms.ChoiceField(
                 local_groups,
-                label='Group ID',
+                label='Group',
                 widget=ReadOnlyWidget, required=False
             )
             enabled = forms.BooleanField(widget=ReadOnlyWidget, required=False)
@@ -389,6 +390,8 @@ def user_detail(request, api, account_info, config, username, email, saved=False
     data = dict()
     data.update(user)
     data['bonus_gigs'] = user['bonus_bytes'] / SIZE_OF_GIGABYTE
+    if not local_user:
+        data['group_id'] = get_group_name(groups, data['group_id'])
     user_form = UserForm(initial=data)
     if request.method == 'POST':
         if request.POST.get('form', '') == 'resend_email':
