@@ -8,7 +8,7 @@ PROJECT_DIR = os.path.abspath(os.path.dirname(__file__))
 sys.path += [os.path.join(PROJECT_DIR, '../apps')]
 sys.path += ['/opt/openmanage/django/apps']
 
-DEBUG = False
+DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = ()
