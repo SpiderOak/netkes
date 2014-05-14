@@ -1,0 +1,1 @@
+/opt/openmanage/upgrade/resources/PyNaCl-0.2.3.tar.gz

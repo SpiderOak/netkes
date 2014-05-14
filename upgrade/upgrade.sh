@@ -85,7 +85,8 @@ echo "Running additional update scripts..."
 sudo bash -c "PYTHONPATH=/opt/openmanage python /opt/openmanage/upgrade/apply_scripts.py"
 
 apt-get -y remove python-crypto
-pip install -r /opt/openmanage/upgrade/requirements.txt
+pip install --no-index -f /opt/openmanage/upgrade/resources -r /opt/openmanage/upgrade/requirements.txt
+pip install --no-index -f /opt/openmanage/upgrade/resources -r /opt/openmanage/upgrade/requirements2.txt
 
 # Restart services
 for SERVICE in openmanage admin_console; do
