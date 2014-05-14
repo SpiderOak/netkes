@@ -19,3 +19,8 @@ cd resources
 pip install --download=. pip==1.4.1
 pip install --download=. Django==1.5.5
 pip install --download=. pytz==2013.8
+pip install --download=. pynacl==0.2.3
+pip install --download=. py-bcrypt==0.4
+
+apt-get -d install libffi-dev
+cp /var/cache/apt/archives/libffi-dev_* .

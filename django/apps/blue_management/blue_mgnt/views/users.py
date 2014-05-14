@@ -14,6 +14,7 @@ from django.template import RequestContext
 from django.shortcuts import redirect
 
 from netkes.account_mgr.user_source import local_source
+import openmanage.models as openmanage_models
 
 class UserDetailWidget(ReadOnlyWidget):
     def render(self, name, value, attrs):
@@ -403,10 +404,16 @@ def user_detail(request, api, account_info, config, username, email, saved=False
                     data.update(user_form.cleaned_data)
                     del data['bonus_gigs']
                     del data['repeat_password']
+                    if email != data['email']:
+                        try:
+                            password = openmanage_models.Password.objects.get(email=email)
+                            password.update_email(data['email'])
+                        except openmanage_models.Password.DoesNotExist:
+                            pass
                 if 'password' in data:
                     if data['password']:
                         local_source.set_user_password(local_source._get_db_conn(config),
-                                                    email, data['password'])
+                                                       email, data['password'])
                     del data['password']
                 if request.user.has_perm('blue_mgnt.can_edit_bonus_gigs'):
                     data['bonus_bytes'] = user_form.cleaned_data['bonus_gigs'] * SIZE_OF_GIGABYTE
