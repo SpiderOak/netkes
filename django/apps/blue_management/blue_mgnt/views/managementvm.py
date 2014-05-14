@@ -33,6 +33,8 @@ def get_login_link(username, auth_token):
 @permission_required('blue_mgnt.can_view_user_data', raise_exception=True)
 def escrow_login(request, api, account_info, config, username,
                  escrow_username, saved=False):
+    user = api.get_user(escrow_username)
+    log_admin_action(request, "Used storage login for user: %s" % user['email'])
     data = dict(
         token=setup_token.new_token(),
         expiry=datetime.datetime.now() + datetime.timedelta(minutes=1),

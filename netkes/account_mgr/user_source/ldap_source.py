@@ -118,7 +118,7 @@ class LdapGroup(object):
                     self.config['dir_lname_source'].encode('utf-8'),
                     ]
 
-        if 'dir_email_source' in self.config:
+        if self.config.get('dir_email_source', None) not in (None, '',):
             attrlist.append(self.config['dir_email_source'].encode('utf-8'))
 
         return attrlist
@@ -138,7 +138,7 @@ class LdapGroup(object):
             'group_id'  : self.group_id,
         }
 
-        if 'dir_email_source' in self.config:
+        if self.config.get('dir_email_source', None) not in (None, '',):
             user['email'] = result_dict[self.config['dir_email_source']][0]
             user['username'] = result_dict[self.config['dir_username_source']][0]
         else:
@@ -191,7 +191,7 @@ class LdapGroup(object):
 
         '''
         log = logging.getLogger('_build_user_details')
-        if uid_field is not None:
+        if uid_field not in (None, ''):
             user_dict = self._user_for_uid(uid, uid_field)
         else:
             user_dict = self._user_for_dn(uid)
@@ -357,8 +357,8 @@ def get_auth_username(config, username):
     # just return here.
     log = logging.getLogger("get_auth_username")
 
-    if (config.get('dir_auth_username') is None and 
-        config.get('dir_auth_source') is None):
+    if (config.get('dir_auth_username') in (None, '',) and 
+        config.get('dir_auth_source') in (None, '',)):
         return username
 
     my_ldap = OMLDAPConnection(config['dir_uri'], config['dir_base_dn'],
