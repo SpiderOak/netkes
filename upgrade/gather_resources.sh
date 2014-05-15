@@ -20,7 +20,24 @@ pip install --download=. pip==1.4.1
 pip install --download=. Django==1.5.5
 pip install --download=. pytz==2013.8
 pip install --download=. pycrypto==2.4.1
+pip install --download=. py-bcrypt==0.4
 pip install --download=. cffi==0.8.2
 pip install --download=. six==1.6.1
 pip install --download=. pycparser==2.10
 pip install --download=. PyNaCl==0.2.3
+
+if [ ! -d /tmp/gather_resources/archives/partial ]; then
+    mkdir -p /tmp/gather_resources/archives/partial
+fi
+
+LIBFFI_DEPS=`apt-cache depends libffi-dev |
+    grep 'Depends' |
+    cut -d: -f2 |
+    tr -d ' ' |
+    grep -v dpkg |
+    grep -v install-info |
+    xargs -d "\n"`
+
+apt-get -d -o dir::cache=/tmp/gather_resources -o Debug::NoLocking=1 --reinstall install libffi-dev $LIBFFI_DEPS
+cp /tmp/gather_resources/archives/*.deb .
+rm -rf /tmp/gather_resources

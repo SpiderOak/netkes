@@ -4,6 +4,7 @@ semantic.cache
 *.pyc
 *.pyo
 *.swp
+upgrade/resources
 deploy/openmanage*
 docs/_build*
 *.key*
