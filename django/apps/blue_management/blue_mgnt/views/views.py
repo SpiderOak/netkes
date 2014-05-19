@@ -198,44 +198,6 @@ class NetkesBackend(ModelBackend):
 
             return None
 
-    def authenticate_ldap(self, username, password):
-        config = read_config_file()
-        conn = ldap.initialize(config['dir_uri'])
-        try:
-            auth_user = ldap_source.get_auth_username(config, username)
-            conn.simple_bind_s(auth_user, password)
-            group = False
-            ldap_conn = ldap_source.OMLDAPConnection(config["dir_uri"],
-                                                     config["dir_base_dn"],
-                                                     config["dir_user"],
-                                                     config["dir_password"])
-            for admin_group in models.AdminGroup.objects.all():
-                group = ldap_source.LdapGroup.get_group(
-                    ldap_conn,
-                    config,
-                    admin_group.ldap_dn,
-                    admin_group.ldap_dn,
-                )
-                for user in group.userlist():
-                    key = 'email'
-                    if 'username' in user:
-                        key = 'username'
-                    if user[key] == username:
-                        group = Group.objects.get(pk=admin_group.group_id)
-                        break
-
-            if not group:
-                return None
-            try:
-                user = User.objects.get(username=username)
-            except User.DoesNotExist:
-                user = User(username=username, password='not used')
-                user.save()
-            user.groups.add(group)
-            return user
-        except Exception, e:
-            return None
-
     def authenticate_netkes(self, username, password):
         log = logging.getLogger('admin_actions.authenticate_netkes')
         log.info('Attempting to log in "%s" through netkes' % username)
@@ -271,7 +233,10 @@ class NetkesBackend(ModelBackend):
         if user:
             return user
 
-        return self.authenticate_netkes(username, password)
+        config = read_config_file()
+        if config['api_user']:
+            return self.authenticate_netkes(username, password)
+        return None
 
     def get_user(self, user_id):
             try:
@@ -287,13 +252,32 @@ class LoginForm(forms.Form):
     password = forms.CharField(widget=forms.PasswordInput)
 
 def initial_setup(username, password):
-    print 'in initial'
     config_mgr_ = config_mgr.ConfigManager(config_mgr.default_config())
     config_mgr_.config['api_user'] = username
     config_mgr_.config['api_password'] = password
     config_mgr_.apply_config()
 
     call(['/opt/openmanage/bin/first_setup.sh', username])
+    api = get_api(config_mgr_.config)
+    plans = api.list_plans()
+    unlimited = [x for x in plans if x['storage_bytes'] == 1000000001000000000]
+    if unlimited:
+        data = {
+            'name': 'Unlimited',
+            'plan_id': unlimited[0]['plan_id'],
+            'webapi_enable': True,
+            'check_domain': False,
+        }
+        group_id = api.create_group(data)
+        data = dict(group_id=group_id,
+                    type='dn',
+                    ldap_id='',
+                    priority=0,
+                    user_source='local',
+                    admin_group=False,
+                   )
+        config_mgr_.config['groups'].append(data)
+        config_mgr_.apply_config()
 
 def login_user(request):
     form = LoginForm()
@@ -310,7 +294,6 @@ def login_user(request):
                 log_admin_action(request, 'logged in')# from ip: %s' % remote_addr)
                 config = read_config_file()
 
-                print 'pass', config['api_password']
                 if not config['api_password']:
                     initial_setup(username, password)
 
