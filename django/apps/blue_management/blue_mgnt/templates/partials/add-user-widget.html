@@ -21,7 +21,6 @@
             </div>
         </div>
     {% endcomment %}
-{% if config.enable_local_users %}
         <div class="widget-add-user" style="display:none">
             <form action="{% url 'blue_mgnt:users' %}" enctype="multipart/form-data" method="POST">
             {% csrf_token %}
@@ -61,7 +60,6 @@
             </div>
         </form>
     </div>
-{% endif %}
     <div class="widget-upload-csv" style="display: none">
         <form action="{% url 'blue_mgnt:users' %}" enctype="multipart/form-data" method="post">
         {% csrf_token %}
@@ -91,10 +89,10 @@
                 </table>
                 <div class="csv-note">
                     <p>Note: CSV uploads should be comma delimited and need to contain
-                    email address, name, password, and group name which should appear as follows:</p>
+                    email address, name, and group name which should appear as follows:</p>
                     <p>
-                        <pre>email,name,password,group_name
-jane@foo.com,Jane Doe,passworD,Local 20 GB</pre>
+                        <pre>email,name,group_name
+jane@foo.com,Jane Doe,Unlimited</pre>
                     </p>
                     <p>For additional information, please don't hesitate to reach out to
                     <a href="mailto:bluesupport@spideroak.com">bluesupport@spideroak.com</a></p>

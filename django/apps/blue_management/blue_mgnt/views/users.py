@@ -108,8 +108,6 @@ def get_new_user_csv_form(api, groups, config, request):
                     raise forms.ValidationError(msg + ' email is required')
                 if 'name' not in row:
                     raise forms.ValidationError(msg + ' name is required')
-                if 'password' not in row:
-                    raise forms.ValidationError(msg + ' password is required')
                 if 'group_name' not in row:
                     raise forms.ValidationError(msg + ' group_name is required')
 
@@ -130,8 +128,6 @@ def get_new_user_csv_form(api, groups, config, request):
                 )
                 try:
                     api.create_user(user_info)
-                    local_source.set_user_password(local_source._get_db_conn(config),
-                                                   row['email'], row['password'])
                     log_admin_action(request, 'create user through csv: %s' % user_info)
                 except api.DuplicateEmail:
                     msg = 'Invalid data in row %s. Email already in use' % x
@@ -145,9 +141,6 @@ def get_new_user_form(api, features, config, local_groups, groups, request):
             username = forms.CharField(max_length=45)
         email = forms.EmailField()
         name = forms.CharField(max_length=45)
-        password = forms.CharField(max_length=64, 
-                                   required=False,
-                                   widget=forms.PasswordInput)
         group_id = forms.ChoiceField(local_groups, label='Group')
 
         def clean_username(self):
@@ -165,7 +158,6 @@ def get_new_user_form(api, features, config, local_groups, groups, request):
             name = cleaned_data.get('name', '')
             group_id = cleaned_data['group_id']
             username = cleaned_data.get('username', '')
-            password = cleaned_data.get('password', '')
 
             valid_username = username
             if not hasattr(self, username):
@@ -178,10 +170,7 @@ def get_new_user_form(api, features, config, local_groups, groups, request):
                     data.update(dict(username=username))
                 try:
                     api.create_user(data)
-                    local_source.set_user_password(local_source._get_db_conn(config),
-                                                   email, password)
-                    if not password:
-                        api.send_activation_email(email, dict(template_name='set_password'))
+                    api.send_activation_email(email, dict(template_name='set_password'))
                     log_admin_action(request, 'create user: %s' % data)
                 except api.DuplicateEmail:
                     self._errors['email'] = self.error_class(["Email address already in use"])
