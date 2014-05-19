@@ -21,6 +21,9 @@ pip install --download=. Django==1.5.5
 pip install --download=. pytz==2013.8
 pip install --download=. py-bcrypt==0.4
 pip install --download=. pycrypto==2.4.1
+pip install --download=. cffi==0.8.2
+pip install --download=. six==1.6.1
+pip install --download=. pycparser==2.10
 pip install --download=. pynacl==0.2.3
 
 apt-get -d install libffi-dev
