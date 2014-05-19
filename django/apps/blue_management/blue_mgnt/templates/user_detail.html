@@ -16,7 +16,9 @@
 <h1 class="page-header">
 	<i class="ss-icon">&#x1F464;</i> User Details
     <div class="actions">
+        {% if devices|length > 0 %}
         <a href="{{ storage_login }}" target="_blank" class="button button-primary-basic">Access User's Data</a>
+        {% endif %}
     </div>
 </h1>
 
