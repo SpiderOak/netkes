@@ -87,7 +87,7 @@ sudo bash -c "PYTHONPATH=/opt/openmanage python /opt/openmanage/upgrade/apply_sc
 apt-get -y remove python-crypto
 dpkg -i /opt/openmanage/upgrade/resources/libffi-dev*
 
-pip install -r /opt/openmanage/upgrade/requirements.txt
+cat /opt/openmanage/upgrade/requirements.txt | xargs pip install
 
 # Restart services
 for SERVICE in openmanage admin_console; do
