@@ -47,9 +47,9 @@
 				</a>
 			</h1>
 			<ul>
-                <li>( {{ account_info.api_user|title }} )</li>
+                <li>{{ account_info.api_user|title }}</li>
 				<li>{{ username }}</li>
-                <li class="line"><a href="https://spideroak.com/business/blue/docs/">
+                <li class="line"><a target="_blank" href="https://spideroak.com/business/blue/docs/">
                     <i class="ss-icon">&#x2753;</i>Help
                 </a></li>
 				<li class="line"><a href="{% url "blue_mgnt:logout" %}"><i class="ss-icon">&#x1F512;</i>Logout</a></li>
