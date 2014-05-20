@@ -37,7 +37,8 @@ def save_settings(request, api, options):
     cleaned_data = options.cleaned_data
     data = dict()
     data.update(cleaned_data)
-    del data['timezone']
+    if 'timezone' in data:
+        del data['timezone']
     if 'enable_local_users' in data: 
         del data['enable_local_users']
     if 'share_link_ttl' in data: 
@@ -55,12 +56,14 @@ def save_settings(request, api, options):
 
     config_mgr_ = config_mgr.ConfigManager(config_mgr.default_config())
     for var in AGENT_CONFIG_VARS:
-        config_mgr_.config[var] = cleaned_data[var]
+        if var in cleaned_data:
+            config_mgr_.config[var] = cleaned_data[var]
     config_mgr_.apply_config()
 
-    with open('/etc/timezone', 'w') as f:
-        f.write(cleaned_data['timezone'])
-    subprocess.call(['dpkg-reconfigure', '-f', 'noninteractive', 'tzdata'])
+    if 'timezone' in cleaned_data:
+        with open('/etc/timezone', 'w') as f:
+            f.write(cleaned_data['timezone'])
+        subprocess.call(['dpkg-reconfigure', '-f', 'noninteractive', 'tzdata'])
 
 
 class IPBlockForm(forms.Form):
@@ -104,23 +107,25 @@ def settings(request, api, account_info, config, username, saved=False):
             initial=datetime.timedelta(days=opts['versionpurge_interval'])
         )
         support_email = forms.EmailField(initial=opts['support_email'])
-        omva_url = forms.URLField(
-            label='OpenManage Virtual Appliance URL', 
-            initial=opts['omva_url'], 
-        )
-        timezone = forms.ChoiceField(
-            choices=[(x, x) for x in pytz.common_timezones],
-            initial=file('/etc/timezone').read().strip(),
-        )
+        if features['ldap']:
+            omva_url = forms.URLField(
+                label='OpenManage Virtual Appliance URL', 
+                initial=opts['omva_url'], 
+            )
+            timezone = forms.ChoiceField(
+                choices=[(x, x) for x in pytz.common_timezones],
+                initial=file('/etc/timezone').read().strip(),
+            )
 
         def __init__(self, *args, **kwargs):
             super(OpenmanageOptsForm, self).__init__(*args, **kwargs)
             
-            for var in AGENT_CONFIG_VARS:
-                self.fields[var] = forms.CharField(
-                    initial=config.get(var, ''), 
-                    required=False
-                )
+            if features['ldap']:
+                for var in AGENT_CONFIG_VARS:
+                    self.fields[var] = forms.CharField(
+                        initial=config.get(var, ''), 
+                        required=False
+                    )
 
     options = OpenmanageOptsForm()
 

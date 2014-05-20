@@ -261,7 +261,7 @@ class Api(object):
                 raise self.NotFound()
             raise
 
-    def send_activation_email(self, username_or_email, data=''):
+    def send_activation_email(self, username_or_email, data={}):
         try:
             self.client.post_json('users/%s?action=sendactivationemail' % (
                 username_or_email,), data)
