@@ -75,7 +75,9 @@
             <td>
                 {{ curr_user.name }}
             </td>
-            <td>{{ curr_user.email }}</td>
+            <td><a href="mailto:{{ curr_user.email }}">
+                {{ curr_user.email }}
+            </a></td>
             {% if curr_user.is_local_user %}
                 {% for hidden in curr_user.form.hidden_fields %}
                     {{ hidden }}
