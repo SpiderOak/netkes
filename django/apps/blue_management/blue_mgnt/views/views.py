@@ -263,7 +263,7 @@ def initial_setup(username, password):
     unlimited = [x for x in plans if x['storage_bytes'] == 1000000001000000000]
     if unlimited:
         data = {
-            'name': 'Unlimited',
+            'name': username,
             'plan_id': unlimited[0]['plan_id'],
             'webapi_enable': True,
             'check_domain': False,
