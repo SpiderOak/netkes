@@ -11,28 +11,32 @@ class Error(Exception):
     pass
 
 
-class ApiMeta(type):
+class LogErrorMeta(type):
+    '''Decorate all functions so that they log all Errors.'''
     def __new__(cls, name, bases, attrs):
         for attr_name, attr_value in attrs.iteritems():
             if isinstance(attr_value, types.FunctionType):
                 attrs[attr_name] = cls.log_exceptions(attr_value)
 
-        return super(ApiMeta, cls).__new__(cls, name, bases, attrs)
+        return super(LogErrorMeta, cls).__new__(cls, name, bases, attrs)
 
     @classmethod
     def log_exceptions(cls, func):
+        '''Log the name and arguments of any function that raises an Error. 
+        Then raise the exception. 
+        '''
         def wrapper(*args, **kwargs):
             try:
                 return func(*args, **kwargs)
             except Error:
                 log = logging.getLogger('accounts_api')
-                log.error('%s - %s - %s' % (func.__name__, args, kwargs))
+                log.exception('%s - %s - %s' % (func.__name__, args, kwargs))
                 raise
         return wrapper
         
 
 class Api(object):
-    __metaclass__ = ApiMeta
+    __metaclass__ = LogErrorMeta
 
     class BadParams(Error):
         pass
