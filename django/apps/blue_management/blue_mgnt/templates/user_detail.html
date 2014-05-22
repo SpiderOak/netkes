@@ -152,7 +152,11 @@
             </tr>
             <tr>
                 <td><label>Storage GBs</label></td>
+                {% if api_user.storage_bytes < 1000000001000000000 %}
                 <td>{{ api_user.storage_bytes|sofilesizeformat }}</td>
+                {% else %}
+                <td>Unlimited</td>
+                {% endif %}
                 <td></td>
             </tr>
             <tr>

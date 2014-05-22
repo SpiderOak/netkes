@@ -42,13 +42,8 @@ if [ ! -n "$UPDATE_TARBALL" ]; then
     echo "The upgrade file could not be found.  Exiting."
     exit
 fi
-BRAND=${2:-$OPENMANAGE_BRAND} # Loaded indirectly from /etc/default/openmanage.
-if [ ! -n "$BRAND" ]; then
-    echo "The enterprise ID could not be loaded.  Exiting."
-    exit
-fi
 
-echo "Starting upgrade using $UPDATE_TARBALL for enterprise $BRAND."
+echo "Starting upgrade using $UPDATE_TARBALL."
 read -p "Press <Enter> to continue; <Ctrl>-C to abort."
 
 CURRENT_DATE=$(date "+%y-%m-%d")
@@ -74,9 +69,6 @@ cp /opt/openmanage.$CURRENT_DATE/etc/agent_config.json /opt/openmanage/etc
 random_string="$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c 64;echo;)"
 secret_key="export DJANGO_SECRET_KEY=\"$random_string\""
 echo $secret_key >> /opt/openmanage/etc/openmanage_defaults 
-
-# Set the brand in the configuration
-echo "OPENMANAGE_BRAND=$BRAND" > /opt/openmanage/etc/brand
 
 echo "Updating database..."
 /opt/openmanage/upgrade/apply_sql.sh

@@ -26,5 +26,4 @@ pip install --download=. six==1.6.1
 pip install --download=. pycparser==2.10
 pip install --download=. pynacl==0.2.3
 
-apt-get -d install libffi-dev
-cp /var/cache/apt/archives/libffi-dev_* .
+wget $(apt-get install --reinstall --print-uris -qq libffi-dev | cut -d"'" -f2)

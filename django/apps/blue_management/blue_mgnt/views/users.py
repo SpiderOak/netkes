@@ -144,7 +144,9 @@ def get_new_user_form(api, features, config, local_groups, groups, request):
             username = forms.CharField(max_length=45)
         email = forms.EmailField()
         name = forms.CharField(max_length=45)
-        password = forms.CharField(max_length=64, widget=forms.PasswordInput)
+        password = forms.CharField(max_length=64, 
+                                   required=False,
+                                   widget=forms.PasswordInput)
         group_id = forms.ChoiceField(local_groups, label='Group')
 
         def clean_username(self):
@@ -177,6 +179,8 @@ def get_new_user_form(api, features, config, local_groups, groups, request):
                     api.create_user(data)
                     local_source.set_user_password(local_source._get_db_conn(config),
                                                    email, password)
+                    if not password:
+                        api.send_activation_email(email, dict(template_name='set_password'))
                     log_admin_action(request, 'create user: %s' % data)
                 except api.DuplicateEmail:
                     self._errors['email'] = self.error_class(["Email address already in use"])

@@ -17,20 +17,23 @@ from blue_mgnt import models
 
 def get_plan_choices(plans):
     sorted_plans = sorted(plans, key=lambda x: x['storage_bytes'])
-    return [(p['plan_id'], '%s GB' % (p['storage_bytes'] / SIZE_OF_GIGABYTE \
-            if p['storage_bytes'] / SIZE_OF_GIGABYTE < 1000000001 else 'Unlimited')) \
+    return [(p['plan_id'], '%s GB' % (p['storage_bytes'] / SIZE_OF_GIGABYTE) \
+            if p['storage_bytes'] / SIZE_OF_GIGABYTE < 1000000001 else 'Unlimited') \
             for p in sorted_plans]
 
-def get_group_form(request, config, plans, api, show_user_source=True, new_group=True):
+def get_group_form(request, config, plans, api, show_user_source=True, 
+                   new_group=True, ldap_enabled=True):
     class GroupForm(forms.Form):
         name = forms.CharField(label="Group Name", required=True)
         plan_id = forms.ChoiceField(get_plan_choices(plans), label='Plan')
         webapi_enable = forms.BooleanField(required=False, initial=True)
         check_domain = forms.BooleanField(required=False)
-        ldap_dn = forms.CharField(required=False,
-                                    widget=forms.Textarea(attrs={'rows':'1', 'cols':'60'}))
-        if config['enable_local_users'] and show_user_source:
-            user_source = forms.ChoiceField([('ldap', 'ldap'), ('local', 'local')])
+        if ldap_enabled:
+            ldap_dn = forms.CharField(required=False,
+                                      widget=forms.Textarea(
+                                          attrs={'rows':'1', 'cols':'60'}))
+            if show_user_source:
+                user_source = forms.ChoiceField([('ldap', 'ldap'), ('local', 'local')])
         priority = forms.IntegerField(initial=0, required=False)
         admin_group = forms.BooleanField(required=False)
         permissions = forms.MultipleChoiceField(
@@ -84,10 +87,11 @@ def get_group_form(request, config, plans, api, show_user_source=True, new_group
 
 def add_config_items(group, config):
     g = get_config_group(config, group['group_id'])
-    group['ldap_dn'] = g['ldap_id']
-    group['priority'] = g['priority']
-    group['user_source'] = g['user_source']
-    group['admin_group'] = g['admin_group']
+    if g:
+        group['ldap_dn'] = g['ldap_id']
+        group['priority'] = g['priority']
+        group['user_source'] = g['user_source']
+        group['admin_group'] = g['admin_group']
 
 @enterprise_required
 @permission_required('blue_mgnt.can_view_groups', raise_exception=True)
@@ -155,7 +159,8 @@ def groups(request, api, account_info, config, username, saved=False):
             config_mgr_.apply_config()
 
 
-    GroupForm = get_group_form(request, config, plans, api)
+    GroupForm = get_group_form(request, config, plans, api, 
+                               ldap_enabled=features['ldap'])
     GroupFormSet = formset_factory(get_group_form(request, config, plans, api, False),
                                    extra=0, formset=BaseGroupFormSet)
 
@@ -171,7 +176,11 @@ def groups(request, api, account_info, config, username, saved=False):
         add_config_items(i, config)
         for plan in plans:
             if plan['plan_id'] == i['plan_id']:
-                i['plan_name'] = '%s GB' % (plan['storage_bytes'] / SIZE_OF_GIGABYTE)
+                storage_gigs = plan['storage_bytes'] / SIZE_OF_GIGABYTE
+                if storage_gigs < 1000000001:
+                    i['plan_name'] = '%s GB' % storage_gigs
+                else:
+                    i['plan_name'] = 'Unlimited'
 
     groups = GroupFormSet(initial=initial, prefix='groups')
     group_csv = GroupCSVForm()
@@ -194,9 +203,9 @@ def groups(request, api, account_info, config, username, saved=False):
                 config_mgr_ = config_mgr.ConfigManager(config_mgr.default_config())
                 data = dict(group_id=group_id,
                             type='dn',
-                            ldap_id=new_group.cleaned_data['ldap_dn'],
+                            ldap_id=new_group.cleaned_data.get('ldap_dn', ''),
                             priority=new_group.cleaned_data['priority'],
-                            user_source=new_group.cleaned_data.get('user_source', 'ldap'),
+                            user_source=new_group.cleaned_data.get('user_source', 'local'),
                             admin_group=new_group.cleaned_data['admin_group'],
                            )
                 config_mgr_.config['groups'].append(data)
