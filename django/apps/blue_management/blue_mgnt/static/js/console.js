@@ -99,7 +99,7 @@ $(function() {
             'position' : 'relative',
             'z-index' : '1',
         });
-        $('.shield').css({
+        $('.shield').not('.reboot-message-wrapper').css({
             'position' : 'absolute',
             'z-index' : '10000'
         }).toggle();

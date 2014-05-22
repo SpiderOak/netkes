@@ -110,6 +110,7 @@
         $('.reboot-message > p').html(str);
         if ( start == 1 ){
             $('.shield').show();
+            $('.loader').hide();
             $('.shield').css('height', $('.overlord').height());
             posModal('.reboot-message');
             $('#processing').not(':visible').toggle();
@@ -122,6 +123,7 @@
 
     $('.reboot-message-close').click(function(){
         $('.shield').hide();
+        $('.loader').show();
         $(this).hide();
     });
 
