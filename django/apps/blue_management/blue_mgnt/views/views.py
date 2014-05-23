@@ -418,6 +418,9 @@ def enterprise_required(fun):
         account_info['total_groups'] = len(config['groups'])
         account_info['total_auth_codes'] = models.AdminSetupTokensUse.objects.count()
         account_info['api_user'] = config['api_user']
+        
+        with open('/opt/openmanage/etc/OpenManage_version.txt') as f:
+            account_info['version'] = f.readlines()[0]
         return fun(request, api, account_info, config,
                    request.session['username'], *args, **kwargs)
     return new_fun
