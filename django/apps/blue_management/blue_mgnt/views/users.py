@@ -128,6 +128,10 @@ def get_new_user_csv_form(api, groups, config, request):
                 )
                 try:
                     api.create_user(user_info)
+                    # Set a blank password so that the password can be set 
+                    # through the set password email.
+                    local_source.set_user_password(local_source._get_db_conn(config),
+                                                   row['email'], '')
                     log_admin_action(request, 'create user through csv: %s' % user_info)
                 except api.DuplicateEmail:
                     msg = 'Invalid data in row %s. Email already in use' % x
@@ -170,6 +174,10 @@ def get_new_user_form(api, features, config, local_groups, groups, request):
                     data.update(dict(username=username))
                 try:
                     api.create_user(data)
+                    # Set a blank password so that the password can be set 
+                    # through the set password email.
+                    local_source.set_user_password(local_source._get_db_conn(config),
+                                                   email, '') 
                     api.send_activation_email(email, dict(template_name='set_password'))
                     log_admin_action(request, 'create user: %s' % data)
                 except api.DuplicateEmail:
