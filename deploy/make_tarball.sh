@@ -94,7 +94,7 @@ echo
 echo Making tarball...
 echo
 pushd $deploy_dir > /dev/null
-tar cjf openmanage-$version.tar.bz2 openmanage
+tar cjf openmanage-$version.tar.bz2 openmanage-$version
 popd > /dev/null
 
 echo Done setting up!

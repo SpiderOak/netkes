@@ -44,7 +44,6 @@ if [ ! -n "$UPDATE_TARBALL" ]; then
 fi
 
 echo "Starting upgrade using $UPDATE_TARBALL."
-read -p "Press <Enter> to continue; <Ctrl>-C to abort."
 
 CURRENT_DATE=$(date "+%y-%m-%d")
 
