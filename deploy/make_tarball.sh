@@ -22,7 +22,7 @@ management_files=$3
 echo "Building OpenManage software suite from $source_dir"
 
 deploy_dir=$source_dir/deploy           # source_dir/deploy
-buildit_dir=$deploy_dir/openmanage      # source_dir/deploy/openmanage
+buildit_dir=$deploy_dir/openmanage-$version      # source_dir/deploy/openmanage
 
 # The following script gets packages, like from pip, and puts them in $source_dir/upgrade.
 echo
