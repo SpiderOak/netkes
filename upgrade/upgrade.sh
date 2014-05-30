@@ -14,10 +14,7 @@ usage(){
     cat << __EOF__
 Usage:
 
-upgrade.sh <upgradefile> [<brand_id>]
-
-where <upgradefile> is a tarball, like openmanage-1.3.tar.bz2
-and <brand_id> is the enterprise brand, imported if not specified and available.
+upgrade.sh <version>
 
 Requirements:
 Must be run as root, e.g. with sudo!
@@ -37,7 +34,9 @@ fi
 
 . /etc/default/openmanage
 
-UPDATE_TARBALL=`readlink -e $1`
+VERSION=$1
+
+UPDATE_TARBALL="openmanage-$VERSION.tar.bz2"
 if [ ! -n "$UPDATE_TARBALL" ]; then
     echo "The upgrade file could not be found.  Exiting."
     exit
@@ -56,10 +55,8 @@ done
 # Move out old openmanage
 mv /opt/openmanage /opt/openmanage.$CURRENT_DATE
 
-pushd /opt
-tar xjfv $UPDATE_TARBALL
-popd #/opt
-
+tar xjfv $UPDATE_TARBALL -C /opt
+ln -s /opt/openmanage-$VERSION /opt/openmanage
 echo "updated tarball"
 
 # Bring over configuration into the new stuff.
