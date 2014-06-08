@@ -3,6 +3,7 @@
         <h2 class="page-header"><i class="ss-icon">&#x1F464;</i>Add User
             <span class="actions"><i class="ss-icon">&#x2421;</i></span>
         </h2>
+    {% comment %}
             <div class="spacer"><!--ZXP--></div>
         <div class="widget-add-user-option">
             <div class="lower-content">
@@ -19,7 +20,7 @@
             </div>
             </div>
         </div>
-
+    {% endcomment %}
 {% if config.enable_local_users %}
         <div class="widget-add-user" style="display:none">
             <form action="{% url 'blue_mgnt:users' %}" enctype="multipart/form-data" method="POST">
