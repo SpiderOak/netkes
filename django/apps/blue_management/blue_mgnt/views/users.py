@@ -5,6 +5,7 @@ import csv
 from views import enterprise_required, render_to_response, log_admin_action
 from views import ReadOnlyWidget, get_base_url, SIZE_OF_GIGABYTE
 from views import pageit
+from settings import PasswordForm
 from groups import get_config_group
 
 from django import forms
@@ -360,14 +361,6 @@ def user_detail(request, api, account_info, config, username, email, saved=False
             name = forms.CharField(max_length=45)
             email = forms.EmailField()
             group_id = forms.ChoiceField(local_groups, label='Group')
-            password = forms.CharField(max_length=64, 
-                                       widget=forms.PasswordInput,
-                                       required=False
-                                      )
-            repeat_password = forms.CharField(max_length=64, 
-                                              widget=forms.PasswordInput,
-                                              required=False
-                                             )
             enabled = forms.BooleanField(required=False)
         else:
             name = forms.CharField(widget=ReadOnlyWidget, required=False, max_length=45)
@@ -380,24 +373,13 @@ def user_detail(request, api, account_info, config, username, email, saved=False
             enabled = forms.BooleanField(widget=ReadOnlyWidget, required=False)
         bonus_gigs = forms.IntegerField(label="Bonus GBs")
 
-        def clean(self):
-            cleaned_data = super(UserForm, self).clean()
-            password = cleaned_data.get("password")
-            repeat_password = cleaned_data.get("repeat_password")
-
-            if password != repeat_password:
-                msg = "must match password"
-                self._errors['repeat_password'] = self.error_class([msg])
-                del cleaned_data['password']
-                del cleaned_data['repeat_password']
-            return cleaned_data
-
     data = dict()
     data.update(user)
     data['bonus_gigs'] = user['bonus_bytes'] / SIZE_OF_GIGABYTE
     if not local_user:
         data['group_id'] = get_group_name(groups, data['group_id'])
     user_form = UserForm(initial=data)
+    password_form = PasswordForm()
     if request.method == 'POST':
         if request.POST.get('form', '') == 'resend_email':
             log_admin_action(request, 'resent activation email for %s ' % email)
@@ -410,26 +392,29 @@ def user_detail(request, api, account_info, config, username, email, saved=False
                 if local_user:
                     data.update(user_form.cleaned_data)
                     del data['bonus_gigs']
-                    del data['repeat_password']
                     if email != data['email']:
                         try:
                             password = openmanage_models.Password.objects.get(email=email)
                             password.update_email(data['email'])
                         except openmanage_models.Password.DoesNotExist:
                             pass
-                if 'password' in data:
-                    if data['password']:
-                        local_source.set_user_password(local_source._get_db_conn(config),
-                                                       email, data['password'])
-                    del data['password']
                 if request.user.has_perm('blue_mgnt.can_edit_bonus_gigs'):
                     data['bonus_bytes'] = user_form.cleaned_data['bonus_gigs'] * SIZE_OF_GIGABYTE
                 if data:
                     log_admin_action(request, 'edit user "%s" with data: %s' % (email, data))
                     api.edit_user(email, data)
                 return redirect('blue_mgnt:user_detail_saved', data.get('email', email))
+        if request.POST.get('form', '') == 'password':
+            password_form = PasswordForm(request.POST)
+            if password_form.is_valid():
+                log_admin_action(request, 'change password for: %s' % email)
+                password = password_form.cleaned_data['password']
+                local_source.set_user_password(local_source._get_db_conn(config),
+                                                email, password)
+                return redirect('blue_mgnt:user_detail_saved', data.get('email', email))
         if request.POST.get('form', '') == 'delete_user':
             if request.user.has_perm('blue_mgnt.can_manage_users'):
+                log_admin_action(request, 'delete user %s' % email)
                 api.delete_user(email)
                 return redirect('blue_mgnt:users')
         if request.POST.get('form', '') == 'edit_share':
@@ -449,6 +434,7 @@ def user_detail(request, api, account_info, config, username, email, saved=False
         api_user=user,
         storage_login=get_login_link(data['username']),
         user_form=user_form,
+        password_form=password_form,
         features=features,
         account_info=account_info,
         datetime=datetime,
