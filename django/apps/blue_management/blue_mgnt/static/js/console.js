@@ -1,13 +1,21 @@
 function posModal(obj) {
     obj = $(obj);
     if ( obj.is(':visible') ) {
+        
+        if ( obj.css('left') > 0 ) {
+            obj.css({
+                'left' : '0',
+                'top' : '0'
+            });
+        }
 
         pos_left = Math.round(($(window).width() - obj.outerWidth()) / 2) + ($(document).scrollLeft());
         pos_top = Math.round(($(window).height() - obj.outerHeight()) / 2) + ($(document).scrollTop());
 
         obj.css({
             'left' : pos_left,
-            'top' : pos_top
+            'top' : pos_top,
+            'z-index' : '10000'
         });
     }
 }
@@ -43,10 +51,27 @@ $(function() {
         }
     }
 
-    $('#add-widget').click(function(e){
+    $('#add-widget').click(function(e){ //TODO: Depreciate this
         e.preventDefault();
         $('.modal-wrapper').show().css('height', $(document).height());
         posModal('.modal-content');
+    });
+
+    $('[id^=modal-trigger-]').click(function(e) {
+        e.preventDefault();
+        var this_id = $(this).attr('id');
+        var this_name = this_id.lastIndexOf('-');
+        var this_refer = '#modal-refer-' + this_id.substring(this_name + 1);
+        console.log(this_id + ',' + this_refer);
+
+        var other_modals = $('[id^=modal-refer-]').not(this_refer);
+        if ( other_modals.is(':visible') ){
+            other_modals.hide();
+        }
+        
+        $(this_refer).closest('.modal-wrapper').show().css('height', $(document).height());
+        $(this_refer).show();
+        posModal(this_refer);
     });
 
     $('#option-add-user button').click(function(){
@@ -60,6 +85,9 @@ $(function() {
     });
 
     $('h2.page-header .actions').click(function() {
+        var thing = $(this).closest('[id^=modal-refer-]');
+        thing.hide();
+        console.log(thing.attr('id') + ' was hidden.');
         $('.widget-add-user').hide()
         $('.widget-upload-csv').hide();
         $('.widget-add-user-option').show();
@@ -68,6 +96,7 @@ $(function() {
 
     // Confirm delete
     $('.cancel-action').click(function() {
+        $(this).closest('[id^=modal-refer-]').hide();
         $('.modal-wrapper').hide();
     });
     

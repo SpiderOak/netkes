@@ -1,14 +1,14 @@
 <div class="modal-wrapper">
-    <div id="modal-refer-delete_user" class="modal-content confirm">
+    <div id="modal-refer-disable_user" class="modal-content confirm">
         <form method="POST" action="{% url 'blue_mgnt:user_detail' email %}">
             {% csrf_token %}
-            <input type='hidden' value='delete_user' name='form'>
+            <input type='hidden' value='disable_user' name='form'>
             <h2 class="page-header">
                 <span class="actions"><i class="ss-icon">&#x2421;</i></span>
             </h2>
             <div class="spacer"><!--ZXP--></div>
             <div class="delete-notice">
-                <p>You are about to delete user {{api_user.name}}.</p>
+                <p>You are about to disable user {{api_user.name}}.</p>
                 <p>Are you sure you want to do this?</p>
             </div>
             <div class="widget-actions center-right">
@@ -20,4 +20,5 @@
         </div>
     </div>
 </div>
+
 
