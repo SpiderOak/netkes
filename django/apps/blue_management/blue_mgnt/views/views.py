@@ -360,6 +360,56 @@ def get_api(config):
         config['api_user'],
         config['api_password'],
     )
+
+    FUNCTIONS_TO_CACHE = [
+        'list_plans',
+        'quota',
+        'enterprise_features',
+        'enterprise_settings',
+        'list_groups',
+        'list_shares_for_brand',
+        'get_user_count',
+        'list_devices',
+        'list_shares',
+        'list_users',
+    ]
+    FUNCTIONS_TO_INVALIDATE_CACHE = {
+        'update_enterprise_settings': ['enterprise_settings'],
+        'create_group': ['list_groups'],
+        'edit_group': ['list_groups'],
+        'create_user': ['list_users'],
+        'edit_user': ['list_users'],
+        'delete_user': ['list_users'],
+    }
+    
+    def check_list_users(name, args, kwargs):
+        if (name == 'list_users' and 
+            args == (25, 0) 
+            and not kwargs):
+            return True
+        return False
+
+    def cache_api(fun):
+        def dec(*args, **kwargs):
+            name = fun.__name__
+            if name in FUNCTIONS_TO_INVALIDATE_CACHE:
+                for f in FUNCTIONS_TO_INVALIDATE_CACHE[name]:
+                    cache.delete(f)
+            if name in FUNCTIONS_TO_CACHE or check_list_users(name, args, kwargs):
+                value = cache.get(name)
+                if not value:
+                    value = fun(*args, **kwargs)
+                    cache.set(name, value)
+                return value
+            else:
+                return fun(*args, **kwargs)
+        return dec
+    for attr in dir(api):
+        fun_ = getattr(api, attr)
+        if (callable(fun_) and 
+            (attr in FUNCTIONS_TO_CACHE or 
+             attr in FUNCTIONS_TO_INVALIDATE_CACHE)):
+            setattr(api, attr, cache_api(fun_))
     return api
 
 def enterprise_required(fun):
@@ -370,10 +420,7 @@ def enterprise_required(fun):
         config = read_config_file()
         api = get_api(config)
         account_info = dict()
-        quota = cache.get('quota')
-        if not quota:
-            quota = api.quota()
-            cache.set('quota', quota, 60 * 15)
+        quota = api.quota()
         account_info['device_count'] = quota['device_count']
         account_info['share_count'] = quota['share_count']
         account_info['space_used'] = quota['bytes_used']
@@ -383,10 +430,7 @@ def enterprise_required(fun):
         if not account_info['space_available']:
             account_info['show_available'] = False
             account_info['space_available'] = account_info['space_allocated']
-        user_count = cache.get('user_count')
-        if not user_count:
-            user_count = api.get_user_count()
-            cache.set('user_count', user_count, 60 * 5)
+        user_count = api.get_user_count()
         account_info['total_users'] = user_count
         account_info['total_groups'] = len(config['groups'])
         account_info['total_auth_codes'] = models.AdminSetupTokensUse.objects.count()
