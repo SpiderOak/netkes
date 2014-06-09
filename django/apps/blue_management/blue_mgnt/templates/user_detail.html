@@ -67,7 +67,7 @@
                         <a href="{% url 'blue_mgnt:manage' %}">Manage page</a>.
                     </span>
                 </td>
-                {% elif field.html_name == 'bonus_gigs' %}
+                {% elif field.html_name == 'bonus_gigs' and not field.errors %}
                 <td id="hint">
                     <span>Add extra space for this specific user.</span>
                 </td>
@@ -200,47 +200,4 @@
                 <button id="modal-trigger-change_user_password" class="button button-muted">Change User's Password</button>
             </div>
     </form>
-
-
-
-    <form method="POST" action="{% url 'blue_mgnt:user_detail' email %}">
-    {% csrf_token %}
-    <input type="hidden" name="form" value="password">
-    <table class="widget-table">
-    {% for field in password_form.visible_fields %}
-        <tr>
-            <td class="modal-table-label">
-                <div class="{{ field.errors|yesno:'error,' }}">
-                    {{ field.label_tag }}
-                </div>
-            </td>
-            <td>
-            {% if field.errors %}
-                {% for error in field.errors %}
-                <span class="error-highlight">
-                    {{ field }}
-                    <span class="error-tag">{{ error }}</span>
-                </span>
-                {% endfor %}
-            {% else %}
-                {{ field }}
-            {% endif %}
-            </td>
-        </tr>
-    {% endfor %}
-    <tr>
-        <td colspan="2"></td>
-    </tr>
-    </table>
-        <div class="widget-actions">
-            <input type="submit" value="Change Password" class="rhs button button-primary-basic">
-            <input type='hidden' value='password' name='form'>
-            {% for hidden in password_form.hidden_fields %}
-                {{ hidden }}
-            {% endfor %}
-        </div>
-    </form>
-
-
-
 {% endblock content %}
