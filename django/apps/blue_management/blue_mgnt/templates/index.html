@@ -9,7 +9,12 @@
 <h1 class="page-header">
 	<i class="ss-icon">&#x1F464;</i> Users
     <div class="actions">
-		<button id="add-widget" class="button button-primary-basic">Add User</button>
+        <div id="option-add-user" class="inline-short">
+		    <button id="" class="button button-primary-basic">Add User</button>
+        </div>
+        <div id="option-upload-csv" class="inline-short">
+		    <button id="" class="button button-primary-basic">Add CSV</button>
+        </div>
         <form action="{% url 'blue_mgnt:users' %}" method="GET">
             <input name="show_disabled" type="hidden" value="{{ show_disabled }}">
             {% if search %}
@@ -107,7 +112,19 @@
             </td>
         </tr>
             {% empty %}
-                <p>Nothing to show</p>
+        <tr>
+            <td colspan="7" class="first-time-user">
+                <div>
+                    <p>Begin setting up your account<br />by adding users here.</p>
+                <div id="option-add-user" class="inline-medium">
+                    <button id="" class="button button-primary-basic">Manually Add Your First User</button>
+                </div>
+                <div id="option-upload-csv" class="inline-medium">
+                    <button id="" class="button button-primary-basic">Import Users via CSV</button>
+                </div>
+                </div>
+            </td>
+        </tr>
             {% endfor %}
 	</tbody>
 </table>

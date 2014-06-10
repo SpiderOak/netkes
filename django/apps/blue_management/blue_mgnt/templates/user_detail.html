@@ -6,11 +6,18 @@
 
 {% block body_classes %}user_detail {{ block.super }}{% endblock body_classes %}
 {% block breadcrumb %}<a href="{% url 'blue_mgnt:users' %}">Back to Users</a>{% endblock breadcrumb %}
-{% block modal_options %}{% include "partials/delete-user-widget.html" %}{% endblock modal_options %}
+{% block modal_options %}
+    {% include "partials/delete-user-widget.html" %}
+    {% include "partials/disable-user-widget.html" %}
+    {% include "partials/change-user-password-widget.html" %}
+{% endblock modal_options %}
 {% block navtab %}{% include "partials/navtab-widget.html" with active="users" %}{% endblock navtab %}
 {% block content %}
 <h1 class="page-header">
 	<i class="ss-icon">&#x1F464;</i> User Details
+    <div class="actions">
+        <a href="{{ storage_login }}" target="_blank" class="button button-primary-basic">Access User's Data</a>
+    </div>
 </h1>
 
 {% if saved %}
@@ -60,7 +67,7 @@
                         <a href="{% url 'blue_mgnt:manage' %}">Manage page</a>.
                     </span>
                 </td>
-                {% elif field.html_name == 'bonus_gigs' %}
+                {% elif field.html_name == 'bonus_gigs' and not field.errors %}
                 <td id="hint">
                     <span>Add extra space for this specific user.</span>
                 </td>
@@ -180,17 +187,6 @@
                 <td>{{ api_user.enabled }}</td>
                 <td></td>
             </tr>
-            <tr>
-                <td><label>Storage Login</label></td>
-                <td>
-                    {% if devices|length > 0 %}
-                    <a href="{{ storage_login }}" target="_blank">storage login</a>
-                    {% else %}
-                    No devices created.
-                    {% endif %}
-                </td>
-                <td></td>
-            </tr>
         </tbody>
     </table>
         </fieldset>
@@ -200,7 +196,8 @@
                 <input type='hidden' value='edit_user' name='form'>
             </div>
             <div class="widget-splitactions float">
-                <button id="add-widget" class="button button-secondary">Delete User</button>
+                <button id="modal-trigger-delete_user" class="button button-secondary">Delete User</button>
+                <button id="modal-trigger-change_user_password" class="button button-muted">Change User's Password</button>
             </div>
     </form>
 

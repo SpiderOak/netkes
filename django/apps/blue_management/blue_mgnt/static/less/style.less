@@ -787,6 +787,7 @@ body.errors {
 .user_detail {
     .widget-table {
         table-layout: fixed;
+        width: 880px;
     }
 }
 
@@ -1338,4 +1339,45 @@ body.password {
              }
          }
      }
+ }
+
+ #modal-refer-change_user_password {
+     width: 600px;
+     .widget-table {
+        width: 100%!important;
+        input[type=password] {
+            width: 220px;
+        }
+     }
+}
+
+ td.first-time-user {
+     &:hover {
+         background-color: #fff!important;
+     }
+     div {
+         width: 600px;
+         margin: 30px auto 120px;
+         text-align: center;
+         p {
+             font-size: 20px;
+             color: darken(@NAVTAB_BORDER_COLOR, 20%);
+             line-height: 34px;
+             padding: 60px 0;
+         }
+         button {
+             margin: 0 10px;
+         }
+    }
+
+ }
+
+ .inline-short {
+     width: 100px;
+     display: inline-block;
+ }
+
+ .inline-medium {
+     max-width: 261px;
+     display: inline-block;
  }
