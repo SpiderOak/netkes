@@ -430,6 +430,7 @@ def user_detail(request, api, account_info, config, username, email, saved=False
         shares=api.list_shares(email),
         share_url=get_base_url(),
         username=username,
+        local_user=local_user,
         email=email,
         api_user=user,
         storage_login=get_login_link(data['username']),
