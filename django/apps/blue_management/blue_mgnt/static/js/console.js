@@ -74,14 +74,24 @@ $(function() {
         posModal(this_refer);
     });
 
-    $('#option-add-user button').click(function(){
+    function exposeWidget(e){
+        e.preventDefault();
+        $('.modal-wrapper').show().css('height', $(document).height());
+        posModal('.modal-content');
+    }
+
+    $('#option-add-user button').click(function(e){
+            exposeWidget(e);
             $('.widget-add-user-option').hide();
             $('.widget-add-user').show();
+            $('.widget-upload-csv').hide();
     });
 
-    $('#option-upload-csv button').click(function(){
+    $('#option-upload-csv button').click(function(e){
+            exposeWidget(e);
             $('.widget-add-user-option').hide();
             $('.widget-upload-csv').show();
+            $('.widget-add-user').hide();
     });
 
     $('h2.page-header .actions').click(function() {
@@ -209,3 +219,5 @@ function getCookie(name) {
 }
 var csrftoken = getCookie('csrftoken');
 });
+
+console.log("Console.js Loaded");
