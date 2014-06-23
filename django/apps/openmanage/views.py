@@ -170,7 +170,7 @@ def login_required(fun):
 
             session_challenge = get_challenge(request)
             secret_box = create_secret_box(plaintext_auth['password'],
-                                           session_challenge[0])
+                                           a2b_base64(session_challenge[0]))
             request.session['auth'] = {
                 'secret_box': secret_box,
                 'time': session_challenge[1],
@@ -198,15 +198,29 @@ def read_data(request):
     log.debug("start")
     auth = request.session['auth']
     brand_identifier = auth['brand_identifier']
-    sign_key = auth['sign_key']
-    layer_count = auth['layer_count']
+
+    serial_sign_key = auth.get('sign_key')
+    if serial_sign_key:
+        try:
+            sign_key = serial.loads(serial_sign_key)
+        except (serial.EndOfFile, 
+                serial.NotSerializerFileError, 
+                serial.NotSerializableObjectError):
+            log.error("Got bad request. Unable to load sign key")
+            return HttpResponseBadRequest()
+
+    try:
+        layer_count = int(auth.get('layer_count', 2))
+    except ValueError:
+        log.warn("ValueError at layer_count")
+        return HttpResponseBadRequest()
 
     try:
         escrowed_data = a2b_base64(request.POST['escrow_data'])
     except KeyError:
         log.warn("KeyError at start")
-        return BadRequest()(environ, start_response)
-    
+        return HttpResponseBadRequest()
+
     log.debug("Being sent:")
     log.debug("brand_identifier: %r" % brand_identifier)
     log.debug("layer_count: %r" % layer_count)
