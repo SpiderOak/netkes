@@ -1,5 +1,6 @@
 @import "reset";
 @import "utils";
+@import "so-forms";
 
 @FONTFAMILY_R: ProximaNova-Regular;
 @FONTFAMILY_B: ProximaNova-Bold;
@@ -897,6 +898,9 @@ body.login {
         margin: 3% auto;
         width: 750px;
         background-color: #fff;
+        .left-col {
+            width: 300px;
+        }
         .right-col {
             width: 385px;
             margin-left: 50px;
@@ -926,6 +930,9 @@ body.password {
             input:first-of-type {
                 margin-bottom: 20px;
             }
+        }
+        .left-col {
+            width: 300px;
         }
         .right-col {
             h3 {
@@ -962,9 +969,9 @@ body.password {
         }
 
     }
-    .inline_inputs();
 
-    .widget-login {
+    .widget-passwword {
+        .inline_inputs();
         label {
             display: block;
             text-transform: uppercase;
@@ -1373,7 +1380,7 @@ body.password {
  }
 
  .inline-short {
-     width: 100px;
+    // width: 100px;
      display: inline-block;
  }
 
@@ -1381,3 +1388,4 @@ body.password {
      max-width: 261px;
      display: inline-block;
  }
+

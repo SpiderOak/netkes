@@ -5,7 +5,7 @@
 <div class="image-wrapper">
     <img src="/static/blue_mgnt/img/logo_large.png" />
 </div>
-<h1>Welcome back.</h1>
+<h1>Welcome</h2>
 <h2>Login below to access your management console.</h2>
 <div class="login-wrapper">
     <div class="left-col">
@@ -15,11 +15,13 @@
             {% if form.non_field_errors %}
             <div class="error">{{ form.non_field_errors }}</div>
             {% endif %}
-            <div class="widget-login">
+            <div class="so-form">
                 {% for field in form %}
-                    <div {% if field.errors %}class="error"{% endif %}>
+                    <div class="so-form-field{% if field.errors %} error{% endif %}">
                         {{ field.label_tag }}
-                        {{ field }}
+                        <div class="so-form-widget">
+                            {{ field }}
+                        </div>
                     </div>
                 <span class="help-inline error">
                     {% if field.errors %}
