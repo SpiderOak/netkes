@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ -e ~/.ran_firstsetup ]; then
+if [ -e /opt/openmanage/etc/.ran_firstsetup ]; then
     exit 0
 fi
 
@@ -15,10 +15,6 @@ if [ ! -f /var/lib/openmanage/keys/base.cfg ]; then
 $OPENMANAGE_ROOT/bin/make_keys.sh $OPENMANAGE_BRAND
 fi
 
-#sudo mkdir -p /etc/service/openmanage/supervise
-#sudo ln -s $OPENMANAGE_ROOT/etc/service/openmanage/run /etc/service/openmanage/run
-#sudo sv start openmanage
-
-touch ~/.ran_firstsetup
+touch /opt/openmanage/etc/.ran_firstsetup
 
 echo "finished"

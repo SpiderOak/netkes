@@ -1,7 +1,7 @@
 import os
 import datetime
 import csv
-from subprocess import call
+import subprocess
 import urllib2
 from base64 import b32encode
 import urlparse
@@ -257,13 +257,13 @@ def initial_setup(username, password):
     config_mgr_.config['api_password'] = password
     config_mgr_.apply_config()
 
-    call(['/opt/openmanage/bin/first_setup.sh', username])
+    subprocess.call(['/opt/openmanage/bin/first_setup.sh', username])
     api = get_api(config_mgr_.config)
     plans = api.list_plans()
     unlimited = [x for x in plans if x['storage_bytes'] == 1000000001000000000]
     if unlimited:
         data = {
-            'name': username,
+            'name': 'Default',
             'plan_id': unlimited[0]['plan_id'],
             'webapi_enable': True,
             'check_domain': False,
@@ -431,7 +431,7 @@ def download_logs(request, api, account_info, config, username):
     filename = 'openmanage-logs-%s.tar.bz2' % date
     path = '/opt/openmanage/tmp_logs/%s' % filename
 
-    call(['/opt/openmanage/bin/gather_logs.sh', date])
+    subprocess.call(['/opt/openmanage/bin/gather_logs.sh', date])
 
     response = HttpResponse(FileWrapper(open(path)),
                             mimetype='application/bzip2')
