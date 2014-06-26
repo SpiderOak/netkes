@@ -71,7 +71,7 @@ echo "updated tarball"
 # Bring over configuration into the new stuff.
 cp /opt/openmanage.$CURRENT_DATE/etc/agent_config.json /opt/openmanage/etc
 
-random_string=$(pwgen 64 1)
+random_string="$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c 64;echo;)"
 secret_key="export DJANGO_SECRET_KEY=\"$random_string\""
 echo $secret_key >> /opt/openmanage/etc/openmanage_defaults 
 
@@ -83,6 +83,9 @@ echo "Updating database..."
 echo "Running additional update scripts..."
 
 sudo bash -c "PYTHONPATH=/opt/openmanage python /opt/openmanage/upgrade/apply_scripts.py"
+
+apt-get -y remove python-crypto
+pip install -r /opt/openmanage/upgrade/requirements.txt
 
 # Restart services
 for SERVICE in openmanage admin_console; do

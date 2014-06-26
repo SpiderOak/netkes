@@ -54,10 +54,9 @@ def get_api(config):
                       config['api_user'], 
                       config['api_password'],)
 
-def admin_token_auth(config, username, password):
+def admin_token_auth(config, user, username, password):
     log = logging.getLogger("admin_token_auth")
     api = get_api(config)
-    user = api.get_user(username)
     user_token = dict(avatar_id=user['avatar_id'], token=password)
     if not user['enabled']:
         return False
@@ -108,9 +107,12 @@ def authenticator(config, username, password, use_admin_tokens=True):
     auth_source = None
 
     api = get_api(config)
-    user = api.get_user(username)
+    try:
+        user = api.get_user(username)
+    except api.NotFound:
+        return False
 
-    if use_admin_tokens and admin_token_auth(config, username, password):
+    if use_admin_tokens and admin_token_auth(config, user, username, password):
         return True
 
     if auth_method == 'ldap':

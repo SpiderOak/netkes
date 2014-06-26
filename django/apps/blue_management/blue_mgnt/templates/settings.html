@@ -2,7 +2,10 @@
 {% block title %}Account - Management Console{{ block.super }}{% endblock %}
 {% block body_classes %}settings {{ block.super }}{% endblock body_classes %}
 {% block breadcrumb %}<a href="{% url 'blue_mgnt:manage' %}">Back to Manage</a>{% endblock breadcrumb %}
-{% block modal_options %}{% include "partials/add-ip-blocks-widget.html" with active="manage" %}{% endblock modal_options %}
+{% block modal_options %}
+    {% include "partials/add-ip-blocks-widget.html" with active="manage" %}
+    {% include "partials/reboot-widget.html" %}    
+{% endblock modal_options %}
 {% block navtab %}{% include "partials/navtab-widget.html" with active="manage" %}{% endblock navtab %}
 {% block content %}
 {% if sync_output or rebuild_output %}
@@ -72,12 +75,12 @@
         <form method="post" action="{% url 'blue_mgnt:settings' %}">
             {% csrf_token %}
             <input type='hidden' value='reboot' name='form'>
-            <input type='submit' value="Reboot Virtual Appliance" class="button button-muted">
+            <button type='submit' id="reboot" class="button button-muted">Reboot Virtual Appliance</button>
         </form>
         <form method="post" action="{% url 'blue_mgnt:settings' %}">
             {% csrf_token %}
             <input type='hidden' value='restart_directory' name='form'>
-            <input type='submit' value="Restart Directory / Services" class="button button-muted">
+            <button type='submit' id="restart" class="button button-muted">Restart Directory / Services</button>
         </form>
         <div class="space-20none">
             <form method="post" action="{% url 'blue_mgnt:settings' %}">
@@ -94,3 +97,75 @@
         {% endif %}
     </div>
 {% endblock content %}
+{% block js_templates %}
+<script>
+    var $complete;
+    function clearCheck(){
+        clearInterval(ajax_check);
+    }
+
+    function sendMessage(str, start){
+        $('.reboot-message > p').html(str);
+        if ( start == 1 ){
+            $('.shield').show();
+            $('.shield').css('height', $('.overlord').height());
+            posModal('.reboot-message');
+            $('#processing').not(':visible').toggle();
+        } else {
+            $('.reboot-message-close').show();
+            $('#processing').hide();
+        }
+    }
+
+
+    $('.reboot-message-close').click(function(){
+        $('.shield').hide();
+        $(this).hide();
+    });
+
+    $('#reboot').click(function(e){
+         e.preventDefault();
+         $.ajax({
+             url: "{% url 'blue_mgnt:settings' %}",
+             type: "POST",
+             data: {
+                 form: 'reboot',
+                 csrfmiddlewaretoken: '{{ csrf_token }}'
+             },
+             complete: function(){
+                sendMessage("Rebooting Virtual Appliance", 1);
+                $complete = "Reboot Completed";
+            }
+        });
+        ajax_check = setInterval(function(){
+            $.get("{% url 'blue_mgnt:manage' %}", function(){
+                sendMessage($complete, 0);
+                clearCheck();
+            });
+        }, 2000);
+    });
+
+     $('#restart').click(function(e){
+         e.preventDefault();
+         $.ajax({
+             url: "{% url 'blue_mgnt:settings' %}",
+             type: "POST",
+             data: {
+                 form: 'restart_directory',
+                 csrfmiddlewaretoken: '{{ csrf_token }}'
+             },
+             complete: function(){
+                sendMessage("Restarting Directory / Services", 1);
+                $complete = "Restart Completed";
+            }
+        });
+        
+        ajax_check = setInterval(function(){
+            $.get("{% url 'blue_mgnt:settings' %}", function(){
+                sendMessage($complete, 0);
+                clearCheck();
+            });
+        }, 2000);
+     });
+</script>
+{% endblock js_templates %}

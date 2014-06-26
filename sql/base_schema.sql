@@ -22,7 +22,7 @@ GRANT SELECT, UPDATE, INSERT, DELETE ON users TO directory_agent;
 
 CREATE INDEX users_idx ON users (uniqueid, email, avatar_id);
 
-CREATE LANGUAGE plpgsql;
+CREATE OR REPLACE LANGUAGE plpgsql;
 
 -- the following is from:
 -- http://www.postgresql.org/docs/current/static/plpgsql-control-structures.html#PLPGSQL-UPSERT-EXAMPLE
