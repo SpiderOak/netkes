@@ -257,13 +257,13 @@ def initial_setup(username, password):
     config_mgr_.config['api_password'] = password
     config_mgr_.apply_config()
 
-    subprocess.call(['/opt/openmanage/bin/first_setup.sh', username])
     api = get_api(config_mgr_.config)
+
     plans = api.list_plans()
     unlimited = [x for x in plans if x['storage_bytes'] == 1000000001000000000]
     if unlimited:
         data = {
-            'name': 'Default',
+            'name': info['company_name'],
             'plan_id': unlimited[0]['plan_id'],
             'webapi_enable': True,
             'check_domain': False,
@@ -285,7 +285,7 @@ def login_user(request):
         form = LoginForm(request.POST)
         if form.is_valid():
             password = form.cleaned_data['password']
-            username = form.cleaned_data['username']
+            username = form.cleaned_data['username'].strip()
             user = authenticate(username=username,
                                 password=password)
             if user and user.is_active:
@@ -296,6 +296,11 @@ def login_user(request):
 
                 if not config['api_password']:
                     initial_setup(username, password)
+
+                config_mgr_ = config_mgr.ConfigManager(config_mgr.default_config())
+                api = get_api(config_mgr_.config)
+                subprocess.call(['/opt/openmanage/bin/first_setup.sh', 
+                                 api.info()['brand_identifier']])
 
                 request.session['username'] = username
 
@@ -418,6 +423,7 @@ def enterprise_required(fun):
         account_info['total_groups'] = len(config['groups'])
         account_info['total_auth_codes'] = models.AdminSetupTokensUse.objects.count()
         account_info['api_user'] = config['api_user']
+        account_info['info'] = api.info()
         
         with open('/opt/openmanage/etc/OpenManage_version.txt') as f:
             account_info['version'] = f.readlines()[0]

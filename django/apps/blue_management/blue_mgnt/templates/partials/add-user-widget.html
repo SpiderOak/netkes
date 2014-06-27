@@ -95,7 +95,16 @@
 jane@foo.com,Jane Doe,Unlimited</pre>
                     </p>
                     <p>For additional information, please don't hesitate to reach out to
-                    <a href="mailto:bluesupport@spideroak.com">bluesupport@spideroak.com</a></p>
+                    {% if features.ldap %}
+                    <a href="mailto:support@spideroakblue.com">
+                        support@spideroakblue.com
+                    </a>
+                    {% else %}
+                    <a href="mailto:smbsupport@spideroakblue.com">
+                        smbsupport@spideroakblue.com
+                    </a>
+                    {% endif %}
+                    </p>
                 </div>
             </fieldset>
             <div class="widget-actions">

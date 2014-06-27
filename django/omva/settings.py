@@ -35,6 +35,7 @@ DATABASE_PASSWORD = 'iexyjtso'        # Not used with sqlite3.
 DATABASE_HOST = 'localhost'
 DATABASE_PORT = ''
 
+SESSION_SAVE_EVERY_REQUEST = True
 SESSION_COOKIE_AGE = 60 * 15
 
 ACCOUNT_API_URL = config['api_root']

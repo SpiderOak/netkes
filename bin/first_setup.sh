@@ -1,6 +1,7 @@
 #!/bin/bash
 
 if [ -e /opt/openmanage/etc/.ran_firstsetup ]; then
+    echo "Keys already generated. Exiting"
     exit 0
 fi
 

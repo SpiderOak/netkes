@@ -80,6 +80,11 @@ class Api(object):
     def quota(self):
         return self.client.get_json('partner/quota')
 
+    ### Info
+
+    def info(self):
+        return self.client.get_json('partner/info')
+
     ### Features
 
     def enterprise_features(self):
