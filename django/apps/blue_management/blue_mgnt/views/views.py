@@ -15,8 +15,7 @@ import bcrypt
 from hashlib import sha256
 
 from django.http import HttpResponse, HttpResponseForbidden
-from django.shortcuts import redirect
-from django.shortcuts import render_to_response as django_render_to_response
+from django.shortcuts import redirect, render_to_response
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ObjectDoesNotExist
 from django.template.context import Context
@@ -55,10 +54,6 @@ LOG = logging.getLogger('admin_actions')
 
 MANAGEMENT_VM = getattr(django_settings, 'MANAGEMENT_VM', False)
 APP_DIR = os.path.abspath(os.path.dirname(__file__))
-LOOKUP = TemplateLookup(directories=[os.path.join(APP_DIR, '../mako_templates')],
-                        input_encoding='utf-8',
-                        output_encoding='utf-8',
-                        encoding_errors='replace')
 SHARE_URL = os.getenv('SHARE_URL', 'https://spideroak.com')
 SIZE_OF_GIGABYTE = 10 ** 9
 
@@ -99,42 +94,6 @@ def profile(log_file):
 
         return _inner
     return _outer
-
-def render_to_response(template, data=None, context=None):
-    # pass ?force_template=mako to force using mako template
-    # or ?force_template=django to force using Django
-    try:
-        force_template = context['request'].GET.get('force_template')
-    except (AttributeError, KeyError):
-        force_template = None
-
-    if force_template != 'mako':
-        try:
-            return django_render_to_response(template, data, context_instance=context)
-        except TemplateDoesNotExist as e:
-            if force_template == 'django':
-                raise e
-
-    template = LOOKUP.get_template(template)
-    if data is None:
-        data = {}
-    if context is None:
-        context = Context(data)
-    else:
-        context.update(data)
-    tmpl_data = {}
-    for d in context:
-        tmpl_data.update(d)
-    tmpl_data['reverse'] = reverse
-    tmpl_data['management_vm'] = getattr(django_settings, 'MANAGEMENT_VM', False)
-    tmpl_data['private_cloud'] = getattr(django_settings, 'PRIVATE_CLOUD', False)
-    try:
-        return HttpResponse(template.render(**tmpl_data))
-    except Exception, e:
-        if django_settings.DEBUG:
-            return HttpResponse(exceptions.text_error_template().render())
-        else:
-            raise
 
 def get_config_group(config, group_id):
     for group in config['groups']:

@@ -14,7 +14,7 @@ from views import (
 from django import forms
 from django.forms.formsets import formset_factory
 from django.template import RequestContext
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render_to_response
 from django.contrib.auth.decorators import permission_required
 
 from interval.forms import IntervalFormField
