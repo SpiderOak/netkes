@@ -2,7 +2,7 @@ import datetime
 from base64 import b32encode
 import csv
 
-from views import enterprise_required, render_to_response, log_admin_action
+from views import enterprise_required, log_admin_action
 from views import ReadOnlyWidget, get_base_url, SIZE_OF_GIGABYTE
 from views import pageit
 from groups import get_config_group
@@ -11,7 +11,7 @@ from django import forms
 from django.core.urlresolvers import reverse
 from django.forms.formsets import formset_factory
 from django.template import RequestContext
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render_to_response
 
 from netkes.account_mgr.user_source import local_source
 import openmanage.models as openmanage_models
