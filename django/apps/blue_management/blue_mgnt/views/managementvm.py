@@ -4,9 +4,9 @@ import subprocess
 import glob
 from base64 import b32encode
 
-from views import enterprise_required, render_to_response, log_admin_action, get_base_url
+from views import enterprise_required, log_admin_action, get_base_url
 from django.template import RequestContext
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render_to_response
 from django.db import connection
 from django import forms
 from django.core.urlresolvers import reverse
