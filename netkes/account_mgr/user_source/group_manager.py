@@ -184,6 +184,10 @@ def _run_disabled_users_for_repair(ldap_conn, config, desc, resultslist):
 
     return list(ldap_source.get_user_guids(ldap_conn, config, userlist))
     
+def get_config_group(config, group_id):
+    for group in config['groups']:
+        if group['group_id'] == group_id:
+            return group
 
 def run_db_repair(config, db_conn):
     """Repairs the current user DB and billing API versus LDAP."""
@@ -261,10 +265,14 @@ def run_db_repair(config, db_conn):
                 "LEFT OUTER JOIN ldap_users l USING (email) "
                 "WHERE l.email IS NULL")
     orphans = cur.fetchall()
+    # We only care about ldap users here
+    orphans = [x for x in orphans \
+               if get_config_group(config, x[4])["user_source"] == 'ldap']
 
     # "found_orphans" are the users who exist *somewhere* in the LDAP. lost_orphans do not.
     found_orphans = _run_disabled_users_for_repair(ldap_conn, config, cur.description, orphans)
-    lost_orphans = set(orphans) - set(found_orphans)
+    found_emails = [y['email'] for y in found_orphans]
+    lost_orphans = [x for x in orphans if x[0] not in found_emails]
     
     # Put the found orphans in the DB.
     cur.executemany("INSERT INTO users "
@@ -278,5 +286,8 @@ def run_db_repair(config, db_conn):
     # ...and disable the lost orphans. We don't care about already disabled lost orphans,
     # we want to only disable orphans who are enabled so they can be rounded up and
     # deleted.
+    for orphan in lost_orphans:
+        if orphan[5]: # If the user is enabled then disable them. 
+            api.edit_user(orphan[0], dict(enabled=False))
     
     

@@ -155,7 +155,21 @@ class Api(object):
 
     ### Users
 
+    def list_users_paged(self, user_limit=1000):
+        all_users = []
+        user_count = self.get_user_count()
+        for page in range((user_count / user_limit) + 1):
+            user_offset = user_limit * page
+            if user_offset < user_count:
+                all_users = all_users + self.list_users(user_limit, user_offset)
+        return all_users
+
     def list_users(self, limit=None, offset=None):
+        # If the query is not limited it may time out for large user lists
+        # so we automatically page the user list.
+        if limit is None and offset is None:
+            return self.list_users_paged()
+
         query_string = self._create_query_string(limit, offset)
         return self.client.get_json('users/%s' % query_string)
 
