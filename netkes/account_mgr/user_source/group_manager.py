@@ -184,6 +184,10 @@ def _run_disabled_users_for_repair(ldap_conn, config, desc, resultslist):
 
     return list(ldap_source.get_user_guids(ldap_conn, config, userlist))
     
+def get_config_group(config, group_id):
+    for group in config['groups']:
+        if group['group_id'] == group_id:
+            return group
 
 def run_db_repair(config, db_conn):
     """Repairs the current user DB and billing API versus LDAP."""
@@ -247,13 +251,30 @@ def run_db_repair(config, db_conn):
                 "FROM ldap_users l JOIN spider_users AS s ON l.email = s.email ")
 
     # Collect the list of users who are NOT in the LDAP
+    # There are two types of users not in the LDAP sync groups we're looking through:
+    #   1. Users who exist in the LDAP still, but not anymore in a monitored group
+    #   2. Users who do not at all exist in the LDAP.
+    #
+    # Users in the first group we can enter back into the user sync database as disabled,
+    # as we can locate some form of unique ID from the LDAP to put in the sync DB. The
+    # second group needs to be just disabled on the Accounts API side. Note that users
+    # in this second group will have to have the whole DB rebuilt if they reappear on the LDAP
+    # and wish to continue using the same account.
     cur.execute("SELECT s.email, s.avatar_id, s.givenname, s.surname, s.group_id, s.enabled "
                 "FROM spider_users s "
                 "LEFT OUTER JOIN ldap_users l USING (email) "
                 "WHERE l.email IS NULL")
     orphans = cur.fetchall()
+    # We only care about ldap users here
+    orphans = [x for x in orphans \
+               if get_config_group(config, x[4])["user_source"] == 'ldap']
+
+    # "found_orphans" are the users who exist *somewhere* in the LDAP. lost_orphans do not.
     found_orphans = _run_disabled_users_for_repair(ldap_conn, config, cur.description, orphans)
+    found_emails = [y['email'] for y in found_orphans]
+    lost_orphans = [x for x in orphans if x[0] not in found_emails]
     
+    # Put the found orphans in the DB.
     cur.executemany("INSERT INTO users "
                     "(avatar_id, email, givenname, surname, group_id, enabled, uniqueid) "
                     "VALUES (%(avatar_id)s, %(email)s, %(givenname)s, %(surname)s, "
@@ -261,3 +282,12 @@ def run_db_repair(config, db_conn):
                     found_orphans)
 
     db_conn.commit()
+
+    # ...and disable the lost orphans. We don't care about already disabled lost orphans,
+    # we want to only disable orphans who are enabled so they can be rounded up and
+    # deleted.
+    for orphan in lost_orphans:
+        if orphan[5]: # If the user is enabled then disable them. 
+            api.edit_user(orphan[0], dict(enabled=False))
+    
+    
