@@ -1,0 +1,274 @@
+{% extends "base.html" %}
+{% load filter_todate %}
+{% load so_filters %}
+
+{% block title %}Billing Information - Management Console{{ block.super }}{% endblock %}
+
+{% block body_classes %}billing {{ block.super }}{% endblock body_classes %}
+{% block breadcrumb %}<a href="{% url 'blue_mgnt:manage' %}">Back to Manage</a>{% endblock breadcrumb %}
+{% block navtab %}{% include "partials/navtab-widget.html" with active="manage" %}{% endblock navtab %}
+{% block content %}
+<h1 class="page-header">
+	<i class="ss-icon">&#xE7B0;</i> Upgrade Your Plan
+	<span class="header-note">current plan: {{account_info.total_users}} users</span>
+</h1>
+
+<div id="billing-dropzone">
+</div>
+
+{% endblock content %}
+{% block js_templates %}
+<script type="text/x-swig-template" id="template-billing-nav">
+  <ul>
+    <li class="billing-nav-1 billing-nav-plan" data-target="plan">
+      <span><a>1</a></span>
+      <a>Plan</a>
+    </li>
+    <li class="billing-nav-2 billing-nav-payment" data-target="payment">
+      <span><a>2</a></span>
+      <a>Payment</a>
+    </li>
+    <li class="billing-nav-3 billing-nav-summary" data-target="summary">
+      <span><a>3</a></span>
+      <a>Summary</a>
+    </li>
+  </ul>
+</script>
+
+<script type="text/x-swig-template" id="template-billing-select-size">
+  <p class="size-note">Adding more space to your SpiderOak account is easy. To begin, select a plan.</p>
+  <h2>Select a Plan Size</h2>
+  <div class="plans">
+    <ul>
+    <% for plan in plans %>
+      <li <% if plan.active %>class="active"<% endif %> data-quantity="<%- plan.quantity %>" data-cost="<%- plan.price.int %>">
+        <p><%- plan.quantity %> users</p>
+        <span>($<%- plan.price.str %>)</span>
+      </li>
+    <% endfor %>
+    </ul>
+    <div class="spacer"><!--ZKP--></div>
+  </div>
+  <% if not show_more %>
+  <div id="show_more">
+    <a>Show More Plan Sizes</a>
+  </div>
+  <% endif %>
+  <div class="spacer"><!--ZKP--></div>
+</script>
+
+<script type="text/x-swig-template" id="template-billing-select-frequency">
+  <h2>Select Payment Frequency</h2>
+  <ul>
+    <li class="yearly-frequency" data-frequency="yearly">
+      Yearly
+      <span></span>
+    </li>
+    <li class="monthly-frequency" data-frequency="monthly">
+      Monthly
+      <span></span>
+    </li>
+  </ul>
+  <div class="spacer"><!--ZKP--></div>
+</script>
+
+<script type="text/x-swig-template" id="template-billing-select-coupon">
+  <h2>Promotional Code <span class="header-note">(optional)</span></h2>
+  <form class="so-form">
+    <fieldset>
+      <div>
+        <input type="text" id="promo_code_field" value=""><button class="button button-primary-basic" id="submit_promo_code">Update</button>
+        <% if msg %>
+          <div class="alert<% if msg_class %> alert-<%- msg_class %><% endif %>">
+            <p><%- msg|safe %></p>
+          </div>
+        <% endif %>
+        <div class="spacer"><!--ZKP--></div>
+    </fieldset>
+  </form>
+</script>
+
+<script type="text/x-swig-template" id="template-billing-cost-preview">
+  <h3>Total Cost</h3>
+  <div class="so-form">
+    <fieldset>
+      <div>
+        $<%- price.str %>
+      </div>
+    </fieldset>
+  </div>
+</script>
+
+<script type="text/x-swig-template" id="template-billing-next">
+  <button class="button button-primary-basic">Next</button>
+</script>
+
+<script type="text/x-swig-template" id="template-billing-plan">
+</script>
+
+<script type="text/x-swig-template" id="template-billing-payment">
+<h2>Payment</h2>
+</script>
+
+<script type="text/x-swig-template" id="template-billing-summary">
+<h2>Summary</h2>
+</script>
+
+<script type="text/x-swig-template" id="template-billing-cc-type">
+  <div class="cc_type">
+    <ul>
+      <li data-value="visa"><img src="/static/blue_mgnt/img/payment_types/cc_visa.png" alt="Visa"></li>
+      <li data-value="amex"><img src="/static/blue_mgnt/img/payment_types/cc_amex.png" alt="American Express"></li>
+      <li data-value="mastercard"><img src="/static/blue_mgnt/img/payment_types/cc_mc.png" alt="MasterCard"></li>
+    </ul>
+  </div>
+</script>
+
+<script type="text/x-swig-template" id="template-billing-stripe-payment">
+  <form class="so-form">
+    <h3>Credit Card Information</h3>
+    <fieldset>
+      <div class="billing-stripe-name">
+        <label for="stripe_name">Name on Card</label>
+        <input id="stripe_name">
+        <div class="alert">
+          <p></p>
+        </div>
+      </div>
+      <div class="billing-stripe-cc">
+        <label for="stripe_cc">Card Number</label>
+        <input id="stripe_cc">
+        <div class="alert">
+          <p></p>
+        </div>
+      </div>
+      <div class="billing-stripe-csv">
+        <label for="stripe_csv">CSV Code</label>
+        <input id="stripe_csv">
+        <div class="alert">
+          <p></p>
+        </div>
+      </div>
+      <div class="billing-stripe-expiration">
+        <label>Expiration Date</label>
+        <select id="stripe_exp_month">
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+          <option value="6">6</option>
+          <option value="7">7</option>
+          <option value="8">8</option>
+          <option value="9">9</option>
+          <option value="10">10</option>
+          <option value="11">11</option>
+          <option value="12">12</option>
+        </select>
+        <select id="stripe_exp_year">
+          <option value="2014">2014</option>
+          <option value="2015">2015</option>
+          <option value="2016">2016</option>
+          <option value="2017">2017</option>
+          <option value="2018">2018</option>
+          <option value="2019">2019</option>
+          <option value="2020">2020</option>
+          <option value="2021">2021</option>
+          <option value="2022">2022</option>
+          <option value="2023">2023</option>
+          <option value="2024">2024</option>
+          <option value="2025">2025</option>
+          <option value="2026">2026</option>
+          <option value="2027">2027</option>
+          <option value="2028">2028</option>
+          <option value="2029">2029</option>
+          <option value="2030">2030</option>
+        </select>
+        <div class="alert">
+          <p></p>
+        </div>
+      </div>
+    </fieldset>
+
+    <h3>Optional Information</h3>
+    <fieldset>
+      <div>
+        <label for="stripe_memo">Memo</label>
+        <input id="stripe_memo">
+      </div>
+    </fieldset>
+    <div class="billing-next">
+      <button class="button button-primary-basic">Next</button>
+      <p>You will have a chance to review your<br> order before your card is charged.</p>
+    </div>
+  </form>
+</script>
+
+<script type="text/x-swig-template" id="template-billing-loading">
+  <img src="/static/blue_mgnt/img/loader.gif">
+</script>
+
+<script type="text/x-swig-template" id="template-billing-alert">
+  <div><p></p></div>
+</script>
+
+<script type="text/x-swig-template" id="template-billing-overview">
+  <form class="so-form">
+    <fieldset>
+      <div>
+        <label>Selected Plan</label>
+        <p class="bubbly_strongs">
+          <strong><%- quantity %> users</strong>
+          at
+          <strong>$<%- price.str %></strong>
+        </p>
+        <span class="edit" data-target="plan"><a href="">edit</a></span>
+        <div class="spacer"><!--ZKP--></div>
+      </div>
+      <div>
+        <label>Payment Type</label>
+        <p><%- cc_type %></p>
+        <span class="edit" data-target="payment"><a href="">edit</a></span>
+        <div class="spacer"><!--ZKP--></div>
+      </div>
+      <div>
+        <label>Credit Card</label>
+        <p>&middot;&middot;&middot;&middot;&middot;&middot;&middot;&middot;<%- cc_last4 %></p>
+        <span class="edit" data-target="payment"><a href="">edit</a></span>
+        <div class="spacer"><!--ZKP--></div>
+      </div>
+      <div>
+        <label>Memo</label>
+        <p><%- cc_memo %></p>
+        <span class="edit" data-target="payment"><a href="">edit</a></span>
+        <div class="spacer"><!--ZKP--></div>
+      </div>
+      <div class="billing-summary-total">
+        <label>Total Due:</label>
+        <p>$<%- price.int %></p>
+        <div class="spacer"><!--ZKP--></div>
+      </div>
+    </fieldset>
+    <div class="billing-next">
+      <button class="button button-primary-basic">Submit Order</button>
+    </div>
+  </form>
+</script>
+
+<script type="text/x-swig-template" id="template-billing-success">
+  <p id="saved">Thank you!</p>
+</script>
+
+{% endblock js_templates %}
+
+{% block js_main %}
+<script type="text/javascript" src="/static/blue_mgnt/vendor/underscore-min.js"></script>
+<script type="text/javascript" src="/static/blue_mgnt/vendor/underscore.string.min.js"></script>
+<script type="text/javascript" src="/static/blue_mgnt/vendor/backbone-min.js"></script>
+<script type="text/javascript" src="/static/blue_mgnt/vendor/swig.min.js"></script>
+<script type="text/javascript" src="/static/blue_mgnt/vendor/jquery.payment.js"></script>
+<script type="text/javascript" src="https://js.stripe.com/v2/"></script>
+<script type="text/javascript">Stripe.setPublishableKey('{{ stripe_public_key }}');</script>
+<script type="text/javascript">var SMB = SMB || {}; SMB.total_users = {{ account_info.total_users }};</script>
+<script type="text/javascript" src="/static/blue_mgnt/js/billing.js"></script>
+{% endblock js_main %}

@@ -84,10 +84,11 @@ def get_group_form(request, config, plans, api, show_user_source=True, new_group
 
 def add_config_items(group, config):
     g = get_config_group(config, group['group_id'])
-    group['ldap_dn'] = g['ldap_id']
-    group['priority'] = g['priority']
-    group['user_source'] = g['user_source']
-    group['admin_group'] = g['admin_group']
+    if g:
+        group['ldap_dn'] = g['ldap_id']
+        group['priority'] = g['priority']
+        group['user_source'] = g['user_source']
+        group['admin_group'] = g['admin_group']
 
 @enterprise_required
 @permission_required('blue_mgnt.can_view_groups', raise_exception=True)

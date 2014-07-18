@@ -36,6 +36,7 @@ DATABASE_HOST = 'localhost'
 DATABASE_PORT = ''
 
 ACCOUNT_API_URL = config['api_root']
+BILLING_API_URL = config['billing_root']
 
 EMAIL_HOST = 'localhost'
 EMAIL_PORT = 25
