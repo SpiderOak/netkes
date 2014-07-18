@@ -7,6 +7,7 @@ from views import groups
 from views import users
 from views import managementvm
 from views import settings
+from views import billing
 
 urlpatterns = patterns('',
     (r'^$', users.users, {}, 'index'),
@@ -41,4 +42,7 @@ urlpatterns = patterns('',
     (r'^favicon\.ico$', RedirectView.as_view(url='/static/blue_mgnt/img/favicon.png')),
     (r'^codes/$', managementvm.auth_codes, {}, 'auth_codes'),
     (r'^codes/saved/$', managementvm.auth_codes, {'saved': True}, 'auth_codes_saved'),
+    (r'^billing/$', billing.billing, {}, 'billing'),
+    (r'^billing/check_coupon$', billing.check_coupon, {}, 'billing_check_coupon'),
+    (r'^billing/create_subscription$', billing.create_subscription, {}, 'billing_create_subscription'),
 )

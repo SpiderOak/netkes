@@ -24,6 +24,16 @@
         </div>
     </div>
     <div class="widget-manage-blocks">
+        <div class="manage-icon"><i class="ss-icon">&#x1F4B2;</i></div>
+        <div class="manage-content">
+            <h3>Billing Information</h3>
+            <p>Manage your billing.</p>
+            <a href="{% url 'blue_mgnt:billing' %}" class="button button-primary-basic">Manage Billing</a>
+        </div>
+    </div>
+</div>
+<div class="right-col">
+    <div class="widget-manage-blocks">
         <div class="manage-icon"><i class="ss-icon">&#x1F511;</i></div>
         <div class="manage-content">
             <h3>Auth Codes<span>{{ account_info.total_auth_codes }} Auth Codes</span></h3>
@@ -33,8 +43,6 @@
             </a>
         </div>
     </div>
-</div>
-<div class="right-col">
     <div class="widget-manage-blocks">
         <div class="manage-icon"><i class="ss-icon">&#x1F464;</i></div>
         <div class="manage-content">
