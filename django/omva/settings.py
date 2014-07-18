@@ -39,6 +39,7 @@ SESSION_SAVE_EVERY_REQUEST = True
 SESSION_COOKIE_AGE = 60 * 15
 
 ACCOUNT_API_URL = config['api_root']
+BILLING_API_URL = config['billing_root']
 
 EMAIL_HOST = 'localhost'
 EMAIL_PORT = 25
