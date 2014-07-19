@@ -20,6 +20,12 @@
         }
     });
 
+    var scrollTo = function($el) {
+        $('html, body').stop().animate({
+            scrollTop: $el.offset().top
+        }, 500);
+    };
+
     var $base = $("#billing-dropzone");
 
     var COUPON_STATES = {
@@ -63,6 +69,10 @@
         },
         onPromoCodeChange: function() {
             var coupon_code = this.get("coupon");
+            if (!coupon_code) {
+                this.set("coupon_state", COUPON_STATES.NONE);
+                return;
+            }
             this.set("coupon_state", COUPON_STATES.CHECKING);
             var xhr = $.ajax("/billing/check_coupon", {
                 type: "POST",
@@ -152,6 +162,7 @@
         alert: function(msg) {
             this.$("p").text(msg);
             this.$("div").show().attr("class", "error-alert");
+            scrollTo(this.$el);
         }
     });
 
@@ -263,6 +274,10 @@
             alerter.clear();
             var val = this.$("input").val();
             this.model.set("coupon", val);
+        },
+        isValid: function() {
+            var coupon_state = this.model.get("coupon_state");
+            return (coupon_state === COUPON_STATES.NONE || coupon_state === COUPON_STATES.SUCCESS);
         },
         getContext: function() {
             var msg, msg_class;
@@ -391,7 +406,6 @@
             var exp_year = this.$exp_year.val();
             var tests = [this.checkCC(), this.checkCSV(), this.checkName(), this.checkExpiry()];
             if (_.all(tests)) {
-                nav.disable();
                 Stripe.card.createToken({
                     name: name,
                     number: cc,
@@ -570,8 +584,24 @@
 
     pager.pages.summary.$el.append(billingoverviewview.$el);
 
+    nav.listenTo(pager, "switchTo", function(page) {
+        switch(page) {
+            case "loading":
+            case "success":
+                this.$el.hide();
+                break;
+            default:
+                this.$el.show();
+                break;
+        }
+    });
     pager.listenTo(nextview, "onClickNext", function(){
-        this.switchTo("payment");
+        if (couponview.isValid()) {
+            this.switchTo("payment");
+            scrollTo(pager.$el);
+        } else {
+            alerter.alert("Please enter a valid coupon");
+        }
     });
     pager.switchTo("plan");
 
