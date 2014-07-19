@@ -586,8 +586,9 @@
 
     nav.listenTo(pager, "switchTo", function(page) {
         switch(page) {
-            case "loading":
             case "success":
+                $(".page-header").hide();
+            case "loading":
                 this.$el.hide();
                 break;
             default:
