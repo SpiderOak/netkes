@@ -160,13 +160,6 @@
         initialize: function() {
             this.$el.html(Templates["billing-nav"]());
             this.$el.addClass("billing-nav");
-            this.enabled = false;
-        },
-        enable: function() {
-            //this.enabled = true;
-        },
-        disable: function() {
-            this.enabled = false;
         },
         render: function(page) {
             if (page) {
@@ -409,7 +402,6 @@
             }
         },
         onStripeResponse: function(status, data) {
-            nav.enable();
             if (status === 200 && data.card) {
                 this.model.set({
                     stripe_token: data.id,
@@ -583,12 +575,4 @@
     });
     pager.switchTo("plan");
 
-    nav.$("li").on("click", _.bind(function(evt) {
-        evt.preventDefault();
-        if (this.enabled) {
-            var $e = $(evt.currentTarget);
-            pager.switchTo($e.attr("data-target"));
-        }
-    }, nav));
-    nav.enable();
 }(jQuery, _, Backbone, swig));
