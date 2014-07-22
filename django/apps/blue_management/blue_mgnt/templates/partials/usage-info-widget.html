@@ -12,8 +12,8 @@
     </div>
     {% block extrajs %}
     <script>
-        allocated_num = {{ account_info.space_allocated }};
-        used_num = {{ account_info.space_used }};
+        allocated_num = {{ account_info.space_allocated|default:"0" }};
+        used_num = {{ account_info.space_used|default:"0" }};
     // Usage Bar
     // Adjusted to add classes when the amount used exceeds 
     // 50% (yellow) and 90% (red with "Almost out of space!" message).
