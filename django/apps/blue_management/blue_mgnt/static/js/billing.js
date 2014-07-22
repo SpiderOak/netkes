@@ -26,6 +26,14 @@
         }, 500);
     };
 
+    var toCurrency = function(v) {
+        var ret = _.str.numberFormat(v, 2);
+        if (_.str.endsWith(ret, ".00")) {
+            return _.str.numberFormat(v, 0);
+        }
+        return ret;
+    };
+
     var $base = $("#billing-dropzone");
 
     var COUPON_STATES = {
@@ -40,6 +48,7 @@
 
     var calculate_price = function(quantity, frequency, coupon) {
             var per, per_str;
+            var percent_off, cents_off;
             if (frequency === "monthly") {
                 per = 5;
                 per_str = "/month";
@@ -47,9 +56,19 @@
                 per = 60;
                 per_str = "/year";
             }
-            return {
-                'int': (per * quantity),
-                'str': (per * quantity) + per_str
+            var cost = (per * quantity);
+            var coupon = COUPON_CACHE[coupon];
+            if (coupon && coupon.state === COUPON_STATES.SUCCESS) {
+                if (coupon.data.percent_off) {
+                        cost = (cost * (100 - coupon.data.percent_off)) / 100;
+                }
+                if (coupon.data.cents_off) {
+                        cost = (cost - (coupon.data.cents_off / 100));
+                }
+            }
+            return { 
+                'int': (toCurrency(cost)),
+                'str': (toCurrency(cost)) + per_str
             };
     };
 
@@ -74,6 +93,10 @@
                 return;
             }
             this.set("coupon_state", COUPON_STATES.CHECKING);
+            if (COUPON_CACHE[coupon_code]) {
+                this.set("coupon_state", COUPON_CACHE[coupon_code].state);
+                return;
+            }
             var xhr = $.ajax("/billing/check_coupon", {
                 type: "POST",
                 data: {
@@ -81,14 +104,18 @@
                 }
             })
             .done(function(data, status, xhr) {
-                COUPON_CACHE[coupon_code] = data.success ? COUPON_STATES.SUCCESS : COUPON_STATES.FAILURE;
+                if (data.valid) {
+                        COUPON_CACHE[coupon_code] = {state: COUPON_STATES.SUCCESS, data: data};
+                } else {
+                        COUPON_CACHE[coupon_code] = {state: COUPON_STATES.FAILURE, data: null};
+                }
             })
             .fail(function(xhr, status, err) {
-                COUPON_CACHE[coupon_code] = COUPON_STATES.ERROR;
+                COUPON_CACHE[coupon_code] = {state: COUPON_STATES.ERROR, data: null};
             })
             .always(_.bind(function() {
                 if (this.get("coupon") === coupon_code) {
-                    this.set("coupon_state", COUPON_CACHE[coupon_code]);
+                    this.set("coupon_state", COUPON_CACHE[coupon_code].state);
                 }
             }, this));
         }
@@ -231,6 +258,7 @@
             var plans = [];
             var frequency = this.model.get("frequency");
             var curr_quantity = this.model.get("quantity");
+            var coupon = this.model.get("coupon");
             var n = 0;
             var quantity_selected = false;
             for (var i = 10; i <= 200; i += 5) {
@@ -240,7 +268,7 @@
                 if (SMB.total_users <= i) {
                     plans.push({
                         quantity: i,
-                        price: calculate_price(i, frequency),
+                        price: calculate_price(i, frequency, coupon),
                         active: (i === curr_quantity)
                     });
                     if (i === curr_quantity) {
@@ -314,8 +342,9 @@
         getContext: function() {
             var frequency = this.model.get("frequency");
             var quantity = this.model.get("quantity");
+            var coupon = this.model.get("coupon");
             return {
-                price: calculate_price(quantity, frequency)
+                price: calculate_price(quantity, frequency, coupon)
             };
         },
     });
@@ -373,13 +402,14 @@
         getContext: function() {
             var frequency = this.model.get("frequency");
             var quantity = this.model.get("quantity");
+            var coupon = this.model.get("coupon");
             return {
                 quantity: quantity,
                 frequency: frequency,
                 cc_last4: this.model.get("stripe_last4"),
                 cc_type: this.model.get("stripe_type"),
                 cc_memo: this.model.get("stripe_memo"),
-                price: calculate_price(quantity, frequency)
+                price: calculate_price(quantity, frequency, coupon)
             };
         }
     });
