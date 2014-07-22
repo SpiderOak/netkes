@@ -26,7 +26,7 @@ class BillingApi(object):
     def __init__(self, client):
         self.client = client
 
-    def check_coupon(self, coupon_code):
+    def fetch_coupon(self, coupon_code):
         try:
             resp = self.client.post('coupon', {'coupon': coupon_code})
         except urllib2.HTTPError, err:
@@ -36,7 +36,7 @@ class BillingApi(object):
             raise
         else:
             data = json.loads(resp.read())
-            return data['valid']
+            return data
 
     def create_subscription(self, coupon, quantity, frequency, stripe_memo, stripe_token):
         try:
