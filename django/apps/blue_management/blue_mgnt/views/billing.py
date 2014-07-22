@@ -63,11 +63,7 @@ def check_coupon(request):
             coupon_code = check_form.cleaned_data['coupon_code']
             config = read_config_file()
             billing_api = get_billing_api(config)
-            is_valid = billing_api.check_coupon(coupon_code)
-            return json_response(request, {
-                'coupon_code': coupon_code,
-                'success': is_valid,
-            })
+            return json_response(request, billing_api.fetch_coupon(coupon_code))
     raise PermissionDenied
 
 
