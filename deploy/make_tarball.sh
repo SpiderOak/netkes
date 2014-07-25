@@ -65,6 +65,10 @@ popd > /dev/null #$buildit_dir/django
 # Copy over the upgrades
 cp -r $source_dir/upgrade $buildit_dir
 
+# Copy keys
+mkdir $buildit_dir/upgrade/keys
+cp $management_files/server.* $buildit_dir/upgrade/keys
+
 # Setup the SQL package
 mkdir $buildit_dir/sql
 cp $source_dir/sql/*.sql $buildit_dir/sql

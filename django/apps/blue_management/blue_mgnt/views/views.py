@@ -262,6 +262,7 @@ def initial_setup(username, password):
     plans = api.list_plans()
     unlimited = [x for x in plans if x['storage_bytes'] == 1000000001000000000]
     if unlimited:
+        info = api.info()
         data = {
             'name': info['company_name'],
             'plan_id': unlimited[0]['plan_id'],

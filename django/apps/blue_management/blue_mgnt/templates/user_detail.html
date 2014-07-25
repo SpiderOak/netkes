@@ -34,7 +34,7 @@
     {% csrf_token %}
     <div class="" id="options">
         <fieldset>
-            <table class="widget-table widget-table-details">
+            <table id="widget-table-details" class="widget-table">
                 <tbody>
             {% if not features.email_as_username %}
             <tr>
@@ -85,23 +85,23 @@
                 <td class="toggle-controller link-primary"><span></span> all devices</td>
             </tr>
             <tr class="widget-overview">
-                <td></td>
+                <td>
                 <td colspan="2">
                     <table class="widget-table">
                         <thead>
                             <th>Name</th>
                             <th>Creation Time</th>
-                            <th>Last Logged In</th>
+                            <th>Last Backup Complete</th>
                         </thead>
                         <tbody>
                             {% for device in devices %}
                             <tr>
                                 <td>{{ device.name }}</td>
                                 <td>{{ device.creation_time|todate }}</td>
-                                <td>{% if device.last_login %}
-                                    {{ device.last_login|todate }}
+                                <td>{% if device.last_backup_complete  %}
+                                    {{ device.last_backup_complete |todate }}
                                     {% else %}
-                                    No login recorded
+                                    No backup recorded
                                     {% endif %}
                                 </td>
                             </tr>
@@ -180,6 +180,17 @@
                     {{ api_user.last_login|todate }}
                     {% else %}
                     No login recorded
+                    {% endif %}
+                </td>
+                <td></td>
+            </tr>
+            <tr>
+                <td><label>Last Backup Complete</label></td>
+                <td>
+                    {% if api_user.last_backup_complete %}
+                    {{ api_user.last_backup_complete|todate }}
+                    {% else %}
+                    No backup recorded
                     {% endif %}
                 </td>
                 <td></td>

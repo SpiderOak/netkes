@@ -348,6 +348,10 @@ def users(request, api, account_info, config, username, saved=False):
 def user_detail(request, api, account_info, config, username, email, saved=False):
     user = api.get_user(email)
     devices = api.list_devices(email)
+    if devices:
+        user['last_backup_complete'] = max(x['last_backup_complete'] for x in devices)
+    else:
+        user['last_backup_complete'] = None
     features = api.enterprise_features()
     local_user = is_local_user(config, user['group_id'])
     groups = api.list_groups()
