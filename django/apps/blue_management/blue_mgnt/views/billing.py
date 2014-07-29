@@ -33,7 +33,7 @@ class CreateSubscriptionForm(forms.Form):
     quantity = forms.IntegerField()
     frequency = forms.CharField()
     stripe_memo = forms.CharField(required=False)
-    stripe_token= forms.CharField()
+    stripe_token = forms.CharField(required=False)
 
 
 @enterprise_required
