@@ -128,8 +128,7 @@ def _calculate_changes_against_db(db_conn, config, users):
         create_attrs = ['email', 'firstname', 'lastname', 'group_id']
     
     api_actions['create'] = _process_query(db_conn, _USERS_TO_CREATE_QUERY,
-                                           ['email', 'firstname', 
-                                            'lastname', 'group_id'])
+                                           create_attrs)
     log.debug('Enabling users:')
     api_actions['enable'] = _process_query(db_conn, _USERS_TO_ENABLE_QUERY,
                                            ['avatar_id', 'email'])
