@@ -81,9 +81,17 @@
             stripe_token: null,
             stripe_type: null,
             stripe_last4: null,
-            stripe_memo: null
+            stripe_memo: null,
+            payment_method: "new",
+            has_cc: false
         },
         initialize: function() {
+            if (SMB.current_plan) {
+                this.set("quantity", SMB.current_plan); 
+                // assume that if they have a plan they have a cc on file
+                this.set("has_cc", true);
+                this.set("payment_method", "existing");
+            }
             this.on("change:coupon", this.onPromoCodeChange, this);
         },
         onPromoCodeChange: function() {
@@ -369,6 +377,32 @@
         onFormSubmit: function(evt) {
             evt.preventDefault();
             alerter.clear();
+            if (this.model.get("has_cc") && this.model.get("payment_method") === "existing") {
+                pager.switchTo("loading");
+                var xhr = $.ajax("/billing/create_subscription", {
+                    type: "POST",
+                    data: {
+                        'coupon': this.model.get("coupon"),
+                        'quantity': this.model.get("quantity"),
+                        'frequency': this.model.get("frequency"),
+                    }
+                })
+                .done(function(data, status, xhr) {
+                    if (data.success) {
+                        pager.switchTo("success");
+                        alerter.clear();
+                        nav.$el.hide();
+                    } else {
+                        pager.switchTo("summary");
+                        alerter.alert("There was an error contacting the server. Please try again later.");
+                    }
+                })
+                .fail(function(data, status, xhr) {
+                    pager.switchTo("summary");
+                    alerter.alert("There was an error contacting the server. Please try again later.");
+                });
+                return;
+            }
             var stripe_token = this.model.get("stripe_token");
             if (stripe_token) {
                 pager.switchTo("loading");
@@ -383,15 +417,23 @@
                     }
                 })
                 .done(function(data, status, xhr) {
-                    pager.switchTo("success");
-                    alerter.clear();
-                    nav.$el.hide();
+                    if (data.success) {
+                        pager.switchTo("success");
+                        alerter.clear();
+                        nav.$el.hide();
+                    } else {
+                        pager.switchTo("summary");
+                        alerter.alert("There was an error contacting the server. Please try again later.");
+                    }
                 })
                 .fail(function(data, status, xhr) {
                     pager.switchTo("summary");
                     alerter.alert("There was an error contacting the server. Please try again later.");
                 });
+                return;
             }
+            pager.switchTo("summary");
+            alerter.alert("There was an error with the form. Please try again later.");
         },
         onClickEdit: function(evt) {
             evt.preventDefault();
@@ -403,16 +445,55 @@
             var frequency = this.model.get("frequency");
             var quantity = this.model.get("quantity");
             var coupon = this.model.get("coupon");
-            return {
-                quantity: quantity,
-                frequency: frequency,
-                cc_last4: this.model.get("stripe_last4"),
-                cc_type: this.model.get("stripe_type"),
-                cc_memo: this.model.get("stripe_memo"),
-                price: calculate_price(quantity, frequency, coupon)
-            };
+            if (this.model.get("payment_method") === "new") {
+                return {
+                    quantity: quantity,
+                    frequency: frequency,
+                    cc_last4: this.model.get("stripe_last4"),
+                    cc_type: this.model.get("stripe_type"),
+                    cc_memo: this.model.get("stripe_memo"),
+                    price: calculate_price(quantity, frequency, coupon)
+                };
+            } else {
+                return {
+                    quantity: quantity,
+                    frequency: frequency,
+                    cc_last4: SMB.last4_on_file,
+                    cc_type: "Card on file",
+                    cc_memo: "",
+                    price: calculate_price(quantity, frequency, coupon)
+                };
+            }
         }
     });
+
+    var PaymentMethodView = View.extend({
+        template: "billing-payment-method",
+        events: {
+            "click li": "onMethodSelect"
+        },
+        onMethodSelect: function(evt) {
+            evt.preventDefault();
+            var $el = $(evt.currentTarget);
+            this.model.set("payment_method", $el.attr("data-method"));
+        },
+        getContext: function() {
+            return {};
+        },
+        onRender: function() {
+            var method = this.model.get("payment_method");
+            this.$(".payment-" + method).addClass("active");
+            var $form = this.parentView.$('.so-form');
+            if (method === 'new') {
+                $(".cc-info", $form).show();
+                $(".onfile-info", $form).hide();
+            } else {
+                $(".cc-info", $form).hide();
+                $(".onfile-info", $form).show();
+            }
+        }
+    });
+
 
     var StripePaymentView = View.extend({
         template: "billing-stripe-payment",
@@ -423,6 +504,10 @@
         onFormSubmit: function(evt) {
             evt.preventDefault();
             alerter.clear();
+            if (this.model.get("payment_method") === "existing") {
+                pager.switchTo("summary");
+                return;
+            }
             this.model.set({
                 stripe_token: null,
                 stripe_last4: null,
@@ -535,8 +620,6 @@
         initialize: function() {
             this.$el.html(Templates[this.template]());
             this.$el.addClass(this.template);
-            var addValidateHook = function($el, cb) {
-            };
             this.$name = this.$("#stripe_name");
             this.$cc = this.$("#stripe_cc");
             this.$csv = this.$("#stripe_csv");
@@ -567,11 +650,18 @@
             this.$exp_month.on("change blur", _.bind(this.checkExpiry, this));
             this.$exp_year.on("change blur", _.bind(this.checkExpiry, this));
             this.showCCType(this.$cc);
+
+            this.paymentMethod = new PaymentMethodView({model: this.model});
+            this.paymentMethod.parentView = this;
+            if (this.model.get("has_cc")) {
+                this.paymentMethod.$el.prependTo(this.$(".so-form"));
+            }
         },
         render: function(page) {
             var now = new Date();
             this.$exp_month.val(now.getMonth() + 1);
             this.$exp_year.val(now.getFullYear());
+            this.paymentMethod.render();
         }
     });
 

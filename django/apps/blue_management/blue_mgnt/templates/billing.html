@@ -125,79 +125,107 @@
   </div>
 </script>
 
+<script type="text/x-swig-template" id="template-billing-payment-method">
+  <h2>Select Payment Method</h2>
+  <ul>
+    <li class="payment-existing" data-method="existing">
+      Card on file
+      <span></span>
+    </li>
+    <li class="payment-new" data-method="new">
+      New card
+      <span></span>
+    </li>
+  </ul>
+  <div class="spacer"><!--ZKP--></div>
+</script>
+
 <script type="text/x-swig-template" id="template-billing-stripe-payment">
   <form class="so-form">
-    <h3>Credit Card Information</h3>
-    <fieldset>
-      <div class="billing-stripe-name">
-        <label for="stripe_name">Name on Card</label>
-        <input id="stripe_name">
-        <div class="alert">
-          <p></p>
+    <div class="cc-info">
+      <h3>Credit Card Information</h3>
+      <fieldset>
+        <div class="billing-stripe-name">
+          <label for="stripe_name">Name on Card</label>
+          <input id="stripe_name">
+          <div class="alert">
+            <p></p>
+          </div>
         </div>
-      </div>
-      <div class="billing-stripe-cc">
-        <label for="stripe_cc">Card Number</label>
-        <input id="stripe_cc">
-        <div class="alert">
-          <p></p>
+        <div class="billing-stripe-cc">
+          <label for="stripe_cc">Card Number</label>
+          <input id="stripe_cc">
+          <div class="alert">
+            <p></p>
+          </div>
         </div>
-      </div>
-      <div class="billing-stripe-csv">
-        <label for="stripe_csv">CSV Code</label>
-        <input id="stripe_csv">
-        <div class="alert">
-          <p></p>
+        <div class="billing-stripe-csv">
+          <label for="stripe_csv">CSV Code</label>
+          <input id="stripe_csv">
+          <div class="alert">
+            <p></p>
+          </div>
         </div>
-      </div>
-      <div class="billing-stripe-expiration">
-        <label>Expiration Date</label>
-        <select id="stripe_exp_month">
-          <option value="1">1</option>
-          <option value="2">2</option>
-          <option value="3">3</option>
-          <option value="4">4</option>
-          <option value="5">5</option>
-          <option value="6">6</option>
-          <option value="7">7</option>
-          <option value="8">8</option>
-          <option value="9">9</option>
-          <option value="10">10</option>
-          <option value="11">11</option>
-          <option value="12">12</option>
-        </select>
-        <select id="stripe_exp_year">
-          <option value="2014">2014</option>
-          <option value="2015">2015</option>
-          <option value="2016">2016</option>
-          <option value="2017">2017</option>
-          <option value="2018">2018</option>
-          <option value="2019">2019</option>
-          <option value="2020">2020</option>
-          <option value="2021">2021</option>
-          <option value="2022">2022</option>
-          <option value="2023">2023</option>
-          <option value="2024">2024</option>
-          <option value="2025">2025</option>
-          <option value="2026">2026</option>
-          <option value="2027">2027</option>
-          <option value="2028">2028</option>
-          <option value="2029">2029</option>
-          <option value="2030">2030</option>
-        </select>
-        <div class="alert">
-          <p></p>
+        <div class="billing-stripe-expiration">
+          <label>Expiration Date</label>
+          <select id="stripe_exp_month">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+            <option value="11">11</option>
+            <option value="12">12</option>
+          </select>
+          <select id="stripe_exp_year">
+            <option value="2014">2014</option>
+            <option value="2015">2015</option>
+            <option value="2016">2016</option>
+            <option value="2017">2017</option>
+            <option value="2018">2018</option>
+            <option value="2019">2019</option>
+            <option value="2020">2020</option>
+            <option value="2021">2021</option>
+            <option value="2022">2022</option>
+            <option value="2023">2023</option>
+            <option value="2024">2024</option>
+            <option value="2025">2025</option>
+            <option value="2026">2026</option>
+            <option value="2027">2027</option>
+            <option value="2028">2028</option>
+            <option value="2029">2029</option>
+            <option value="2030">2030</option>
+          </select>
+          <div class="alert">
+            <p></p>
+          </div>
         </div>
-      </div>
-    </fieldset>
+      </fieldset>
 
-    <h3>Optional Information</h3>
-    <fieldset>
-      <div>
-        <label for="stripe_memo">Memo</label>
-        <input id="stripe_memo">
-      </div>
-    </fieldset>
+      <h3>Optional Information</h3>
+      <fieldset>
+        <div>
+          <label for="stripe_memo">Memo</label>
+          <input id="stripe_memo">
+        </div>
+      </fieldset>
+    </div>
+
+    <div class="onfile-info">
+      <h3>Credit Card Information</h3>
+      <fieldset>
+        <div>
+          <label for="stripe_name">Card on file</label>
+          <p>&middot;&middot;&middot;&middot;&middot;&middot;&middot;&middot;&middot;&middot;&middot;&middot;&middot;&middot;&middot;&middot; {{ billing_info.current_plan.payment_last4|default:"" }}</p>
+        </div>
+      </fieldset>
+    </div>
+
     <div class="billing-next">
       <button class="button button-primary-basic">Next</button>
       <p>You will have a chance to review your<br> order before your card is charged.</p>
@@ -275,6 +303,7 @@
   var SMB = SMB || {};
   SMB.total_users = {{ account_info.total_users }};
   SMB.current_plan = {{ billing_info.current_plan.quantity|default:"null" }};
+  SMB.last4_on_file = "{{ billing_info.current_plan.payment_last4|default:"null" }}";
 </script>
 <script type="text/javascript" src="/static/blue_mgnt/js/billing.js"></script>
 {% endblock js_main %}
