@@ -10,7 +10,9 @@
 {% block content %}
 <h1 class="page-header">
 	<i class="ss-icon">&#xE7B0;</i> Upgrade Your Plan
-	<span class="header-note">current plan: {{account_info.total_users}} users</span>
+        {% if billing_info.current_plan %}
+	<span class="header-note">current plan: {{ billing_info.current_plan.quantity }} users</span>
+        {% endif %}
 </h1>
 
 <div id="billing-dropzone">
@@ -268,7 +270,11 @@
 <script type="text/javascript" src="/static/blue_mgnt/vendor/swig.min.js"></script>
 <script type="text/javascript" src="/static/blue_mgnt/vendor/jquery.payment.js"></script>
 <script type="text/javascript" src="https://js.stripe.com/v2/"></script>
-<script type="text/javascript">Stripe.setPublishableKey('{{ stripe_public_key }}');</script>
-<script type="text/javascript">var SMB = SMB || {}; SMB.total_users = {{ account_info.total_users }};</script>
+<script type="text/javascript">Stripe.setPublishableKey('{{ billing_info.stripe_public_key }}');</script>
+<script type="text/javascript">
+  var SMB = SMB || {};
+  SMB.total_users = {{ account_info.total_users }};
+  SMB.current_plan = {{ billing_info.current_plan.quantity|default:"null" }};
+</script>
 <script type="text/javascript" src="/static/blue_mgnt/js/billing.js"></script>
 {% endblock js_main %}
