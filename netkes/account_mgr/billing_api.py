@@ -25,14 +25,13 @@ class BillingApi(object):
 
     def __init__(self, client):
         self.client = client
+        self.logger = logging.getLogger('admin_actions')
 
     def fetch_coupon(self, coupon_code):
         try:
             resp = self.client.post('coupon', {'coupon': coupon_code})
         except urllib2.HTTPError, err:
-            import logging
-            log = logging.getLogger('admin_actions')
-            log.info(err.read())
+            self.logger.info(err.read())
             raise
         else:
             data = json.loads(resp.read())
@@ -48,22 +47,15 @@ class BillingApi(object):
                 'stripe_token': stripe_token,
             })
         except urllib2.HTTPError, err:
-            import logging
-            log = logging.getLogger('admin_actions')
-            log.info(err.read())
+            self.logger.info(err.read())
             raise
         else:
             data = json.loads(resp.read())
             return data['success']
 
-    def get_plans(self):
-        return self.client.get_json('plans')
-
-    def stripe_public_key(self):
+    def billing_info(self):
         try:
-            return self.client.get_json('stripe_public_key')
+            return self.client.get_json('billing_info')
         except urllib2.HTTPError, err:
-            import logging
-            log = logging.getLogger('admin_actions')
-            log.info(err.read())
+            self.logger.info(err.read())
             raise
