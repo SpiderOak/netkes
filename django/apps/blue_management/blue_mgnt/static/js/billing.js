@@ -252,10 +252,12 @@
             this.show_more = false;
         },
         onPlanSelect: function(evt) {
-            evt.preventDefault();
             var $el = $(evt.currentTarget);
             var quantity = parseInt($el.attr("data-quantity"), 10);
-            this.model.set("quantity", quantity);
+            if (quantity) {
+                this.model.set("quantity", quantity);
+                evt.preventDefault();
+            }
         },
         onClickShowMore: function(evt) {
             evt.preventDefault();
