@@ -221,7 +221,7 @@
       <fieldset>
         <div>
           <label for="stripe_name">Card on file</label>
-          <p>&middot;&middot;&middot;&middot;&middot;&middot;&middot;&middot;&middot;&middot;&middot;&middot;&middot;&middot;&middot;&middot; {{ billing_info.current_plan.payment_last4|default:"" }}</p>
+          <p>&middot;&middot;&middot;&middot;&middot;&middot;&middot;&middot;&middot;&middot;&middot;&middot;&middot;&middot;&middot;&middot; {{ billing_info.current_card.last4|default:"" }}</p>
         </div>
       </fieldset>
     </div>
@@ -303,7 +303,11 @@
   var SMB = SMB || {};
   SMB.total_users = {{ account_info.total_users }};
   SMB.current_plan = {{ billing_info.current_plan.quantity|default:"null" }};
-  SMB.last4_on_file = "{{ billing_info.current_plan.payment_last4|default:"null" }}";
+  {% if billing_info.current_card.last4 %}
+  SMB.last4_on_file = "{{ billing_info.current_card.last4|default:"xxxx" }}";
+  {% else %}
+  SMB.last4_on_file = null;
+  {% endif %}
 </script>
 <script type="text/javascript" src="/static/blue_mgnt/js/billing.js"></script>
 {% endblock js_main %}
