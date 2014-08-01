@@ -2,12 +2,13 @@ import datetime
 from base64 import b32encode
 import csv
 
-from views import enterprise_required, log_admin_action
+from views import enterprise_required, log_admin_action, get_billing_info
 from views import ReadOnlyWidget, get_base_url, SIZE_OF_GIGABYTE
 from views import pageit
 from groups import get_config_group
 
 from django import forms
+from django.core.cache import cache
 from django.core.urlresolvers import reverse
 from django.forms.formsets import formset_factory
 from django.template import RequestContext
@@ -132,6 +133,8 @@ def get_new_user_csv_form(api, groups, config, request):
                     local_source.set_user_password(local_source._get_db_conn(config),
                                                    row['email'], row['password'])
                     log_admin_action(request, 'create user through csv: %s' % user_info)
+                    cache.delete('account_info')
+                    cache.delete('user_count')
                 except api.DuplicateEmail:
                     msg = 'Invalid data in row %s. Email already in use' % x
                     raise forms.ValidationError(msg)
@@ -178,6 +181,8 @@ def get_new_user_form(api, features, config, local_groups, groups, request):
                     local_source.set_user_password(local_source._get_db_conn(config),
                                                    email, password)
                     log_admin_action(request, 'create user: %s' % data)
+                    cache.delete('account_info')
+                    cache.delete('user_count')
                 except api.DuplicateEmail:
                     self._errors['email'] = self.error_class(["Email address already in use"])
                 except api.DuplicateUsername:
@@ -211,6 +216,7 @@ def get_login_link(username):
 
 @enterprise_required
 def users(request, api, account_info, config, username, saved=False):
+    billing_info = get_billing_info(config)
     page = int(request.GET.get('page', 1))
     show_disabled = int(request.GET.get('show_disabled', 1))
     search_back = request.GET.get('search_back', '')
@@ -311,6 +317,8 @@ def users(request, api, account_info, config, username, saved=False):
                     orig_email = form.cleaned_data['orig_email']
                     api.delete_user(orig_email)
                     log_admin_action(request, 'delete user "%s"' % orig_email)
+                    cache.delete('account_info')
+                    cache.delete('user_count')
                 return redirect(reverse('blue_mgnt:users_saved') + '?search=%s' % search)
 
     index = 0
@@ -318,6 +326,13 @@ def users(request, api, account_info, config, username, saved=False):
         if user['is_local_user']:
             user['form'] = tmp_user_formset[index]
             index += 1
+    
+    at_user_limit = False
+    current_plan = billing_info.get('current_plan')
+    if current_plan:
+        if current_plan['quantity'] == account_info['total_users']:
+            at_user_limit = True
+
 
     return render_to_response('index.html', dict(
         all_users=initial,
@@ -339,6 +354,7 @@ def users(request, api, account_info, config, username, saved=False):
         search_back=search_back,
         users_and_delete=zip(initial, delete_user_formset),
         all_pages=all_pages,
+        at_user_limit=at_user_limit,
     ),
     RequestContext(request))
 

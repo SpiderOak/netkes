@@ -1,27 +1,31 @@
 <div class="modal-wrapper">
     <div class="modal-content">
-        <h2 class="page-header"><i class="ss-icon">&#x1F464;</i>Add User
-            <span class="actions"><i class="ss-icon">&#x2421;</i></span>
-        </h2>
+        <div class="modal-item widget-add-user-option">
+            <h2 class="page-header"><i class="ss-icon">&#x1F464;</i>Add User
+                <span class="actions"><i class="ss-icon">&#x2421;</i></span>
+            </h2>
             <div class="spacer"><!--ZXP--></div>
-        <div class="widget-add-user-option">
             <div class="lower-content">
             <p class="description">You can either import users via a CSV file or manually add them.
             If you are using LDAP for user management, users will be added automatically.</p>
 
             <div class="option-box" id="option-upload-csv">
                 <p>Upload from<br />a CSV file.</p>
-                <button class="button button-primary-basic">Upload CSV</button>
+                <button class="action-show-modal button button-primary-basic" data-show-modal="widget-upload-csv">Upload CSV</button>
             </div>
             <div class="option-box" id="option-add-user">
                 <p>Manually<br />add users.</p>
-                <button class="button button-primary-basic">Create User</button>
+                <button class="action-show-modal button button-primary-basic" data-show-modal="{% if at_user_limit %}widget-plan-alert{% else %}widget-add-user{% endif %}">Create User</button>
             </div>
             </div>
         </div>
 
 {% if config.enable_local_users %}
-        <div class="widget-add-user" style="display:none">
+        <div class="modal-item widget-add-user" style="display:none">
+            <h2 class="page-header"><i class="ss-icon">&#x1F464;</i>Add User
+                <span class="actions"><i class="ss-icon">&#x2421;</i></span>
+            </h2>
+            <div class="spacer"><!--ZXP--></div>
             <form action="{% url 'blue_mgnt:users' %}" enctype="multipart/form-data" method="POST">
             {% csrf_token %}
             <input type="hidden" name="form" value="new_user">
@@ -61,7 +65,11 @@
         </form>
     </div>
 {% endif %}
-    <div class="widget-upload-csv" style="display: none">
+    <div class="modal-item widget-upload-csv" style="display: none">
+            <h2 class="page-header"><i class="ss-icon">&#x1F464;</i>Add User
+                <span class="actions"><i class="ss-icon">&#x2421;</i></span>
+            </h2>
+            <div class="spacer"><!--ZXP--></div>
         <form action="{% url 'blue_mgnt:users' %}" enctype="multipart/form-data" method="post">
         {% csrf_token %}
             <fieldset>
@@ -104,6 +112,19 @@ jane@foo.com,Jane Doe,passworD,Local 20 GB</pre>
                 <input type='hidden' value='csv' name='form'>
             </div>
         </form>
+    </div>
+    <div class="modal-item widget-plan-alert" style="display: none">
+            <h2 class="page-header"><i class="ss-icon">&#x26A0;</i>Upgrade Required
+                <span class="actions"><i class="ss-icon">&#x2421;</i></span>
+            </h2>
+            <div class="spacer"><!--ZXP--></div>
+                <div class="csv-note">
+                    <p>Adding a new user will move you into the <span class="link-primary">next plan size</span>. Your credit card on file will be charged. To continue adding this user click Continue. If you do not with to add more users please click cancel.</p>
+                </div>
+            <div class="widget-actions widget-splitactions" style="margin: 20px;">
+                <button class="lhs action-close-modal button">Cancel</button>
+                <button class="rhs action-show-modal button button-primary-basic" data-show-modal="widget-add-user">Create User</button>
+            </div>
     </div>
     </div>
 </div>

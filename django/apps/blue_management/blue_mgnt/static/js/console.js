@@ -49,19 +49,19 @@ $(function() {
         posModal('.modal-content');
     });
 
-    $('#option-add-user button').click(function(){
-            $('.widget-add-user-option').hide();
-            $('.widget-add-user').show();
-    });
-
-    $('#option-upload-csv button').click(function(){
-            $('.widget-add-user-option').hide();
-            $('.widget-upload-csv').show();
+    $('.action-show-modal', $('.modal-wrapper')).click(function(e) {
+        e.preventDefault();
+        var $el = $(e.currentTarget);
+        var trgt = $el.attr('data-show-modal');
+        var $divs = $el.parents('.modal-content').find('.modal-item');
+        $divs.each(function(i, div) {
+            var $div = $(div);
+            $div.toggle($div.hasClass(trgt));
+        });
     });
 
     $('h2.page-header .actions').click(function() {
-        $('.widget-add-user').hide()
-        $('.widget-upload-csv').hide();
+        $('.modal-wrapper .modal-item').hide();
         $('.widget-add-user-option').show();
         $('.modal-wrapper').hide();
     });
