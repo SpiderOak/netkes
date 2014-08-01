@@ -75,17 +75,18 @@ def create_subscription(request, api, account_info, config, username):
                     'msg': 'Quantity lower than current users',
                 })
             billing_api = get_billing_api(config)
-            success = billing_api.create_subscription(
+            resp = billing_api.create_subscription(
                 check_form.cleaned_data['coupon'],
                 check_form.cleaned_data['quantity'],
                 check_form.cleaned_data['frequency'],
                 check_form.cleaned_data['stripe_memo'],
                 check_form.cleaned_data['stripe_token'],
             )
-            if success: 
+            if resp['success']: 
                 cache.delete('billing_info')
             return json_response(request, {
-                'success': success,
+                'success': resp['success'],
+                'msg': resp.get('msg'),
             })
         return json_response(request, {
             'success': False,
