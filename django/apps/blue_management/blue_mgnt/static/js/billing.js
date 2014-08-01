@@ -396,7 +396,11 @@
                         nav.$el.hide();
                     } else {
                         pager.switchTo("summary");
-                        alerter.alert("There was an error contacting the server. Please try again later.");
+                        var msg = "There was an error contacting the server. Please try again later.";
+                        if (data.msg) {
+                           msg = data.msg;
+                        }
+                        alerter.alert(msg);
                     }
                 })
                 .fail(function(data, status, xhr) {
@@ -425,7 +429,11 @@
                         nav.$el.hide();
                     } else {
                         pager.switchTo("summary");
-                        alerter.alert("There was an error contacting the server. Please try again later.");
+                        var msg = "There was an error contacting the server. Please try again later.";
+                        if (data.msg) {
+                           msg = data.msg;
+                        }
+                        alerter.alert(msg);
                     }
                 })
                 .fail(function(data, status, xhr) {
