@@ -9,19 +9,10 @@ from django.core.cache import cache
 from django.views.decorators.csrf import csrf_exempt
 from django.core.exceptions import PermissionDenied
 
-from views import enterprise_required, log_admin_action
-from netkes.account_mgr.billing_api import BillingApi
+from views import enterprise_required, log_admin_action, get_billing_api
 
 def json_response(request, data):
     return HttpResponse(json.dumps(data), content_type='application/json')
-
-def get_billing_api(config):
-    billing_api = BillingApi.create(
-        django_settings.BILLING_API_URL,
-        config['api_user'],
-        config['api_password'],
-    )
-    return billing_api
 
 
 class CouponCheckForm(forms.Form):

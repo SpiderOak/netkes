@@ -42,6 +42,7 @@ from mako import exceptions
 
 from blue_mgnt import models
 from netkes.account_mgr.accounts_api import Api
+from netkes.account_mgr.billing_api import BillingApi
 from netkes.netkes_agent import config_mgr
 from netkes.common import read_config_file
 from netkes.account_mgr.user_source import ldap_source, local_source
@@ -372,6 +373,24 @@ def get_api(config):
              attr in FUNCTIONS_TO_INVALIDATE_CACHE)):
             setattr(api, attr, cache_api(fun_))
     return api
+
+def get_billing_api(config):
+    billing_api = BillingApi.create(
+        django_settings.BILLING_API_URL,
+        config['api_user'],
+        config['api_password'],
+    )
+    return billing_api
+
+
+def get_billing_info(config):
+    billing_info = cache.get('billing_info')
+    if not billing_info:
+        billing_api = get_billing_api(config)
+        billing_info = billing_api.billing_info()
+        cache.set('billing_info', billing_info, 60 * 15)
+    return billing_info
+
 
 def enterprise_required(fun):
     def new_fun(request, *args, **kwargs):

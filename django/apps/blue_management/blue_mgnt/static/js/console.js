@@ -74,6 +74,18 @@ $(function() {
         posModal(this_refer);
     });
 
+    $('.action-show-modal', $('.modal-wrapper')).click(function(e) {
+        e.preventDefault();
+        var $el = $(e.currentTarget);
+        var trgt = $el.attr('data-show-modal');
+        var $divs = $el.parents('.modal-content').find('.modal-item');
+        $divs.each(function(i, div) {
+            var $div = $(div);
+            $div.toggle($div.hasClass(trgt));
+        });
+    });
+
+
     function exposeWidget(e){
         e.preventDefault();
         $('.modal-wrapper').show().css('height', $(document).height());
@@ -101,6 +113,7 @@ $(function() {
         $('.widget-add-user').hide()
         $('.widget-upload-csv').hide();
         $('.widget-add-user-option').show();
+        $('.modal-wrapper .modal-item').hide();
         $('.modal-wrapper').hide();
     });
 
