@@ -301,6 +301,7 @@
 
     var CouponView = View.extend({
         template: "billing-select-coupon",
+        modelTriggers: ["change:coupon", "change:coupon_state"],
         events: {
             "submit form": "onFormSubmit"
         },
