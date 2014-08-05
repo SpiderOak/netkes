@@ -11,6 +11,7 @@ import math
 import hotshot
 import os
 import time
+from hashlib import md5
 
 from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import redirect
@@ -45,6 +46,9 @@ from netkes.netkes_agent import config_mgr
 from netkes.common import read_config_file
 from netkes.account_mgr.user_source import ldap_source, local_source
 from netkes import account_mgr
+from key_escrow import server
+from Pandora import serial
+from Crypto.Util.RFC1751 import key_to_english
 
 LOG = logging.getLogger('admin_actions')
 
@@ -353,6 +357,7 @@ def get_api(config):
     FUNCTIONS_TO_CACHE = [
         'list_plans',
         'quota',
+        'info',
         'enterprise_features',
         'enterprise_settings',
         'list_groups',
@@ -393,6 +398,7 @@ def get_api(config):
             else:
                 return fun(*args, **kwargs)
         return dec
+
     for attr in dir(api):
         fun_ = getattr(api, attr)
         if (callable(fun_) and 
@@ -617,6 +623,29 @@ def manage(request, api, account_info, config, username):
     ),
     RequestContext(request))
 
+@enterprise_required
+def fingerprint(request, api, account_info, config, username):
+    brand_identifier = api.info()['brand_identifier']
+
+    layers = serial.loads(server.get_escrow_layers(brand_identifier))
+
+    fingerprint = 'testing' 
+    # Generate fingerprint
+    h = md5()
+    for key_id, key in layers:
+        s = '{0}{1}'.format(key_id, key.publickey().exportKey('DER'))
+        h.update(s)
+    h = h.hexdigest().upper()
+    fingerprint = '-'.join(h[i:i+4] for i in range(0, len(h), 4))
+    fingerprint = key_to_english(fingerprint)
+    
+    return render_to_response('fingerprint.html', dict(
+        user=request.user,
+        username=username,
+        account_info=account_info,
+        fingerprint=fingerprint,
+    ),
+    RequestContext(request))
 
 # Benny's da_paginator
 def pageit(sub, api, page, extra):

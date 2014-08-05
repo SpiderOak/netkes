@@ -32,6 +32,7 @@ class LogErrorMeta(type):
                 log = logging.getLogger('accounts_api')
                 log.exception('%s - %s - %s' % (func.__name__, args, kwargs))
                 raise
+        wrapper.__name__ = func.__name__
         return wrapper
         
 

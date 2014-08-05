@@ -44,7 +44,7 @@ fi
 
 echo "Starting upgrade using $UPDATE_TARBALL."
 
-CURRENT_DATE=$(date "+%y-%m-%d")
+CURRENT_DATE=$(date "+%y-%m-%d-%T")
 
 
 # Stop services.
