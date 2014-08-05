@@ -34,6 +34,12 @@
         return ret;
     };
 
+    var trim = String.prototype.trim ? function(s) {
+        return s.trim();
+    } : function(s) {
+        return this.replace(/^\s+|\s+$/g, '');
+    };
+
     var $base = $("#billing-dropzone");
 
     var COUPON_STATES = {
@@ -311,8 +317,9 @@
         onFormSubmit: function(evt) {
             evt.preventDefault();
             alerter.clear();
-            var val = this.$("input").val();
-            this.model.set("coupon", val);
+            var $input = this.$("input");
+            var val = $input.val();
+            this.model.set("coupon", trim(val));
         },
         isValid: function() {
             var coupon_state = this.model.get("coupon_state");
