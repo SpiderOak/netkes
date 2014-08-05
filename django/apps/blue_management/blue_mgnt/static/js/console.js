@@ -23,7 +23,7 @@ function posModal(obj) {
 $(function() {
     // Shorten numeric inputs
     $(window).load(function() {
-        $input = $("input[type='text']").not('.widget-search-input, #id_username');
+        $input = $("input[type='text']").not('.widget-search-input, #id_username, #promo_code_field');
         var $size;
         $input.each(function() {
             if ( $(this).val().length < 1 ) {
