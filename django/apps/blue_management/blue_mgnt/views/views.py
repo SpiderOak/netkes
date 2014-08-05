@@ -629,14 +629,12 @@ def fingerprint(request, api, account_info, config, username):
 
     layers = serial.loads(server.get_escrow_layers(brand_identifier))
 
-    fingerprint = 'testing' 
     # Generate fingerprint
     h = md5()
     for key_id, key in layers:
         s = '{0}{1}'.format(key_id, key.publickey().exportKey('DER'))
         h.update(s)
-    h = h.hexdigest().upper()
-    fingerprint = '-'.join(h[i:i+4] for i in range(0, len(h), 4))
+    fingerprint = h.digest()
     fingerprint = key_to_english(fingerprint)
     
     return render_to_response('fingerprint.html', dict(
