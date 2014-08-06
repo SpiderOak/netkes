@@ -11,7 +11,7 @@ import math
 import hotshot
 import os
 import time
-from hashlib import md5
+from hashlib import sha256
 
 from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import redirect
@@ -630,12 +630,13 @@ def fingerprint(request, api, account_info, config, username):
     layers = serial.loads(server.get_escrow_layers(brand_identifier))
 
     # Generate fingerprint
-    h = md5()
+    h = sha256()
     for key_id, key in layers:
         s = '{0}{1}'.format(key_id, key.publickey().exportKey('DER'))
         h.update(s)
-    fingerprint = h.digest()
-    fingerprint = key_to_english(fingerprint)
+    fingerprint = enumerate(key_to_english(h.digest()).split(' '))
+    fingerprint = ' '.join([word for x, word in fingerprint \
+                            if x % 2 == 0])
     
     return render_to_response('fingerprint.html', dict(
         user=request.user,
