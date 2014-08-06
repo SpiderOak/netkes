@@ -402,6 +402,9 @@
                 })
                 .done(function(data, status, xhr) {
                     if (data.success) {
+                        if (data.msg) {
+                            $("#billing-success-message").text(data.msg);
+                        }
                         pager.switchTo("success");
                         alerter.clear();
                         nav.$el.hide();
@@ -435,6 +438,9 @@
                 })
                 .done(function(data, status, xhr) {
                     if (data.success) {
+                        if (data.msg) {
+                            $("#billing-success-message").text(data.msg);
+                        }
                         pager.switchTo("success");
                         alerter.clear();
                         nav.$el.hide();
