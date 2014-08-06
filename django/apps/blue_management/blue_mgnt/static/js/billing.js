@@ -139,6 +139,7 @@
     var Pager = Backbone.View.extend({
         initialize: function() {
             this.pages = {};
+            this.currPage = null;
         },
         addPage: function(name, view) {
             this.pages[name] = view;
@@ -152,7 +153,6 @@
             _.each(this.pages, function(view, key) {
                 if (key === name) {
                     view.$el.show();
-                    this.trigger("switchTo", name);
                     matched = true;
                 } else {
                     view.$el.hide();
@@ -160,6 +160,9 @@
             }, this);
             if (!matched) {
                 console.log("No page " + name);
+            } else {
+                this.currPage = name;
+                this.trigger("switchTo", name);
             }
         }
     });
@@ -742,6 +745,64 @@
             alerter.alert("Please enter a valid coupon");
         }
     });
+
+    var HistoryState = Backbone.Model.extend({
+        pageOrder: ["plan", "payment", "summary"],
+        defaults: {
+            seenPage: 0
+        },
+        str2page: function(s) {
+            var ret = _.indexOf(this.pageOrder, s);
+            if (ret === -1) {
+                return null;
+            }
+            return ret;
+        },
+        page2str: function(i) {
+            return this.pageOrder[i];
+        },
+        markSeen: function(page) {
+            var i = this.str2page(page);
+            this.set("seenPage", Math.max(this.get("seenPage"), i));
+        },
+        start: function(pager) {
+            this.pager = pager;
+            this.listenTo(this.pager, "switchTo", this.markSeen);
+            window.h = this;
+            if (history.pushState) {
+                this.bindHistory();
+            }
+        },
+        bindHistory: function() {
+            history.pushState(-1, null);
+            history.pushState(0, null);
+            window.addEventListener("popstate", _.bind(function(evt) {
+                if (evt.state === 1) {
+                    // nothing to do for forward
+                } else if (evt.state === -1) {
+                    if (this.handleBack()) {
+                        history.go(-evt.state);
+                    } else {
+                        history.go(-2);
+                    }
+                }
+            }, this), false);
+        },
+        handleBack: function() {
+            var i = this.str2page(this.pager.currPage);
+            if (i === 0) {
+                return false;
+            }
+            if (i > 0) {
+                var page = this.page2str(i - 1);
+                this.pager.switchTo(page);
+            }
+            return true;
+        }
+    });
+    var historyState = new HistoryState();
+    historyState.start(pager);
+    
     pager.switchTo("plan");
 
 }(jQuery, _, Backbone, swig));
