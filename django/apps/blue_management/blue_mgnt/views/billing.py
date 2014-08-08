@@ -23,7 +23,6 @@ class CreateSubscriptionForm(forms.Form):
     coupon = forms.CharField(required=False)
     quantity = forms.IntegerField()
     frequency = forms.CharField()
-    stripe_memo = forms.CharField(required=False)
     stripe_token = forms.CharField(required=False)
 
 
@@ -79,7 +78,6 @@ def create_subscription(request, api, account_info, config, username):
                 check_form.cleaned_data['coupon'],
                 check_form.cleaned_data['quantity'],
                 check_form.cleaned_data['frequency'],
-                check_form.cleaned_data['stripe_memo'],
                 check_form.cleaned_data['stripe_token'],
             )
             if resp['success']: 
