@@ -45,13 +45,12 @@ class BillingApi(object):
             data = json.loads(resp.read())
             return data
 
-    def create_subscription(self, coupon, quantity, frequency, stripe_memo, stripe_token):
+    def create_subscription(self, coupon, quantity, frequency, stripe_token):
         try:
             resp = self.client.post('create_subscription', {
                 'coupon': coupon,
                 'quantity': quantity,
                 'frequency': frequency,
-                'stripe_memo': stripe_memo,
                 'stripe_token': stripe_token,
             })
         except urllib2.HTTPError, err:

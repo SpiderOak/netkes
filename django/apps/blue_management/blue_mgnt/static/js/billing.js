@@ -87,7 +87,6 @@
             stripe_token: null,
             stripe_type: null,
             stripe_last4: null,
-            stripe_memo: null,
             payment_method: "new",
             has_cc: false
         },
@@ -432,7 +431,6 @@
                         'coupon': this.model.get("coupon"),
                         'quantity': this.model.get("quantity"),
                         'frequency': this.model.get("frequency"),
-                        'stripe_memo': this.model.get("stripe_memo"),
                         'stripe_token': stripe_token
                     }
                 })
@@ -478,7 +476,6 @@
                     frequency: frequency,
                     cc_last4: this.model.get("stripe_last4"),
                     cc_type: this.model.get("stripe_type"),
-                    cc_memo: this.model.get("stripe_memo"),
                     price: calculate_price(quantity, frequency, coupon)
                 };
             } else {
@@ -487,7 +484,6 @@
                     frequency: frequency,
                     cc_last4: SMB.last4_on_file,
                     cc_type: "Card on file",
-                    cc_memo: "",
                     price: calculate_price(quantity, frequency, coupon)
                 };
             }
@@ -538,8 +534,7 @@
             this.model.set({
                 stripe_token: null,
                 stripe_last4: null,
-                stripe_type: null,
-                stripe_memo: null
+                stripe_type: null
             });
             var name = this.$name.val();
             var cc = this.$cc.val();
@@ -562,8 +557,7 @@
                 this.model.set({
                     stripe_token: data.id,
                     stripe_last4: data.card.last4,
-                    stripe_type: data.card.type,
-                    stripe_memo: this.$memo.val()
+                    stripe_type: data.card.type
                 });
                 pager.switchTo("summary");
             } else {
@@ -652,7 +646,6 @@
             this.$csv = this.$("#stripe_csv");
             this.$exp_month = this.$("#stripe_exp_month");
             this.$exp_year = this.$("#stripe_exp_year");
-            this.$memo = this.$("#stripe_memo");
 
             this.$cc.payment("formatCardNumber");
             this.$csv.payment("formatCardCVC");
