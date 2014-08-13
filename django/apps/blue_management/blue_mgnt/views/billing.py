@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 
 from django import forms
@@ -35,11 +36,13 @@ def billing(request, api, account_info, config, username, saved=False):
         cache.set('billing_info', billing_info, 60 * 15)
     current_plan = billing_info.get('current_plan')
 
+    curr_year = datetime.now().year
     ctx = dict(
         user=request.user,
         username=username,
         account_info=account_info,
         billing_info=billing_info,
+        cc_years=range(curr_year, curr_year+21),
     )
     tmpl = 'billing.html'
     if current_plan and current_plan['status'] == 'pending':
