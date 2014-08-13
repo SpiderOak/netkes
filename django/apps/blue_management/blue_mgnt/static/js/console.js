@@ -43,11 +43,9 @@ $(function() {
         posModal('.modal-content');
         if ($('.widget-add-user .error-highlight').length) {
             $('.widget-add-user').show();
-            $('.widget-add-user-option').hide();
         }
         if ($('.widget-upload-csv .error-highlight').length) {
             $('.widget-upload-csv').show();
-            $('.widget-add-user-option').hide();
         }
     }
 
@@ -74,37 +72,47 @@ $(function() {
         posModal(this_refer);
     });
 
-    $('.action-show-modal', $('.modal-wrapper')).click(function(e) {
-        e.preventDefault();
-        var $el = $(e.currentTarget);
-        var trgt = $el.attr('data-show-modal');
-        var $divs = $el.parents('.modal-content').find('.modal-item');
-        $divs.each(function(i, div) {
-            var $div = $(div);
-            $div.toggle($div.hasClass(trgt));
+    (function() {
+        var alertTarget = 'widget-add-user';
+
+        function exposeWidget(trgt){
+            var $modal = $('.modal-wrapper');
+            $(".modal-item", $modal).each(function(i, el) {
+                $el = $(el);
+                $el.toggle($el.hasClass(trgt));
+            });
+            $modal.show().css('height', $(document).height());
+            posModal('.modal-content');
+        }
+
+        $('#option-add-user button').click(function(e){
+            e.preventDefault();
+            exposeWidget('widget-add-user');
         });
-    });
 
+        $('#option-upload-csv button').click(function(e){
+            e.preventDefault();
+            exposeWidget('widget-upload-csv');
+        });
 
-    function exposeWidget(e){
-        e.preventDefault();
-        $('.modal-wrapper').show().css('height', $(document).height());
-        posModal('.modal-content');
-    }
+        $('#option-add-user-alert button').click(function(e){
+            e.preventDefault();
+            alertTarget = 'widget-add-user';
+            exposeWidget('widget-plan-alert');
+        });
 
-    $('#option-add-user button').click(function(e){
-            exposeWidget(e);
-            $('.widget-add-user-option').hide();
-            $('.widget-add-user').show();
-            $('.widget-upload-csv').hide();
-    });
+        $('#option-upload-csv-alert button').click(function(e){
+            e.preventDefault();
+            alertTarget = 'widget-upload-csv';
+            exposeWidget('widget-plan-alert');
+        });
 
-    $('#option-upload-csv button').click(function(e){
-            exposeWidget(e);
-            $('.widget-add-user-option').hide();
-            $('.widget-upload-csv').show();
-            $('.widget-add-user').hide();
-    });
+        $('#option-confirm-alert').click(function(e){
+            e.preventDefault();
+            exposeWidget(alertTarget);
+        });
+
+    }());
 
     $('h2.page-header .actions').click(function() {
         var thing = $(this).closest('[id^=modal-refer-]');
@@ -112,7 +120,6 @@ $(function() {
         console.log(thing.attr('id') + ' was hidden.');
         $('.widget-add-user').hide()
         $('.widget-upload-csv').hide();
-        $('.widget-add-user-option').show();
         $('.modal-wrapper .modal-item').hide();
         $('.modal-wrapper').hide();
     });

@@ -6,34 +6,34 @@
             </h2>
             <div class="spacer"><!--ZXP--></div>
             <form action="{% url 'blue_mgnt:users' %}" enctype="multipart/form-data" method="POST">
-            {% csrf_token %}
-            <input type="hidden" name="form" value="new_user">
-            <table class="widget-table">
-            {% for field in new_user.visible_fields %}
-                <tr>
-                    <td class="modal-table-label">
-                        <div class="{{ field.errors|yesno:'error,' }}">
-                            {{ field.label_tag }}
-                        </div>
-                    </td>
-                    <td>
-                    {% if field.errors %}
-                        {% for error in field.errors %}
-                        <span class="error-highlight">
+                {% csrf_token %}
+                <input type="hidden" name="form" value="new_user">
+                <table class="widget-table">
+                {% for field in new_user.visible_fields %}
+                    <tr>
+                        <td class="modal-table-label">
+                            <div class="{{ field.errors|yesno:'error,' }}">
+                                {{ field.label_tag }}
+                            </div>
+                        </td>
+                        <td>
+                        {% if field.errors %}
+                            {% for error in field.errors %}
+                            <span class="error-highlight">
+                                {{ field }}
+                                <span class="error-tag">{{ error }}</span>
+                            </span>
+                            {% endfor %}
+                        {% else %}
                             {{ field }}
-                            <span class="error-tag">{{ error }}</span>
-                        </span>
-                        {% endfor %}
-                    {% else %}
-                        {{ field }}
-                    {% endif %}
-                    </td>
+                        {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+                <tr>
+                    <td colspan="2"></td>
                 </tr>
-            {% endfor %}
-            <tr>
-                <td colspan="2"></td>
-            </tr>
-        </table>
+            </table>
             <div class="widget-actions">
                 <input type="submit" value="Create User" class="rhs button button-primary-basic">
                 <input type='hidden' value='new_user' name='form'>
@@ -55,25 +55,25 @@
                 <table class="widget-table">
                     <tr>
                         <td class="modal-table-label">
-                        <div class="{{ field.errors|yesno:'error,' }}">
-                            {{ field.label_tag }}
-                        </div>
-                    </td>
-                    <td>
-                    {% if field.errors %}
-                        {% for error in field.errors %}
-                        <span class="error-highlight">
-                            {{ field }}
-                            <span class="error-tag">{{ error }}</span>
-                        </span>
-                        {% endfor %}
-                    {% else %}
-                        {{ field }}
-                    {% endif %}
+                            <div class="{{ field.errors|yesno:'error,' }}">
+                                {{ field.label_tag }}
+                            </div>
                         </td>
-                {% endfor %}
+                        <td>
+                        {% if field.errors %}
+                            {% for error in field.errors %}
+                            <span class="error-highlight">
+                                {{ field }}
+                                <span class="error-tag">{{ error }}</span>
+                            </span>
+                            {% endfor %}
+                        {% else %}
+                            {{ field }}
+                        {% endif %}
+                        </td>
                     </tr>
                 </table>
+                {% endfor %}
                 <div class="csv-note">
                     <p>Note: CSV uploads should be comma delimited and need to contain
                     email address, name, and group name which should appear as follows:</p>
@@ -101,17 +101,17 @@ jane@foo.com,Jane Doe,Unlimited</pre>
         </form>
     </div>
     <div class="modal-item widget-plan-alert" style="display: none">
-            <h2 class="page-header"><i class="ss-icon">&#x26A0;</i>Upgrade Required
-                <span class="actions"><i class="ss-icon">&#x2421;</i></span>
-            </h2>
-            <div class="spacer"><!--ZXP--></div>
-                <div class="csv-note">
-                    <p>Adding a new user will move you into the next plan size. Your credit card on file will be charged. To continue adding this user click Continue. If you do not with to add more users please click cancel.</p>
-                </div>
+        <h2 class="page-header"><i class="ss-icon">&#x26A0;</i>Upgrade Required
+            <span class="actions"><i class="ss-icon">&#x2421;</i></span>
+        </h2>
+        <div class="spacer"><!--ZXP--></div>
+            <div class="csv-note">
+                <p>Adding a new user will move you into the next plan size. Your credit card on file will be charged. To continue adding this user click Continue. If you do not with to add more users please click cancel.</p>
+            </div>
             <div class="widget-actions widget-splitactions">
                 <button class="lhs action-close-modal button cancel-action">Cancel</button>
-                <button class="rhs action-show-modal button button-primary-basic" data-show-modal="widget-add-user" style="margin-right: 20px;">Create User</button>
+                <button id="option-confirm-alert" class="rhs button button-primary-basic" style="margin-right: 20px;">Continue</button>
             </div>
-    </div>
+        </div>
     </div>
 </div>
