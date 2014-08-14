@@ -3,6 +3,7 @@ import urllib
 import urllib2
 import types
 import logging
+import time
 
 from api_client import ApiClient
 
@@ -240,6 +241,23 @@ class Api(object):
             if err.code == 404:
                 raise self.NotFound()
             raise
+
+    def list_client_revisions(self, min_revision=0, max_revision=-1, 
+                              max_days_since_login=-1):
+        '''
+        min_revision: 0 is the lowest possible revision
+        max_revision: revisions will always be positive so use -1 to indicate 
+            no maximum.
+        max_days_since_login: Only return results for devices that have logged 
+            in within a certain number of days. -1 indicates that results should
+            be returned for all devices.
+        '''
+        data = (min_revision,
+                max_revision,
+                max_days_since_login,
+               ) 
+        url = 'clientrevisions/?min_revision=%s&max_revision=%s&max_days_since_login=%s'
+        return self.client.get_json(url % data)
 
     def list_shares(self, username_or_email):
         try:
