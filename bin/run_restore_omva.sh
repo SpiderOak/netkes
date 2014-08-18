@@ -9,4 +9,4 @@ fi
 
 . /etc/default/openmanage
 
-python $OPENMANAGE_ROOT/bin/update_backup.py
+python $OPENMANAGE_ROOT/bin/restore_backup.py

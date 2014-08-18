@@ -14,8 +14,14 @@ if [ $? != 0 ]; then
 fi
 
 # Stage One: Unzip the tarball.
-tar xzf $1
-pushd omva-backup
+BACKUP_BASE=$OPENMANAGE_ROOT/tmp_backup
+
+rm -rf $BACKUP_BASE
+mkdir $BACKUP_BASE
+cd $BACKUP_BASE
+
+tar xjfv $1
+pushd openmanage-backup*
 
 # Stage Two: move the configuration and keys back into place.
 mkdir -p $SPIDEROAK_ESCROW_KEYS_PATH
@@ -31,4 +37,4 @@ su postgres -c "psql -f db_dump.sql openmanage"
 
 # Clean up.
 popd
-rm -r omva-backup
+rm -r openmanage-backup*
