@@ -97,14 +97,25 @@
 </script>
 
 <script type="text/x-swig-template" id="template-billing-cost-preview">
-  <h3>Total Cost</h3>
-  <div class="so-form">
-    <fieldset>
-      <div>
-        $<%- price.str %>
-      </div>
-    </fieldset>
-  </div>
+  <% if has_current_plan %>
+    <h3>New <%- frequency %> Cost</h3>
+    <div class="so-form">
+      <fieldset>
+        <div>
+          $<%- price.str %>
+        </div>
+      </fieldset>
+    </div>
+  <% else %>
+    <h3>Total Cost</h3>
+    <div class="so-form">
+      <fieldset>
+        <div>
+          $<%- price.str %>
+        </div>
+      </fieldset>
+    </div>
+  <% endif %>
 </script>
 
 <script type="text/x-swig-template" id="template-billing-next">
@@ -251,11 +262,19 @@
         <span class="edit" data-target="payment"><a href="">edit</a></span>
         <div class="spacer"><!--ZKP--></div>
       </div>
+      <% if has_current_plan %>
+      <div class="billing-summary-total">
+        <label>New <%- frequency %>:</label>
+        <p>$<%- price.int %> <span>(Account will be prorated)</span></p>
+        <div class="spacer"><!--ZKP--></div>
+      </div>
+      <% else %>
       <div class="billing-summary-total">
         <label>Total Due:</label>
         <p>$<%- price.int %></p>
         <div class="spacer"><!--ZKP--></div>
       </div>
+      <% endif %>
     </fieldset>
     <div class="billing-next">
       <button class="button button-primary-basic">Submit Order</button>
@@ -281,7 +300,8 @@
 <script type="text/javascript">
   var SMB = SMB || {};
   SMB.total_users = {{ account_info.total_users }};
-  SMB.current_plan = {{ billing_info.current_plan.quantity|default:"null" }};
+  SMB.current_plan_quantity = {{ billing_info.current_plan.quantity|default:"null" }};
+  SMB.current_plan_frequency = {% if billing_info.current_plan.type %}"{{ billing_info.current_plan.type }}"{% else %}null{% endif %};
   {% if billing_info.current_card.last4 %}
   SMB.last4_on_file = "{{ billing_info.current_card.last4|default:"xxxx" }}";
   {% else %}
