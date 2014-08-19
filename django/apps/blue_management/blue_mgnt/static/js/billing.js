@@ -1,5 +1,9 @@
 (function($, _, Backbone, swig){
     "use strict";
+    var state;
+    var pager;
+    var alerter;
+
     var Templates = {};
     swig.setDefaults({
         varControls: ["<%-", "%>"],
@@ -136,8 +140,6 @@
             }, this));
         }
     });
-    var state = new BillingState();
-
     var Pager = Backbone.View.extend({
         initialize: function() {
             this.pages = {};
@@ -225,14 +227,6 @@
             }
         }
     });
-
-    var pager = new Pager();
-    pager.render();
-    pager.addPage("plan", new View({template: "billing-plan"}));
-    pager.addPage("payment", new View({template: "billing-payment"}));
-    pager.addPage("summary", new View({template: "billing-summary"}));
-    pager.addPage("loading", new View({template: "billing-loading"}));
-    pager.addPage("success", new View({template: "billing-success"}));
 
     var PlanFrequencyView = View.extend({
         template: "billing-select-frequency",
@@ -525,7 +519,6 @@
         }
     });
 
-
     var StripePaymentView = View.extend({
         template: "billing-stripe-payment",
         events: {
@@ -693,66 +686,6 @@
         }
     });
 
-    var plansizeview = new PlanSizeView({model:state});
-    var couponview = new CouponView({model:state});
-    var planfrequencyview = new PlanFrequencyView({model:state});
-    var costpreview = new CostPreviewView({model:state});
-    var nextview = new NextView({model:state});
-    plansizeview.render();
-    couponview.render();
-    planfrequencyview.render();
-    costpreview.render();
-    nextview.render();
-
-    var stripepaymentview = new StripePaymentView({model: state});
-    stripepaymentview.render();
-
-    var billingoverviewview = new BillingOverviewView({model: state});
-    billingoverviewview.render();
-
-    var nav = new Nav();
-    nav.render();
-    nav.listenTo(pager, "switchTo", function(v) {
-        this.render(v);
-    });
-
-    var alerter = new AlertView();
-    alerter.render();
-
-    $base.append(nav.$el);
-    $base.append(alerter.$el);
-    $base.append(pager.$el);
-    pager.pages.plan.$el.append(plansizeview.$el);
-    pager.pages.plan.$el.append(planfrequencyview.$el);
-    pager.pages.plan.$el.append(couponview.$el);
-    pager.pages.plan.$el.append(costpreview.$el);
-    pager.pages.plan.$el.append(nextview.$el);
-
-    pager.pages.payment.$el.append(stripepaymentview.$el);
-
-    pager.pages.summary.$el.append(billingoverviewview.$el);
-
-    nav.listenTo(pager, "switchTo", function(page) {
-        switch(page) {
-            case "success":
-                $(".page-header").hide();
-            case "loading":
-                this.$el.hide();
-                break;
-            default:
-                this.$el.show();
-                break;
-        }
-    });
-    pager.listenTo(nextview, "onClickNext", function(){
-        if (couponview.isValid()) {
-            this.switchTo("payment");
-            scrollTo(pager.$el);
-        } else {
-            alerter.alert("Please enter a valid coupon");
-        }
-    });
-
     var HistoryState = Backbone.Model.extend({
         pageOrder: ["plan", "payment", "summary"],
         defaults: {
@@ -807,9 +740,80 @@
             return true;
         }
     });
-    var historyState = new HistoryState();
-    historyState.start(pager);
-    
-    pager.switchTo("plan");
 
+    window.init_billing = function() {
+        state = new BillingState();
+        pager = new Pager();
+        pager.render();
+        pager.addPage("plan", new View({template: "billing-plan"}));
+        pager.addPage("payment", new View({template: "billing-payment"}));
+        pager.addPage("summary", new View({template: "billing-summary"}));
+        pager.addPage("loading", new View({template: "billing-loading"}));
+        pager.addPage("success", new View({template: "billing-success"}));
+
+        var plansizeview = new PlanSizeView({model:state});
+        var couponview = new CouponView({model:state});
+        var planfrequencyview = new PlanFrequencyView({model:state});
+        var costpreview = new CostPreviewView({model:state});
+        var nextview = new NextView({model:state});
+        plansizeview.render();
+        couponview.render();
+        planfrequencyview.render();
+        costpreview.render();
+        nextview.render();
+
+        var stripepaymentview = new StripePaymentView({model: state});
+        stripepaymentview.render();
+
+        var billingoverviewview = new BillingOverviewView({model: state});
+        billingoverviewview.render();
+
+        var nav = new Nav();
+        nav.render();
+        nav.listenTo(pager, "switchTo", function(v) {
+            this.render(v);
+        });
+
+        alerter = new AlertView();
+        alerter.render();
+
+        $base.append(nav.$el);
+        $base.append(alerter.$el);
+        $base.append(pager.$el);
+        pager.pages.plan.$el.append(plansizeview.$el);
+        pager.pages.plan.$el.append(planfrequencyview.$el);
+        pager.pages.plan.$el.append(couponview.$el);
+        pager.pages.plan.$el.append(costpreview.$el);
+        pager.pages.plan.$el.append(nextview.$el);
+
+        pager.pages.payment.$el.append(stripepaymentview.$el);
+
+        pager.pages.summary.$el.append(billingoverviewview.$el);
+
+        nav.listenTo(pager, "switchTo", function(page) {
+            switch(page) {
+                case "success":
+                    $(".page-header").hide();
+                case "loading":
+                    this.$el.hide();
+                    break;
+                default:
+                    this.$el.show();
+                    break;
+            }
+        });
+        pager.listenTo(nextview, "onClickNext", function(){
+            if (couponview.isValid()) {
+                this.switchTo("payment");
+                scrollTo(pager.$el);
+            } else {
+                alerter.alert("Please enter a valid coupon");
+            }
+        });
+
+        var historyState = new HistoryState();
+        historyState.start(pager);
+    
+        pager.switchTo("plan");
+    };
 }(jQuery, _, Backbone, swig));
