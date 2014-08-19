@@ -88,11 +88,14 @@
             stripe_type: null,
             stripe_last4: null,
             payment_method: "new",
+            has_current_plan: false,
             has_cc: false
         },
         initialize: function() {
-            if (SMB.current_plan) {
-                this.set("quantity", SMB.current_plan); 
+            if (SMB.current_plan_quantity && SMB.current_plan_frequency) {
+                this.set("has_current_plan", true);
+                this.set("quantity", SMB.current_plan_quantity); 
+                this.set("frequency", SMB.current_plan_frequency.replace(/^smb_/, "")); 
                 // assume that if they have a plan they have a cc on file
                 this.set("has_cc", true);
                 this.set("payment_method", "existing");
@@ -364,6 +367,9 @@
             var quantity = this.model.get("quantity");
             var coupon = this.model.get("coupon");
             return {
+                has_current_plan: this.model.get("has_current_plan"),
+                frequency: frequency,
+                quantity: quantity,
                 price: calculate_price(quantity, frequency, coupon)
             };
         },
@@ -472,6 +478,7 @@
             var coupon = this.model.get("coupon");
             if (this.model.get("payment_method") === "new") {
                 return {
+                    has_current_plan: this.model.get("has_current_plan"),
                     quantity: quantity,
                     frequency: frequency,
                     cc_last4: this.model.get("stripe_last4"),
@@ -480,6 +487,7 @@
                 };
             } else {
                 return {
+                    has_current_plan: this.model.get("has_current_plan"),
                     quantity: quantity,
                     frequency: frequency,
                     cc_last4: SMB.last4_on_file,
