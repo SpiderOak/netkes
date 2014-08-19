@@ -309,4 +309,9 @@
   {% endif %}
 </script>
 <script type="text/javascript" src="/static/blue_mgnt/js/billing.js"></script>
+{% block js_main_init %}
+<script type="text/javascript">
+  init_billing();
+</script>
+{% endblock js_main_init %}
 {% endblock js_main %}
