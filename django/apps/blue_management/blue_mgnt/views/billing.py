@@ -27,8 +27,7 @@ class CreateSubscriptionForm(forms.Form):
     stripe_token = forms.CharField(required=False)
 
 
-@enterprise_required
-def billing(request, api, account_info, config, username, saved=False):
+def _billing(request, api, account_info, config, username, tmpl):
     billing_api = get_billing_api(config)
     billing_info = cache.get('billing_info')
     if not billing_info:
@@ -44,12 +43,21 @@ def billing(request, api, account_info, config, username, saved=False):
         billing_info=billing_info,
         cc_years=range(curr_year, curr_year+21),
     )
-    tmpl = 'billing.html'
     if current_plan and current_plan['status'] == 'pending':
         tmpl = 'billing_pending.html'
         cache.delete('billing_info')
        
     return render_to_response(tmpl, ctx, RequestContext(request))
+
+
+@enterprise_required
+def billing(request, api, account_info, config, username):
+    return _billing(request, api, account_info, config, username, tmpl='billing.html')
+
+
+@enterprise_required
+def billing_update_cc(request, api, account_info, config, username):
+    return _billing(request, api, account_info, config, username, tmpl='billing_update_cc.html')
 
 
 @csrf_exempt

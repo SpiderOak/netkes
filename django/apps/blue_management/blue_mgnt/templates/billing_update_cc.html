@@ -1,0 +1,12 @@
+{% extends "billing.html" %}
+{% block js_main_init %}
+<script type="text/javascript">
+  init_update_cc();
+</script>
+{% endblock js_main_init %}
+{% block billing_header %}
+<h1 class="page-header">
+	<i class="ss-icon">&#x1F4B3;</i> Update Credit Card
+	<span class="header-note">current plan: {{ billing_info.current_plan.quantity }} users</span>
+</h1>
+{% endblock billing_header %}

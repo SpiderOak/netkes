@@ -8,12 +8,14 @@
 {% block breadcrumb %}<a href="{% url 'blue_mgnt:manage' %}">Back to Manage</a>{% endblock breadcrumb %}
 {% block navtab %}{% include "partials/navtab-widget.html" with active="manage" %}{% endblock navtab %}
 {% block content %}
+{% block billing_header %}
 <h1 class="page-header">
 	<i class="ss-icon">&#xE7B0;</i> Upgrade Your Plan
         {% if billing_info.current_plan %}
 	<span class="header-note">current plan: {{ billing_info.current_plan.quantity }} users</span>
         {% endif %}
 </h1>
+{% endblock billing_header %}
 
 <div id="billing-dropzone">
 </div>
@@ -285,6 +287,33 @@
 <script type="text/x-swig-template" id="template-billing-success">
   <h1>Thank You!</h1>
   <p id="billing-success-message">We are now processing your payment.<br>An email should arrive shortly to confirm your payment.</p>
+</script>
+
+<script type="text/x-swig-template" id="template-update-cc-overview">
+  <form class="so-form">
+    <fieldset>
+      <div>
+        <label>Payment Type</label>
+        <p><%- cc_type %></p>
+        <span class="edit" data-target="payment"><a href="">edit</a></span>
+        <div class="spacer"><!--ZKP--></div>
+      </div>
+      <div>
+        <label>Credit Card</label>
+        <p>&middot;&middot;&middot;&middot;&middot;&middot;&middot;&middot;<%- cc_last4 %></p>
+        <span class="edit" data-target="payment"><a href="">edit</a></span>
+        <div class="spacer"><!--ZKP--></div>
+      </div>
+    </fieldset>
+    <div class="billing-next">
+      <button class="button button-primary-basic">Update Card</button>
+    </div>
+  </form>
+</script>
+
+<script type="text/x-swig-template" id="template-update-cc-success">
+  <h1>Thank You!</h1>
+  <p id="billing-success-message">Your card has been updated.</p>
 </script>
 
 {% endblock js_templates %}

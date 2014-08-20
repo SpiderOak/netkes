@@ -42,6 +42,7 @@ urlpatterns = patterns('',
     (r'^codes/$', managementvm.auth_codes, {}, 'auth_codes'),
     (r'^codes/saved/$', managementvm.auth_codes, {'saved': True}, 'auth_codes_saved'),
     (r'^billing/$', billing.billing, {}, 'billing'),
+    (r'^billing/update_cc/$', billing.billing_update_cc, {}, 'billing_update_cc'),
     (r'^billing/check_coupon$', billing.check_coupon, {}, 'billing_check_coupon'),
     (r'^billing/create_subscription$', billing.create_subscription, {}, 'billing_create_subscription'),
 )

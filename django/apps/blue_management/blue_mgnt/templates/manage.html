@@ -24,8 +24,8 @@
     <div class="widget-manage-blocks">
         <div class="manage-icon"><i class="ss-icon">&#x1F4B2;</i></div>
         <div class="manage-content">
-            <h3>Billing Information</h3>
-            <p>Manage your billing.</p>
+            <h3>Billing Information{% if billing_info.current_plan %}<span>{{ billing_info.current_plan.quantity }} users</span>{% endif %}</h3>
+            <p>Manage your billing.{% if billing_info.current_card.last4 %} <a href="{% url 'blue_mgnt:billing_update_cc' %}">Update credit card</a>{% endif %}</p>
             <a href="{% url 'blue_mgnt:billing' %}" class="button button-primary-basic">Manage Billing</a>
         </div>
     </div>
