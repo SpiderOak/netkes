@@ -9,4 +9,9 @@ fi
 
 . /etc/default/openmanage
 
+BACKUP_BASE=$OPENMANAGE_ROOT/tmp_backup
+
+rm -rf $BACKUP_BASE
+mkdir $BACKUP_BASE
+
 python $OPENMANAGE_ROOT/bin/restore_backup.py
