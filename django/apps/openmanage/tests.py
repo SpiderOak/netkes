@@ -193,7 +193,7 @@ class TestOpenmanage(unittest.TestCase):
 
         username = self.post_data['username']
         secret_box, nonce = views.create_secret_box(self.auth['password'], 
-                                                          self.auth['challenge'])
+                                                    self.auth['challenge'])
         plaintext = secret_box.decrypt(response.content)
 
         self.assertEqual(escrow_data, plaintext)

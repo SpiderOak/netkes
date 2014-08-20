@@ -92,6 +92,14 @@ class Api(object):
     def enterprise_features(self):
         return self.client.get_json('partner/features')
 
+    ### Backup
+
+    def backup(self):
+        return self.client.get_json('partner/backup')
+    
+    def update_backup(self, backup):
+        return self.client.post_json('partner/backup', backup)
+
     ### Settings
 
     def enterprise_settings(self):

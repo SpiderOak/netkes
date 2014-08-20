@@ -6,29 +6,40 @@
 
 . /etc/default/openmanage
 
+set -x
+
 # Stage Zero: Sanity-check the tarball
-file $1 | grep 'gzip compressed data' 2>&1 1>/dev/null
+file $1 | grep 'bzip2 compressed data' 2>&1 1>/dev/null
 if [ $? != 0 ]; then
     echo "Backup argument $1 not showing as a tarball properly.  Aborting." >&2
     exit
 fi
 
 # Stage One: Unzip the tarball.
-tar xzf $1
-pushd omva-backup
+BACKUP_BASE=$OPENMANAGE_ROOT/tmp_backup
+
+cd $BACKUP_BASE
+
+tar xjfv $1
+pushd openmanage-backup*
 
 # Stage Two: move the configuration and keys back into place.
 mkdir -p $SPIDEROAK_ESCROW_KEYS_PATH
 mkdir -p $SPIDEROAK_ESCROW_LAYERS_PATH
 
-cp -r omva-backup/keys/* $SPIDEROAK_ESCROW_KEYS_PATH
-cp -r omva-backup/layers/* $SPIDEROAK_ESCROW_LAYERS_PATH
+cp -r keys/* $SPIDEROAK_ESCROW_KEYS_PATH
+cp -r layers/* $SPIDEROAK_ESCROW_LAYERS_PATH
 
-cp agent-config.json $OPENMANAGE_CONFIGDIR
+cp agent_config.json $OPENMANAGE_CONFIGDIR
 
 # Stage Three: Re-load the DB SQL.
-su postgres -c "psql -f db_dump.sql openmanage"
+sudo -u postgres dropdb openmanage
+sudo -u postgres createdb openmanage
+sudo -u postgres psql --single-transaction -f openmanage.sql openmanage 
+
+# We already have keys so we don't need to run first setup
+touch /opt/openmanage/etc/.ran_firstsetup
 
 # Clean up.
 popd
-rm -r omva-backup
+rm -r openmanage-backup*
