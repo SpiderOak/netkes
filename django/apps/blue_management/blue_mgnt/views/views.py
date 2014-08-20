@@ -244,6 +244,7 @@ def initial_setup(username, password):
     config_mgr_.apply_config()
 
 def create_initial_group():
+    config_mgr_ = config_mgr.ConfigManager(config_mgr.default_config())
     api = get_api(config_mgr_.config)
 
     plans = api.list_plans()
@@ -284,6 +285,7 @@ def login_user(request):
 
                 if not config['api_password']:
                     initial_setup(username, password)
+                    config = read_config_file()
                     api = get_api(config)
                     if api.backup():
                         subprocess.call(['/opt/openmanage/bin/run_restore_omva.sh',])
