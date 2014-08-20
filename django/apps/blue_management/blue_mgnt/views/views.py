@@ -605,6 +605,7 @@ def manage(request, api, account_info, config, username):
         username=username,
         account_info=account_info,
         account_name=account_name,
+        billing_info=get_billing_info(config),
     ),
     RequestContext(request))
 

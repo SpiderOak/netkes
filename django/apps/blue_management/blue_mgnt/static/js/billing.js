@@ -441,7 +441,6 @@
                         }
                         pager.switchTo("success");
                         alerter.clear();
-                        nav.$el.hide();
                     } else {
                         pager.switchTo("summary");
                         var msg = "There was an error contacting the server. Please try again later.";
@@ -508,13 +507,10 @@
         onRender: function() {
             var method = this.model.get("payment_method");
             this.$(".payment-" + method).addClass("active");
-            var $form = this.parentView.$('.so-form');
             if (method === 'new') {
-                $(".cc-info", $form).show();
-                $(".onfile-info", $form).hide();
+                this.parentView.showCCForm();
             } else {
-                $(".cc-info", $form).hide();
-                $(".onfile-info", $form).show();
+                this.parentView.showOnFileForm();
             }
         }
     });
@@ -524,6 +520,16 @@
         events: {
             "click .billing-next button": "onFormSubmit",
             "submit form": "onFormSubmit"
+        },
+        showCCForm: function() {
+            var $form = this.$('.so-form');
+            $(".cc-info", $form).show();
+            $(".onfile-info", $form).hide();
+        },
+        showOnFileForm: function() {
+            var $form = this.$('.so-form');
+            $(".cc-info", $form).hide();
+            $(".onfile-info", $form).show();
         },
         onFormSubmit: function(evt) {
             evt.preventDefault();
@@ -639,7 +645,8 @@
             }
             return valid;
         },
-        initialize: function() {
+        initialize: function(options) {
+            this.options = options || {};
             this.$el.html(Templates[this.template]());
             this.$el.addClass(this.template);
             this.$name = this.$("#stripe_name");
@@ -672,17 +679,21 @@
             this.$exp_year.on("change blur", _.bind(this.checkExpiry, this));
             this.showCCType(this.$cc);
 
-            this.paymentMethod = new PaymentMethodView({model: this.model});
-            this.paymentMethod.parentView = this;
-            if (this.model.get("has_cc")) {
-                this.paymentMethod.$el.prependTo(this.$(".so-form"));
+            if (!this.options.force_cc_mode) {
+                this.paymentMethod = new PaymentMethodView({model: this.model});
+                this.paymentMethod.parentView = this;
+                if (this.model.get("has_cc")) {
+                    this.paymentMethod.$el.prependTo(this.$(".so-form"));
+                }
             }
         },
         render: function(page) {
             var now = new Date();
             this.$exp_month.val(now.getMonth() + 1);
             this.$exp_year.val(now.getFullYear());
-            this.paymentMethod.render();
+            if (this.paymentMethod) {
+                this.paymentMethod.render();
+            }
         }
     });
 
@@ -794,6 +805,7 @@
             switch(page) {
                 case "success":
                     $(".page-header").hide();
+                    nav.$el.hide();
                 case "loading":
                     this.$el.hide();
                     break;
@@ -815,5 +827,38 @@
         historyState.start(pager);
     
         pager.switchTo("plan");
+    };
+
+    window.init_update_cc = function() {
+        state = new BillingState();
+        state.set("payment_method", "new");
+        pager = new Pager();
+        pager.render();
+        pager.addPage("payment", new View({template: "billing-payment"}));
+        pager.addPage("summary", new View({template: "billing-summary"}));
+        pager.addPage("loading", new View({template: "billing-loading"}));
+        pager.addPage("success", new View({template: "update-cc-success"}));
+
+        var costpreview = new CostPreviewView({model:state});
+        var nextview = new NextView({model:state});
+        costpreview.render();
+        nextview.render();
+
+        var stripepaymentview = new StripePaymentView({model: state, force_cc_mode: true});
+        stripepaymentview.render();
+        stripepaymentview.showCCForm();
+
+        var billingoverviewview = new BillingOverviewView({model: state, template: "update-cc-overview"});
+        billingoverviewview.render();
+
+        alerter = new AlertView();
+        alerter.render();
+
+        $base.append(alerter.$el);
+        $base.append(pager.$el);
+
+        pager.pages.payment.$el.append(stripepaymentview.$el);
+        pager.pages.summary.$el.append(billingoverviewview.$el);
+        pager.switchTo("payment");
     };
 }(jQuery, _, Backbone, swig));
