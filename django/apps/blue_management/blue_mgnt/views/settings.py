@@ -2,6 +2,9 @@ import datetime
 import pytz
 import subprocess 
 from IPy import IP
+from base64 import b64encode
+from hashlib import sha256
+import bcrypt
 
 from views import enterprise_required, render_to_response, log_admin_action
 
@@ -226,9 +229,16 @@ def password(request, api, account_info, config, username, saved=False):
             if password_form.is_valid():
                 new_password = password_form.cleaned_data['password']
                 log_admin_action(request, 'change password')
-                api.update_enterprise_password(new_password)
+
+                hash_ = sha256(new_password).digest()
+                salt = '$2a$14$' + b64encode(hash_[:16]).rstrip('=')
+                new_pass = bcrypt.hashpw(new_password, salt)
+                api_pass = new_pass[len(salt):]
+
+                api.update_enterprise_password(api_pass)
                 config_mgr_ = config_mgr.ConfigManager(config_mgr.default_config())
-                config_mgr_.config['api_password'] = new_password
+                config_mgr_.config['api_password'] = api_pass
+                config_mgr_.config['local_password'] = new_pass
                 config_mgr_.apply_config()
                 return redirect('blue_mgnt:password_saved')
 

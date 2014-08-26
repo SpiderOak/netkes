@@ -11,6 +11,7 @@ import math
 import hotshot
 import os
 import time
+import bcrypt
 from hashlib import sha256
 
 from django.http import HttpResponse, HttpResponseForbidden
@@ -175,13 +176,8 @@ class NetkesBackend(ModelBackend):
             log.info('Username "%s" does not match superuser username' % username)
             return None
 
-        api = Api.create(
-            django_settings.ACCOUNT_API_URL,
-            username,
-            password,
-        )
-        try:
-            api.ping()
+        local_pass = config['local_password']
+        if bcrypt.hashpw(password, local_pass) == local_pass:
             try:
                 user = User.objects.get(username=username)
             except ObjectDoesNotExist:
@@ -195,11 +191,10 @@ class NetkesBackend(ModelBackend):
             )
 
             return user
-        except urllib2.HTTPError:
-            log.info('''Failed to log in "%s" as a superuser.
-                        Password incorrect or unable to contact
-                        accounts api''' % username)
-
+        else:
+            msg = '''Failed to log in "%s" as a superuser. Password incorrect.
+            ''' % username
+            log.info(msg)
             return None
 
     def authenticate_netkes(self, username, password):
@@ -229,8 +224,9 @@ class NetkesBackend(ModelBackend):
             user.groups.add(group)
             return user
         else:
-            log.info('''Failed to authenticate "%s". Username or password
-                        incorrect.''' % username)
+            msg = '''Failed to authenticate "%s". Username or password incorrect.
+            ''' % username 
+            log.info(msg)
 
     def authenticate(self, username=None, password=None):
         user = self.authenticate_superuser(username, password)
