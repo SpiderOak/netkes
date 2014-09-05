@@ -31,6 +31,8 @@
     };
 
     var toCurrency = function(v) {
+        // v should already be appropriately rounded to 2 decimals.
+        // this method only handles string formatting
         var ret = _.str.numberFormat(v, 2);
         if (_.str.endsWith(ret, ".00")) {
             return _.str.numberFormat(v, 0);
@@ -70,7 +72,7 @@
             var coupon = COUPON_CACHE[coupon];
             if (coupon && coupon.state === COUPON_STATES.SUCCESS) {
                 if (coupon.data.percent_off) {
-                        cost = (cost * (100 - coupon.data.percent_off)) / 100;
+                        cost = Math.floor(cost * (100 - coupon.data.percent_off)) / 100;
                 }
                 if (coupon.data.cents_off) {
                         cost = (cost - (coupon.data.cents_off / 100));
