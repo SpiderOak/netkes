@@ -251,10 +251,21 @@ class LoginForm(forms.Form):
     username = forms.CharField(max_length=90)
     password = forms.CharField(widget=forms.PasswordInput)
 
+def hash_password(new_password):
+    hash_ = sha256(new_password).digest()
+    salt = '$2a$14$' + b64encode(hash_[:16]).rstrip('=')
+    new_pass = bcrypt.hashpw(new_password, salt)
+    api_pass = new_pass[len(salt):]
+
+    return new_pass, api_pass
+
 def initial_setup(username, password):
+    new_pass, api_pass = hash_password(password)
+
     config_mgr_ = config_mgr.ConfigManager(config_mgr.default_config())
     config_mgr_.config['api_user'] = username
-    config_mgr_.config['api_password'] = password
+    config_mgr_.config['api_password'] = api_pass
+    config_mgr_.config['local_password'] = new_pass
     config_mgr_.apply_config()
 
     api = get_api(config_mgr_.config)
