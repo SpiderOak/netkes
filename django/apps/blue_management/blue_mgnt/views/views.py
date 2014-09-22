@@ -136,8 +136,23 @@ class NetkesBackend(ModelBackend):
             log.info('Username "%s" does not match superuser username' % username)
             return None
 
-        local_pass = config['local_password']
-        if bcrypt.hashpw(password, local_pass) == local_pass:
+        initial_auth = False
+        if not config['api_user']:
+            new_pass, api_pass = hash_password(password)
+            api = Api.create(
+                django_settings.ACCOUNT_API_URL,
+                username,
+                api_pass,
+            )
+            try:
+                api.ping()
+                initial_auth = True
+            except urllib2.HTTPError:
+                log.info('''Failed initial log in for "%s" as a superuser.
+                         Password incorrect or unable to contact
+                         accounts api''' % username)
+            
+        if initial_auth or bcrypt.hashpw(password, local_pass) == config['local_password']:
             try:
                 user = User.objects.get(username=username)
             except ObjectDoesNotExist:
