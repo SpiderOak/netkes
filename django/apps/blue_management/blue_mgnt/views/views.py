@@ -13,6 +13,7 @@ import os
 import time
 import bcrypt
 from hashlib import sha256
+from base64 import b64encode
 
 from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import redirect, render_to_response
@@ -152,7 +153,8 @@ class NetkesBackend(ModelBackend):
                          Password incorrect or unable to contact
                          accounts api''' % username)
             
-        if initial_auth or bcrypt.hashpw(password, local_pass) == config['local_password']:
+        local_pass = config['local_password']
+        if initial_auth or bcrypt.hashpw(password, local_pass) == local_pass:
             try:
                 user = User.objects.get(username=username)
             except ObjectDoesNotExist:
