@@ -153,7 +153,7 @@ class NetkesBackend(ModelBackend):
                          Password incorrect or unable to contact
                          accounts api''' % username)
             
-        local_pass = config['local_password']
+        local_pass = config.get('local_password', '')
         if initial_auth or bcrypt.hashpw(password, local_pass) == local_pass:
             try:
                 user = User.objects.get(username=username)
