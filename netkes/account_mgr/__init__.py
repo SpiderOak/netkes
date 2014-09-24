@@ -58,8 +58,6 @@ def admin_token_auth(config, user, username, password):
     log = logging.getLogger("admin_token_auth")
     api = get_api(config)
     user_token = dict(avatar_id=user['avatar_id'], token=password)
-    if not user['enabled']:
-        return False
 
     with get_cursor(config) as cur:
         cur.execute(SELECT_ADMIN_TOKEN, user_token)
