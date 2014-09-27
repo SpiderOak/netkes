@@ -1,3 +1,4 @@
+
 # The OpenManage Virtual Appliance
 
 The OpenManage Virtual Appliance (OMVA) provides automatically managed
@@ -23,3 +24,22 @@ Where:
 
 This will create a file called `openmanage.tar.bz2`, ready for
 deployment on an OMVA.
+
+
+What's In this Repo
+===================
+
+- django: the webapp (for the management console, which let's
+  enterprises manage their users, largely by interacting with accounts
+  api)
+- netkes: the cron job sync logic and the
+  webapp that provides key (cron job is
+  `run_openmanage.sh`)
+  escrow services to the spideroak storage backend so that it can
+  validate logins to the web and from new/reinstalled clients.
+- delpoy: code to create a package to deploy this to virtual appliances
+  (not sure if still used?)
+- etc: key item is ```agent_config.json.sample``` - a sample configuration file for (the web management console, the cron job for ldap sync, and the key escrow service)
+- sql: schema for the local postgres database (synced ldap info and/or local (non-ldap) users )
+- upgrade: auto upgrade system for upgrading in place remotely deployed
+  OVMA's.

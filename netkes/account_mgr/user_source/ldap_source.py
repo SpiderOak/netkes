@@ -35,6 +35,8 @@ _PAGE_SIZE = 900
 # Are we going to use paged queries?
 _TRY_PAGED_QUERIES = True
 
+_ATTR_KEY_RANGE_REGEXP = re.compile(r"^([^;]+);range=(\d+)-(\d+|\*)$")
+
 class InvalidGroupConfiguration(Exception):
     '''
     Thrown when invalid group configuration is used.
@@ -64,6 +66,12 @@ class OMLDAPConnection(object):
         self.base_dn = base_dn
 
 class LdapGroup(object):
+    """
+    Virtual class defining an arbitrary directory-fed group
+    (there are so far concrete implementations for LDAP 'Security Groups' and
+    'Organizational Units'
+    """
+
     _ou_object_classes = set(['container', 'organizationalUnit'])
 
     def __init__(self, ldap_conn, config, ldap_id, group_id):
@@ -86,6 +94,9 @@ class LdapGroup(object):
             return LdapOuGroup(ldap_conn, config, ldap_id, group_id)
         elif group_type == 'group':
             return LdapGroupGroup(ldap_conn, config, ldap_id, group_id)
+        else:
+            raise RuntimeError("unrecognized group_type for group_id %r: %r" 
+                % (ldap_id, group_type, ))
 
     @classmethod
     def _determine_group_type(cls, ldap_conn, ldap_id):
@@ -206,7 +217,7 @@ class LdapGroup(object):
 
     def __iter__(self):
         """
-        Provides an iterable over the user list.
+        Provides a iterable over the (cached on first use) user list.
         """
         if self._users is None:
             # userlist() is a virtual method for this base class, so we
@@ -217,6 +228,10 @@ class LdapGroup(object):
             yield user
 
 class LdapOuGroup(LdapGroup):
+    """
+    Concrete implemenation of LdapGroup for LDAP OU's
+    (i.e. does the userlist in the way needed by OU's)
+    """
     def __init__(self, ldap_conn, config, ldap_id, group_id):
         super(LdapOuGroup, self).__init__(ldap_conn, config, ldap_id, group_id)
 
@@ -251,11 +266,10 @@ class LdapGroupGroup(LdapGroup):
     def _check_result_keys_for_range(self, keys):
         # Check for a ranged result key. Scan the list of result keys
         # and match against a regex.
-        r = re.compile(r"^([^;]+);range=(\d+)-(\d+|\*)$")
         result_key = self.config['dir_member_source']
         end_range = None
         for key in keys:
-            match = r.match(key)
+            match = _ATTR_KEY_RANGE_REGEXP.match(key)
             if match is not None:
                 result_key = key
                 if match.group(3) != '*':
@@ -275,6 +289,7 @@ class LdapGroupGroup(LdapGroup):
 
         NOTE! This function is recursive!
         '''
+        log = logging.getLogger('_pas_ranged_results_wrapper')
         if startrange is None:
             attrstring = self.config['dir_member_source']
         else:
@@ -293,6 +308,11 @@ class LdapGroupGroup(LdapGroup):
         except TooManyLdapResults:
             raise Exception("Multiple results for a single unique DN?")
         except NotEnoughLdapResults:
+            # group doesn't exits (and we should have blown up earlier)
+            # so we should never get here.
+            log.error("NotEnoughLdapResults: "
+                      "this should not happen: ldap_id %r"
+                      % (self.ldap_id, ))
             return []
 
         result_dict = result
@@ -415,11 +435,12 @@ def can_auth(config, username, password):
 
 def collect_groups(conn, config):
     '''
-    Returns a list of lists of users per user group.
-    The user groups are a list of LDAP DNs.
+    Returns a flat list users found in all the groups listed in our config.
+    Each element in the list is a dictionary (email, username, group_id, etc)
     '''
+    log = logging.getLogger("collect_groups")
 
-    result_groups = []
+    result_users = []
 
     for group in config['groups']:
         # Make sure we don't try to sync non-LDAP groups.
@@ -428,9 +449,12 @@ def collect_groups(conn, config):
         ldap_group = LdapGroup.get_group(conn, config,
                                          group['ldap_id'],
                                          group['group_id'])
-        result_groups.extend(ldap_group)
+        # the group object is iterable, and iterates the users in the group
+        #log.debug("%d users in group %r" % ( len(ldap_group), 
 
-    return result_groups
+        result_users.extend(ldap_group)
+
+    return result_users
 
 
 def _fix_guid(config, guid):

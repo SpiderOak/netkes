@@ -91,6 +91,14 @@ def _calculate_changes_against_db(db_conn, config, users):
     cur.execute("CREATE TEMPORARY TABLE ldap_users (LIKE users) ON COMMIT DROP;")
     cur.execute("ALTER TABLE ldap_users DROP COLUMN avatar_id;")
     cur.execute("ALTER TABLE ldap_users DROP COLUMN enabled;")
+    # XXX: review: find better spot for this
+    # dir_email_source means: ("directory email source")
+    # in spideroak blue we generally use email addresses as usernames.
+    # basically a flag to allow using username as username in specific private
+    # clouds.
+    # only makes sense in private clouds when you can be sure to avoid
+    # collisions with orange.
+
     if 'dir_email_source' in get_config():
         cur.executemany("INSERT INTO ldap_users (uniqueid, username, email, givenname, surname, group_id) VALUES (%(uniqueid)s, %(username)s, %(email)s, %(firstname)s, %(lastname)s, %(group_id)s);",
                     users)

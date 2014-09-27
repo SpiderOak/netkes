@@ -6,6 +6,25 @@ directory_agent_main.py
 Directory Agent main program.
 
 (c) 2011 SpiderOak, Inc.
+
+Run sequence:
+- init logging
+- create lock file to avoid overlapping cron jobs
+- performs sync between ldap and local pg database
+- releases lock file
+
+Performing a Sync Involves:
+- pull the contents of the ldap in (i.e. contents of selected groups)
+- compare that to the local database
+- attempts to then transactionally make changes to the local database and
+  accounts API at the same time.
+
+Rebuild mode:
+Also has a mode to completely rebuild (i.e. not sync) the local database from
+the remote ldap AND accounts API (via a command line option.)
+I.e. start with a union of the remote ldap and accouts API, then trigger a
+regular sync as above.
+
 '''
 import fcntl
 import json
@@ -120,6 +139,13 @@ Run %s -h for help.''' % (sys.argv[0],)
         return str(e)
 
     set_config(config)
+    # XXX review: the implementation of get_lock will cause an uncaught IOError
+    # to be raised, aborting this program with a non-zero exit code.
+    # it would be more graceful to exit with 0 status and a useful error
+    # message in the log.
+    # so to do that (inside get_lock) follow the docs here:
+    # https://docs.python.org/2/library/fcntl.html#fcntl.lockf and explicitly
+    # catch the IOError, and then test for EACCESS or EAGAIN errno.
     lockfile = get_lock()
     # Moving along, open the database
     db_conn = psycopg2.connect(database=config['db_db'],
