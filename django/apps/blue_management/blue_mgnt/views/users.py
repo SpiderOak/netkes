@@ -95,7 +95,20 @@ def get_group(groups, group_name):
         if group['name'].lower() == group_name.lower():
             return group
 
-def _csv_create_users():
+def create_user(api, billing_api, account_info, config, data):
+    email = data['email']
+    api.create_user(data)
+    # Set a blank password so that the password can be set 
+    # through the set password email.
+    local_source.set_user_password(local_source._get_db_conn(config),
+                                   email, '') 
+    api.send_activation_email(email, dict(template_name='set_password'))
+    billing_api.update_plan(account_info['total_users'] + 1)
+    cache.delete('billing_info')
+    cache.delete('account_info')
+    cache.delete('user_count')
+
+def _csv_create_users(api, billing_api, account_info, groups, config, request, csv_data):
     for x, row in enumerate(csv_data):
         group = get_group(groups, row['group_name'])
         group_id = group['group_id']
@@ -111,10 +124,7 @@ def _csv_create_users():
             plan_id=plan_id,
         )
         try:
-            # Set a blank password so that the password can be set 
-            # through the set password email.
-            local_source.set_user_password(local_source._get_db_conn(config),
-                                                   row['email'], '')
+            create_user(api, billing_api, account_info, config, user_info)
             log_admin_action(request, 'create user through csv: %s' % user_info)
         except api.DuplicateEmail:
             msg = 'Invalid data in row %s. Email already in use' % x
@@ -140,7 +150,8 @@ def get_new_user_csv_form(api, billing_api, groups, account_info, config, reques
 
             csv_data = csv.DictReader(data)
             msg = False
-            created, e = _csv_create_users(csv_data)
+            created, e = _csv_create_users(api, billing_api, account_info, groups, 
+                                           config, request, csv_data)
             if created > 0:
                 billing_api.update_plan(account_info['total_users'] + created)
                 cache.delete('billing_info')
@@ -185,17 +196,8 @@ def get_new_user_form(api, billing_api, features, account_info, config, local_gr
                 if username:
                     data.update(dict(username=username))
                 try:
-                    api.create_user(data)
-                    # Set a blank password so that the password can be set 
-                    # through the set password email.
-                    local_source.set_user_password(local_source._get_db_conn(config),
-                                                   email, '') 
-                    api.send_activation_email(email, dict(template_name='set_password'))
+                    create_user(api, billing_api, account_info, config, data)
                     log_admin_action(request, 'create user: %s' % data)
-                    billing_api.update_plan(account_info['total_users'] + 1)
-                    cache.delete('billing_info')
-                    cache.delete('account_info')
-                    cache.delete('user_count')
                 except api.DuplicateEmail:
                     self._errors['email'] = self.error_class(["Email address already in use"])
                 except api.DuplicateUsername:
