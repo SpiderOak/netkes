@@ -1229,6 +1229,45 @@ body.password {
 						 left: 20px;
 				 }
 		 }
+    background-color: darken(#32CC39, 10%);
+    color: #fff;
+    margin-bottom: 10px;
+    padding: 10px;
+    border-radius: 4px;
+
+    &.center {
+        text-align: center;
+        width: 80%;
+        margin: 5px auto;
+    }
+
+    a {
+        color: #fff;
+        float: right;
+        top: -5px;
+        position: relative;
+        font-size: 12px;
+        text-decoration: none;
+        &:hover {
+            color: #efefef;
+        }
+    }
+}
+
+ .error-alert {
+     border: 1px solid #CC3239;
+     background-color: lighten(#CC3239, 10%);
+     padding: 10px;
+     border-radius: 4px;
+     margin: 10px 0;
+     p {
+         color: #fff;
+         white-space: nowrap;
+         &.error-list {
+             position: relative;
+             left: 20px;
+         }
+     }
  }
  span.error-highlight {
 		 input {
