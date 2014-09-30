@@ -73,7 +73,8 @@ echo "Running additional update scripts..."
 sudo bash -c "PYTHONPATH=/opt/openmanage python /opt/openmanage/upgrade/apply_scripts.py"
 
 apt-get -y remove python-crypto
-dpkg -i /opt/openmanage/upgrade/resources/libffi-dev*
+
+find /opt/openmanage/upgrade/resources/ -name '*.deb' | xargs dpkg -i
 
 cat /opt/openmanage/upgrade/requirements.txt | xargs pip install
 

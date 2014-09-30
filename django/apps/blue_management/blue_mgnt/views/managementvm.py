@@ -92,7 +92,7 @@ def auth_codes(request, api, account_info, config, username, saved=False):
             code = models.AdminSetupTokens.objects.get(token=request.POST['token'])
             code.expiry = datetime.datetime.now()
             code.save()
-            log_admin_action(request, 'Disabled code: %s' % data)
+            log_admin_action(request, 'Disabled code: %s' % request.POST['token'])
             return redirect(reverse('blue_mgnt:auth_codes_saved') +
                             '?show_inactive=%s' % show_inactive)
 
