@@ -68,8 +68,8 @@ echo $secret_key >> /opt/openmanage/etc/openmanage_defaults
 
 echo "Updating database..."
 /opt/openmanage/upgrade/apply_sql.sh
-echo "Running additional update scripts..."
 
+echo "Running additional update scripts..."
 sudo bash -c "PYTHONPATH=/opt/openmanage python /opt/openmanage/upgrade/apply_scripts.py"
 
 apt-get -y remove python-crypto
@@ -82,5 +82,9 @@ cat /opt/openmanage/upgrade/requirements.txt | xargs pip install
 for SERVICE in openmanage admin_console; do
     sv up $SERVICE
 done
+
+# Backup vm
+sudo /opt/openmanage/bin/backup_omva.sh
+echo "Backup complete"
 
 echo "Upgrade complete!"

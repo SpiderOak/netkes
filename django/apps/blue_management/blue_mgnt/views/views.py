@@ -152,6 +152,7 @@ class NetkesBackend(ModelBackend):
                 log.info('''Failed initial log in for "%s" as a superuser.
                          Password incorrect or unable to contact
                          accounts api''' % username)
+                return None
             
         local_pass = config.get('local_password', '')
         if initial_auth or bcrypt.hashpw(password, local_pass) == local_pass:

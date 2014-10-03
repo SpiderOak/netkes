@@ -14,27 +14,30 @@ from netkes.account_mgr.accounts_api import Api
 
 config = common.read_config_file()
 
-api = Api.create(
-    config["api_root"],
-    config["api_user"],
-    config["api_password"],
-)
+# Only back up active vms. If no one has claimed the vm there's 
+# nothing to back up.
+if config['api_password']:
+    api = Api.create(
+        config["api_root"],
+        config["api_user"],
+        config["api_password"],
+    )
 
-secret_box, nonce = create_secret_box(config['api_password'], config['api_user'])
+    secret_box, nonce = create_secret_box(config['api_password'], config['api_user'])
 
-date = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-filename = 'openmanage-backup-%s.tar.bz2' % date
-path = '/opt/openmanage/tmp_backup/%s' % filename
+    date = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    filename = 'openmanage-backup-%s.tar.bz2' % date
+    path = '/opt/openmanage/tmp_backup/%s' % filename
 
-subprocess.call(['/opt/openmanage/bin/create_backup.sh', date])
+    subprocess.call(['/opt/openmanage/bin/create_backup.sh', date])
 
-with open(path) as f:
-    data = secret_box.encrypt(f.read(), nonce)
-data = b2a_base64(data)
+    with open(path) as f:
+        data = secret_box.encrypt(f.read(), nonce)
+    data = b2a_base64(data)
 
-backup = {
-    'sha256': sha256(data).hexdigest(),
-    'data': data,
-}
+    backup = {
+        'sha256': sha256(data).hexdigest(),
+        'data': data,
+    }
 
-api.update_backup(backup)
+    api.update_backup(backup)

@@ -143,6 +143,8 @@ def get_new_user_csv_form(api, billing_api, groups, account_info, config, reques
                 msg = 'Invalid data in row %s.' % x
                 if 'email' not in row:
                     raise forms.ValidationError(msg + ' email is required')
+                if '@' not in row['email']:
+                    raise forms.ValidationError(msg + ' invalid email')
                 if 'name' not in row:
                     raise forms.ValidationError(msg + ' name is required')
                 if 'group_name' not in row:
