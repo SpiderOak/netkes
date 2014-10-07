@@ -83,8 +83,11 @@ for SERVICE in openmanage admin_console; do
     sv up $SERVICE
 done
 
-# Backup vm
+# Backup VM
 sudo /opt/openmanage/bin/backup_omva.sh
 echo "Backup complete"
+
+# Set VM version
+python /opt/openmanage/bin/set_version.py $VERSION
 
 echo "Upgrade complete!"

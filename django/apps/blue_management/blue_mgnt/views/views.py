@@ -291,9 +291,9 @@ def login_user(request):
                     config = read_config_file()
                     api = get_api(config)
                     if api.backup():
+                        log_admin_action(request, 'restoring from backup')
                         subprocess.call(['/opt/openmanage/bin/run_restore_omva.sh',])
-
-                    if not config['groups']:
+                    elif not config['groups']:
                         create_initial_group()
 
                 config_mgr_ = config_mgr.ConfigManager(config_mgr.default_config())

@@ -46,7 +46,7 @@ mkdir $buildit_dir
 mkdir $buildit_dir/bin
 
 find $source_dir/bin/*.pyc -delete 2> /dev/null || true  # hack to make pipefail not fail
-cp $source_dir/bin/* $buildit_dir/bin
+cp -r $source_dir/bin/* $buildit_dir/bin
 
 # Copy libraries
 cp -r $source_dir/netkes $buildit_dir

@@ -33,9 +33,8 @@ cp -r layers/* $SPIDEROAK_ESCROW_LAYERS_PATH
 cp agent_config.json $OPENMANAGE_CONFIGDIR
 
 # Stage Three: Re-load the DB SQL.
-sudo -u postgres dropdb openmanage
-sudo -u postgres createdb openmanage
-sudo -u postgres psql --single-transaction -f openmanage.sql openmanage 
+sudo -u postgres psql -f /opt/openmanage/bin/resources/recreate_openmanage.sql
+sudo -u postgres psql --single-transaction --pset pager=off -f openmanage.sql openmanage 
 
 # We already have keys so we don't need to run first setup
 touch /opt/openmanage/etc/.ran_firstsetup
@@ -43,3 +42,4 @@ touch /opt/openmanage/etc/.ran_firstsetup
 # Clean up.
 popd
 rm -r openmanage-backup*
+sudo sv restart admin_console
