@@ -21,4 +21,4 @@ pip install --download=. Django==1.5.5
 pip install --download=. pytz==2013.8
 pip install --download=. pycrypto==2.4.1
 
-
+wget http://archive.ubuntu.com/ubuntu/pool/main/b/bash/bash_4.1-2ubuntu3.2_amd64.deb

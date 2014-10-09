@@ -85,6 +85,9 @@ echo "Running additional update scripts..."
 sudo bash -c "PYTHONPATH=/opt/openmanage python /opt/openmanage/upgrade/apply_scripts.py"
 
 apt-get -y remove python-crypto
+
+find /opt/openmanage/upgrade/resources/ -name '*.deb' | xargs dpkg -i
+
 pip install -r /opt/openmanage/upgrade/requirements.txt
 
 # Restart services
