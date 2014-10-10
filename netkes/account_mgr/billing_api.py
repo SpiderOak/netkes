@@ -27,14 +27,6 @@ class BillingApi(object):
         self.client = client
         self.logger = logging.getLogger('admin_actions')
 
-    def update_plan(self, total_users):
-        try:
-            return self.client.post('update_plan', {'total_users': total_users});
-        except urllib2.HTTPError, err:
-            self.logger.info(err.read())
-            raise
-
-
     def fetch_coupon(self, coupon_code):
         try:
             resp = self.client.post('coupon', {'coupon': coupon_code})

@@ -103,8 +103,6 @@ def create_user(api, billing_api, account_info, config, data):
     local_source.set_user_password(local_source._get_db_conn(config),
                                    email, '') 
     api.send_activation_email(email, dict(template_name='set_password'))
-    billing_api.update_plan(account_info['total_users'] + 1)
-    cache.delete('billing_info')
     cache.delete('account_info')
     cache.delete('user_count')
 
@@ -155,8 +153,6 @@ def get_new_user_csv_form(api, billing_api, groups, account_info, config, reques
             created, e = _csv_create_users(api, billing_api, account_info, groups, 
                                            config, request, csv_data)
             if created > 0:
-                billing_api.update_plan(account_info['total_users'] + created)
-                cache.delete('billing_info')
                 cache.delete('account_info')
                 cache.delete('user_count')
             if e is not None:

@@ -10,10 +10,10 @@
 {% block content %}
 {% block billing_header %}
 <h1 class="page-header">
-	<i class="ss-icon">&#xE7B0;</i> Upgrade Your Plan
-        {% if billing_info.current_plan %}
-	<span class="header-note">current plan: {{ billing_info.current_plan.quantity }} users</span>
-        {% endif %}
+  <i class="ss-icon">&#xE7B0;</i> Upgrade Your Plan
+  {% if billing_info.current_plan %}
+    <span class="header-note">current plan: {{ billing_info.current_plan.quantity }} users</span>
+  {% endif %}
 </h1>
 {% endblock billing_header %}
 
@@ -37,34 +37,6 @@
       <a>Summary</a>
     </li>
   </ul>
-</script>
-
-<script type="text/x-swig-template" id="template-billing-select-size">
-  <p class="size-note">Adding more space to your SpiderOak account is easy. To begin, select a plan.</p>
-  <h2>Select a Plan Size</h2>
-  <div class="plans">
-    <ul>
-    <% for plan in plans %>
-      <li <% if plan.active %>class="active"<% endif %> data-quantity="<%- plan.quantity %>" data-cost="<%- plan.price.int %>">
-        <p><%- plan.quantity %> users</p>
-        <span>($<%- plan.price.str %>)</span>
-      </li>
-    <% endfor %>
-    <% if show_more %>
-      <li class="over-two-hundred">
-        <p>200+</p>
-        <span>Please <a href="mailto:blueinfo@spideroak.com">Contact Us</a></span>
-      </li>
-    <% endif %>
-    </ul>
-    <div class="spacer"><!--ZKP--></div>
-  </div>
-  <% if not show_more %>
-  <div id="show_more">
-    <a>Show More Plan Sizes</a>
-  </div>
-  <% endif %>
-  <div class="spacer"><!--ZKP--></div>
 </script>
 
 <script type="text/x-swig-template" id="template-billing-select-frequency">
@@ -99,25 +71,20 @@
 </script>
 
 <script type="text/x-swig-template" id="template-billing-cost-preview">
-  <% if has_current_plan %>
-    <h3>New <%- frequency %> Cost</h3>
-    <div class="so-form">
-      <fieldset>
-        <div>
-          $<%- price.str %>
-        </div>
-      </fieldset>
-    </div>
-  <% else %>
-    <h3>Total Cost</h3>
-    <div class="so-form">
-      <fieldset>
-        <div>
-          $<%- price.str %>
-        </div>
-      </fieldset>
-    </div>
-  <% endif %>
+  <h2>
+    <% if has_current_plan %>
+      New <%- frequency %> Cost
+    <% else %>
+      Plan Cost
+    <% endif %>
+  </h2>
+  <div class="so-form">
+    <fieldset>
+      <h3>
+        (Users: <%- quantity %>) $<%- price.str %>
+      </h3>
+    </fieldset>
+  </div>
 </script>
 
 <script type="text/x-swig-template" id="template-billing-next">

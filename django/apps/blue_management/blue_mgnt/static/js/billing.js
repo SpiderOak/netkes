@@ -249,63 +249,6 @@
         }
     });
 
-    var PlanSizeView = View.extend({
-        template: "billing-select-size",
-        events: {
-            "click li": "onPlanSelect",
-            "click #show_more": "onClickShowMore"
-        },
-        onInitialize: function() {
-            this.show_more = false;
-        },
-        onPlanSelect: function(evt) {
-            var $el = $(evt.currentTarget);
-            var quantity = parseInt($el.attr("data-quantity"), 10);
-            if (quantity) {
-                this.model.set("quantity", quantity);
-                evt.preventDefault();
-            }
-        },
-        onClickShowMore: function(evt) {
-            evt.preventDefault();
-            this.show_more = true;
-            this.render();
-        },
-        getContext: function() {
-            var plans = [];
-            var frequency = this.model.get("frequency");
-            var curr_quantity = this.model.get("quantity");
-            var coupon = this.model.get("coupon");
-            var n = 0;
-            var quantity_selected = false;
-            for (var i = 10; i <= 200; i += 5) {
-                if (!this.show_more && n >= 12) {
-                    break;
-                }
-                if (SMB.total_users <= i) {
-                    plans.push({
-                        quantity: i,
-                        price: calculate_price(i, frequency, coupon),
-                        active: (i === curr_quantity)
-                    });
-                    if (i === curr_quantity) {
-                        quantity_selected = true;
-                    }
-                    n += 1;
-                }
-            }
-            if (!quantity_selected) {
-                var plan = plans[0];
-                plans[0].active = true;
-                this.model.set("quantity", plan.quantity, {"silent": true});
-            }
-            return {
-                plans: plans,
-                show_more: this.show_more
-            };
-        }
-    });
-
     var CouponView = View.extend({
         template: "billing-select-coupon",
         modelTriggers: ["change:coupon", "change:coupon_state"],
@@ -764,12 +707,10 @@
         pager.addPage("loading", new View({template: "billing-loading"}));
         pager.addPage("success", new View({template: "billing-success"}));
 
-        var plansizeview = new PlanSizeView({model:state});
         var couponview = new CouponView({model:state});
         var planfrequencyview = new PlanFrequencyView({model:state});
         var costpreview = new CostPreviewView({model:state});
         var nextview = new NextView({model:state});
-        plansizeview.render();
         couponview.render();
         planfrequencyview.render();
         costpreview.render();
@@ -793,7 +734,6 @@
         $base.append(nav.$el);
         $base.append(alerter.$el);
         $base.append(pager.$el);
-        pager.pages.plan.$el.append(plansizeview.$el);
         pager.pages.plan.$el.append(planfrequencyview.$el);
         pager.pages.plan.$el.append(couponview.$el);
         pager.pages.plan.$el.append(costpreview.$el);
