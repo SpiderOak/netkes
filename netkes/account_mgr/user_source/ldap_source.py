@@ -423,7 +423,7 @@ def collect_groups(conn, config):
 
     for group in config['groups']:
         # Make sure we don't try to sync non-LDAP groups.
-        if group['user_source'] is not 'ldap':
+        if group['user_source'] != 'ldap':
             continue
         ldap_group = LdapGroup.get_group(conn, config,
                                          group['ldap_id'],
