@@ -365,6 +365,7 @@ def get_api(config):
         'update_enterprise_settings': ['enterprise_settings'],
         'create_group': ['list_groups'],
         'edit_group': ['list_groups'],
+        'delete_group': ['list_groups', 'list_users'],
         'create_user': ['list_users'],
         'edit_user': ['list_users'],
         'delete_user': ['list_users'],

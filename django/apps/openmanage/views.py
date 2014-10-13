@@ -229,13 +229,13 @@ def read_data(request):
                                                  layer_count=layer_count,
                                                  sign_key=sign_key)
     except ValueError:
-        log.warn("ValueError at reading escrow data")
+        log.warn("ValueError at reading escrow data", exc_info=True)
         return HttpResponseBadRequest()
     except KeyError:
-        log.warn("KeyError at reading escrow data")
+        log.warn("KeyError at reading escrow data", exc_info=True)
         return HttpResponseNotFound()
     except Exception:
-        log.exception('500 error in reading escrow data')
+        log.exception('500 error in reading escrow data', exc_info=True)
         return HttpResponseServerError()
 
     response = auth['secret_box'].encrypt(plaintext_data, auth['nonce'])
