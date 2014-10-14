@@ -252,14 +252,18 @@ class TestPassword(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_set_password_fails_when_password_set(self, ):
-        models.Password.objects.create(email='set', pw_hash='t')
+        p = models.Password.objects.get_or_create(email='set')[0]
+        p.pw_hash = 't'
+        p.save()
         data = dict(email='set', password='new')
         response = self.client.post('/openmanage/password/', data)
         self.log.error.assert_called_with("Cannot set password. Password already set.")
         self.assertEqual(response.status_code, 200)
 
     def test_set_password_succeeds(self, ):
-        models.Password.objects.create(email='unset', pw_hash='')
+        p = models.Password.objects.get_or_create(email='unset')[0]
+        p.pw_hash = ''
+        p.save()
         data = dict(email='unset', password='new')
         response = self.client.post('/openmanage/password/', data)
         self.assertEqual(response.status_code, 200)
