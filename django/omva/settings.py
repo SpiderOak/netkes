@@ -96,6 +96,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.middleware.transaction.TransactionMiddleware',
+    'omva.middleware.ForceHTTPSMiddleware',
     'pagination.middleware.PaginationMiddleware',
 )
 
@@ -191,6 +192,8 @@ LOGGING = {
         'handlers': ['console']
     }
 }
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 try:
     from dev_settings import *
