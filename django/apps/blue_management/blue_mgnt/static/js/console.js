@@ -73,8 +73,6 @@ $(function() {
     });
 
     (function() {
-        var alertTarget = 'widget-add-user';
-
         function exposeWidget(trgt){
             var $modal = $('.modal-wrapper');
             $(".modal-item", $modal).each(function(i, el) {
@@ -94,24 +92,6 @@ $(function() {
             e.preventDefault();
             exposeWidget('widget-upload-csv');
         });
-
-        $('#option-add-user-alert button').click(function(e){
-            e.preventDefault();
-            alertTarget = 'widget-add-user';
-            exposeWidget('widget-plan-alert');
-        });
-
-        $('#option-upload-csv-alert button').click(function(e){
-            e.preventDefault();
-            alertTarget = 'widget-upload-csv';
-            exposeWidget('widget-plan-alert');
-        });
-
-        $('#option-confirm-alert').click(function(e){
-            e.preventDefault();
-            exposeWidget(alertTarget);
-        });
-
     }());
 
     $('h2.page-header .actions').click(function() {

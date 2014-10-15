@@ -2,7 +2,7 @@ import datetime
 from base64 import b32encode
 import csv
 
-from views import enterprise_required, log_admin_action, get_billing_api, get_billing_info
+from views import enterprise_required, log_admin_action
 from views import ReadOnlyWidget, get_base_url, SIZE_OF_GIGABYTE
 from views import pageit
 from settings import PasswordForm
@@ -95,7 +95,7 @@ def get_group(groups, group_name):
         if group['name'].lower() == group_name.lower():
             return group
 
-def create_user(api, billing_api, account_info, config, data):
+def create_user(api, account_info, config, data):
     email = data['email']
     api.create_user(data)
     # Set a blank password so that the password can be set 
@@ -106,7 +106,7 @@ def create_user(api, billing_api, account_info, config, data):
     cache.delete('account_info')
     cache.delete('user_count')
 
-def _csv_create_users(api, billing_api, account_info, groups, config, request, csv_data):
+def _csv_create_users(api, account_info, groups, config, request, csv_data):
     for x, row in enumerate(csv_data):
         group = get_group(groups, row['group_name'])
         group_id = group['group_id']
@@ -122,14 +122,14 @@ def _csv_create_users(api, billing_api, account_info, groups, config, request, c
             plan_id=plan_id,
         )
         try:
-            create_user(api, billing_api, account_info, config, user_info)
+            create_user(api, account_info, config, user_info)
             log_admin_action(request, 'create user through csv: %s' % user_info)
         except api.DuplicateEmail:
             msg = 'Invalid data in row %s. Email already in use' % x
             return x, forms.ValidationError(msg)
     return x + 1, None
 
-def get_new_user_csv_form(api, billing_api, groups, account_info, config, request):
+def get_new_user_csv_form(api, groups, account_info, config, request):
     class UserCSVForm(forms.Form):
         csv_file = forms.FileField(label='User CSV')
 
@@ -150,7 +150,7 @@ def get_new_user_csv_form(api, billing_api, groups, account_info, config, reques
 
             csv_data = csv.DictReader(data)
             msg = False
-            created, e = _csv_create_users(api, billing_api, account_info, groups, 
+            created, e = _csv_create_users(api, account_info, groups, 
                                            config, request, csv_data)
             if created > 0:
                 cache.delete('account_info')
@@ -160,7 +160,7 @@ def get_new_user_csv_form(api, billing_api, groups, account_info, config, reques
             return data
     return UserCSVForm
 
-def get_new_user_form(api, billing_api, features, account_info, config, local_groups, groups, request):
+def get_new_user_form(api, features, account_info, config, local_groups, groups, request):
     class NewUserForm(forms.Form):
         if not features['email_as_username']:
             username = forms.CharField(max_length=45)
@@ -194,7 +194,7 @@ def get_new_user_form(api, billing_api, features, account_info, config, local_gr
                 if username:
                     data.update(dict(username=username))
                 try:
-                    create_user(api, billing_api, account_info, config, data)
+                    create_user(api, account_info, config, data)
                     log_admin_action(request, 'create user: %s' % data)
                 except api.DuplicateEmail:
                     self._errors['email'] = self.error_class(["Email address already in use"])
@@ -229,8 +229,6 @@ def get_login_link(username):
 
 @enterprise_required
 def users(request, api, account_info, config, username, saved=False):
-    billing_api = get_billing_api(config)
-    billing_info = get_billing_info(config)
     page = int(request.GET.get('page', 1))
     show_disabled = int(request.GET.get('show_disabled', 1))
     search_back = request.GET.get('search_back', '')
@@ -242,8 +240,8 @@ def users(request, api, account_info, config, username, saved=False):
     if not search:
         search = request.POST.get('search', '')
 
-    UserCSVForm = get_new_user_csv_form(api, billing_api, groups, account_info, config, request)
-    NewUserForm = get_new_user_form(api, billing_api, features, account_info, config, local_groups, groups, request)
+    UserCSVForm = get_new_user_csv_form(api, groups, account_info, config, request)
+    NewUserForm = get_new_user_form(api, features, account_info, config, local_groups, groups, request)
 
     class BaseUserFormSet(forms.formsets.BaseFormSet):
         def clean(self):
@@ -341,13 +339,6 @@ def users(request, api, account_info, config, username, saved=False):
             user['form'] = tmp_user_formset[index]
             index += 1
     
-    at_user_limit = False
-    current_plan = billing_info.get('current_plan')
-    if current_plan:
-        if current_plan['quantity'] == account_info['total_users']:
-            at_user_limit = True
-
-
     return render_to_response('index.html', dict(
         all_users=initial,
         user=request.user,
@@ -368,7 +359,6 @@ def users(request, api, account_info, config, username, saved=False):
         search_back=search_back,
         users_and_delete=zip(initial, delete_user_formset),
         all_pages=all_pages,
-        at_user_limit=at_user_limit,
     ),
     RequestContext(request))
 
