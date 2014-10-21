@@ -188,3 +188,8 @@ LOGGING = {
         'handlers': ['console']
     }
 }
+
+try:
+    from dev_settings import *
+except Exception:
+    pass
