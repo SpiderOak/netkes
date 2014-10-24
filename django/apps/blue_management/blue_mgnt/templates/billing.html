@@ -208,6 +208,7 @@
 
 <script type="text/x-swig-template" id="template-billing-overview">
   <form class="so-form">
+    {% csrf_token %}
     <fieldset>
       <div>
         <label>Selected Plan</label>
