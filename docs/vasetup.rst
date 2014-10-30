@@ -19,8 +19,8 @@ The OMVA needs to be able to connect to and accept connections from your SpiderO
 +-----------------+----------+-----------------------------------+-------------------------+
 | HTTPS (443)     | in       | | 208.28.15.128                   |                         |
 |                 |          | | 208.28.15.131                   | (only 1 IP necessary)   |
-|                 |          | | 38.121.104.4                    |                         |
-|                 |          | | 38.121.104.5                    |                         |
+|                 |          | | 39.121.104.20                   |                         |
+|                 |          | | 38.121.104.21                   |                         |
 +-----------------+----------+-----------------------------------+-------------------------+
 
 In addition, the following ports are necessary to be kept open locally for administrative purposes:
