@@ -62,10 +62,6 @@ echo "updated tarball"
 # Bring over configuration into the new stuff.
 cp /opt/openmanage.$CURRENT_DATE/etc/agent_config.json /opt/openmanage/etc
 
-random_string="$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c 64;echo;)"
-secret_key="export DJANGO_SECRET_KEY=\"$random_string\""
-echo $secret_key >> /opt/openmanage/etc/openmanage_defaults 
-
 echo "Updating database..."
 /opt/openmanage/upgrade/apply_sql.sh
 
@@ -78,14 +74,15 @@ find /opt/openmanage/upgrade/resources/ -name '*.deb' | xargs dpkg -i
 
 cat /opt/openmanage/upgrade/requirements.txt | xargs pip install
 
+# Set django secret key
+random_string="$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c 64;echo;)"
+secret_key="export DJANGO_SECRET_KEY=\"$random_string\""
+echo $secret_key >> /opt/openmanage/etc/openmanage_defaults 
+
 # Restart services
 for SERVICE in openmanage admin_console; do
     sv up $SERVICE
 done
-
-# Backup VM
-sudo /opt/openmanage/bin/backup_omva.sh
-echo "Backup complete"
 
 # Set VM version
 python /opt/openmanage/bin/set_version.py $VERSION
