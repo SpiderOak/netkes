@@ -74,7 +74,7 @@ mkdir $buildit_dir/sql
 cp $source_dir/sql/*.sql $buildit_dir/sql
 
 # Package the configuration files.
-included_management="openmanage_defaults apt_list py_list agent_config.json.sample"
+included_management="openmanage_defaults apt_list py_list agent_config.json.sample nginx_vhost"
 mkdir $buildit_dir/etc
 for file in $included_management; do
     cp $source_dir/etc/$file $buildit_dir/etc
