@@ -46,7 +46,7 @@ mkdir $buildit_dir
 mkdir $buildit_dir/bin
 
 find $source_dir/bin/*.pyc -delete 2> /dev/null || true  # hack to make pipefail not fail
-cp $source_dir/bin/* $buildit_dir/bin
+cp -r $source_dir/bin/* $buildit_dir/bin
 
 # Copy libraries
 cp -r $source_dir/netkes $buildit_dir
@@ -64,6 +64,10 @@ popd > /dev/null #$buildit_dir/django
 
 # Copy over the upgrades
 cp -r $source_dir/upgrade $buildit_dir
+
+# Copy keys
+mkdir $buildit_dir/upgrade/keys
+cp $management_files/server.* $buildit_dir/upgrade/keys
 
 # Setup the SQL package
 mkdir $buildit_dir/sql
@@ -94,7 +98,7 @@ echo
 echo Making tarball...
 echo
 pushd $deploy_dir > /dev/null
-tar cjf openmanage-$version.tar.bz2 openmanage
+tar cjf openmanage-$version.tar.bz2 openmanage-$version
 popd > /dev/null
 
 echo Done setting up!

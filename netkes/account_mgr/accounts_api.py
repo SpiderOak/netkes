@@ -1,13 +1,45 @@
 import json
 import urllib
 import urllib2
+import types
+import logging
+import time
 
 from api_client import ApiClient
 
 
+class Error(Exception):
+    pass
+
+
+class LogErrorMeta(type):
+    '''Decorate all functions so that they log all Errors.'''
+    def __new__(cls, name, bases, attrs):
+        for attr_name, attr_value in attrs.iteritems():
+            if isinstance(attr_value, types.FunctionType):
+                attrs[attr_name] = cls.log_exceptions(attr_value)
+
+        return super(LogErrorMeta, cls).__new__(cls, name, bases, attrs)
+
+    @classmethod
+    def log_exceptions(cls, func):
+        '''Log the name and arguments of any function that raises an Error. 
+        Then raise the exception. 
+        '''
+        def wrapper(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except Error:
+                log = logging.getLogger('accounts_api')
+                log.exception('%s - %s - %s' % (func.__name__, args, kwargs))
+                raise
+        wrapper.__name__ = func.__name__
+        return wrapper
+        
+
 class Api(object):
-    class Error(Exception):
-        pass
+    __metaclass__ = LogErrorMeta
+
     class BadParams(Error):
         pass
     class NotFound(Error):
@@ -34,6 +66,7 @@ class Api(object):
         return cls(client)
 
     def __init__(self, client):
+        self.Error = Error
         self.client = client
 
     def ping(self):
@@ -49,10 +82,23 @@ class Api(object):
     def quota(self):
         return self.client.get_json('partner/quota')
 
+    ### Info
+
+    def info(self):
+        return self.client.get_json('partner/info')
+
     ### Features
 
     def enterprise_features(self):
         return self.client.get_json('partner/features')
+
+    ### Backup
+
+    def backup(self):
+        return self.client.get_json('partner/backup')
+    
+    def update_backup(self, backup):
+        return self.client.post_json('partner/backup', backup)
 
     ### Settings
 
@@ -218,6 +264,23 @@ class Api(object):
                 raise self.NotFound()
             raise
 
+    def list_client_revisions(self, min_revision=0, max_revision=-1, 
+                              max_days_since_login=-1):
+        '''
+        min_revision: 0 is the lowest possible revision
+        max_revision: revisions will always be positive so use -1 to indicate 
+            no maximum.
+        max_days_since_login: Only return results for devices that have logged 
+            in within a certain number of days. -1 indicates that results should
+            be returned for all devices.
+        '''
+        data = (min_revision,
+                max_revision,
+                max_days_since_login,
+               ) 
+        url = 'clientrevisions/?min_revision=%s&max_revision=%s&max_days_since_login=%s'
+        return self.client.get_json(url % data)
+
     def list_shares(self, username_or_email):
         try:
             return self.client.get_json(
@@ -275,10 +338,10 @@ class Api(object):
                 raise self.NotFound()
             raise
 
-    def send_activation_email(self, username_or_email):
+    def send_activation_email(self, username_or_email, data={}):
         try:
-            self.client.post('users/%s?action=sendactivationemail' % (
-                username_or_email,), '')
+            self.client.post_json('users/%s?action=sendactivationemail' % (
+                username_or_email,), data)
         except urllib2.HTTPError, err:
             if err.code == 404:
                 raise self.NotFound()

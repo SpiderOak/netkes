@@ -1,5 +1,5 @@
 <div class="modal-wrapper">
-    <div class="modal-content confirm">
+    <div id="modal-refer-delete_user" class="modal-content confirm">
         <form method="POST" action="{% url 'blue_mgnt:user_detail' email %}">
             {% csrf_token %}
             <input type='hidden' value='delete_user' name='form'>

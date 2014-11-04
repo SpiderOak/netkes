@@ -82,6 +82,7 @@
             <input type='hidden' value='restart_directory' name='form'>
             <button type='submit' id="restart" class="button button-muted">Restart Directory / Services</button>
         </form>
+        {% if features.ldap %}
         <div class="space-20none">
             <form method="post" action="{% url 'blue_mgnt:settings' %}">
                 {% csrf_token %}
@@ -94,6 +95,7 @@
                 <input type='submit' value="Rebuild DB" class="button button-muted">
             </form>
         </div>
+        {% endif %}
         {% endif %}
     </div>
 {% endblock content %}
@@ -108,6 +110,7 @@
         $('.reboot-message > p').html(str);
         if ( start == 1 ){
             $('.shield').show();
+            $('.loader').hide();
             $('.shield').css('height', $('.overlord').height());
             posModal('.reboot-message');
             $('#processing').not(':visible').toggle();
@@ -120,6 +123,7 @@
 
     $('.reboot-message-close').click(function(){
         $('.shield').hide();
+        $('.loader').show();
         $(this).hide();
     });
 

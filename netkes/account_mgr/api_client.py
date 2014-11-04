@@ -1,6 +1,7 @@
 import json
 import urllib2
 from base64 import b64encode
+from urllib import urlencode
 from urlparse import urljoin
 
 from netkes.Pandora.https import VerifiedHTTPSHandler
@@ -11,6 +12,7 @@ _DEFAULT_HANDLERS = [
     urllib2.HTTPDefaultErrorHandler,
     urllib2.HTTPRedirectHandler,
     urllib2.HTTPErrorProcessor,
+    urllib2.HTTPHandler,
 ]
 def _make_opener(url):
     opener = urllib2.OpenerDirector()

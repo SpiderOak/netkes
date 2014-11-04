@@ -1,7 +1,7 @@
 import os
 import datetime
 import csv
-from subprocess import call
+import subprocess
 import urllib2
 from base64 import b32encode
 import urlparse
@@ -11,10 +11,12 @@ import math
 import hotshot
 import os
 import time
+import bcrypt
+from hashlib import sha256
+from base64 import b64encode
 
 from django.http import HttpResponse, HttpResponseForbidden
-from django.shortcuts import redirect
-from django.shortcuts import render_to_response as django_render_to_response
+from django.shortcuts import redirect, render_to_response
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ObjectDoesNotExist
 from django.template.context import Context
@@ -41,19 +43,19 @@ from mako import exceptions
 
 from blue_mgnt import models
 from netkes.account_mgr.accounts_api import Api
+from netkes.account_mgr.billing_api import BillingApi
 from netkes.netkes_agent import config_mgr
 from netkes.common import read_config_file
 from netkes.account_mgr.user_source import ldap_source, local_source
 from netkes import account_mgr
+from key_escrow import server
+from Pandora import serial
+from Crypto.Util.RFC1751 import key_to_english
 
 LOG = logging.getLogger('admin_actions')
 
 MANAGEMENT_VM = getattr(django_settings, 'MANAGEMENT_VM', False)
 APP_DIR = os.path.abspath(os.path.dirname(__file__))
-LOOKUP = TemplateLookup(directories=[os.path.join(APP_DIR, '../mako_templates')],
-                        input_encoding='utf-8',
-                        output_encoding='utf-8',
-                        encoding_errors='replace')
 SHARE_URL = os.getenv('SHARE_URL', 'https://spideroak.com')
 SIZE_OF_GIGABYTE = 10 ** 9
 
@@ -95,42 +97,6 @@ def profile(log_file):
         return _inner
     return _outer
 
-def render_to_response(template, data=None, context=None):
-    # pass ?force_template=mako to force using mako template
-    # or ?force_template=django to force using Django
-    try:
-        force_template = context['request'].GET.get('force_template')
-    except (AttributeError, KeyError):
-        force_template = None
-
-    if force_template != 'mako':
-        try:
-            return django_render_to_response(template, data, context_instance=context)
-        except TemplateDoesNotExist as e:
-            if force_template == 'django':
-                raise e
-
-    template = LOOKUP.get_template(template)
-    if data is None:
-        data = {}
-    if context is None:
-        context = Context(data)
-    else:
-        context.update(data)
-    tmpl_data = {}
-    for d in context:
-        tmpl_data.update(d)
-    tmpl_data['reverse'] = reverse
-    tmpl_data['management_vm'] = getattr(django_settings, 'MANAGEMENT_VM', False)
-    tmpl_data['private_cloud'] = getattr(django_settings, 'PRIVATE_CLOUD', False)
-    try:
-        return HttpResponse(template.render(**tmpl_data))
-    except Exception, e:
-        if django_settings.DEBUG:
-            return HttpResponse(exceptions.text_error_template().render())
-        else:
-            raise
-
 def get_config_group(config, group_id):
     for group in config['groups']:
         if group['group_id'] == group_id:
@@ -171,13 +137,25 @@ class NetkesBackend(ModelBackend):
             log.info('Username "%s" does not match superuser username' % username)
             return None
 
-        api = Api.create(
-            django_settings.ACCOUNT_API_URL,
-            username,
-            password,
-        )
-        try:
-            api.ping()
+        initial_auth = False
+        if not config['api_user']:
+            new_pass, api_pass = hash_password(password)
+            api = Api.create(
+                django_settings.ACCOUNT_API_URL,
+                username,
+                api_pass,
+            )
+            try:
+                api.ping()
+                initial_auth = True
+            except urllib2.HTTPError:
+                log.info('''Failed initial log in for "%s" as a superuser.
+                         Password incorrect or unable to contact
+                         accounts api''' % username)
+                return None
+            
+        local_pass = config.get('local_password', '')
+        if initial_auth or bcrypt.hashpw(password, local_pass) == local_pass:
             try:
                 user = User.objects.get(username=username)
             except ObjectDoesNotExist:
@@ -191,49 +169,10 @@ class NetkesBackend(ModelBackend):
             )
 
             return user
-        except urllib2.HTTPError:
-            log.info('''Failed to log in "%s" as a superuser.
-                        Password incorrect or unable to contact
-                        accounts api''' % username)
-
-            return None
-
-    def authenticate_ldap(self, username, password):
-        config = read_config_file()
-        conn = ldap.initialize(config['dir_uri'])
-        try:
-            auth_user = ldap_source.get_auth_username(config, username)
-            conn.simple_bind_s(auth_user, password)
-            group = False
-            ldap_conn = ldap_source.OMLDAPConnection(config["dir_uri"],
-                                                     config["dir_base_dn"],
-                                                     config["dir_user"],
-                                                     config["dir_password"])
-            for admin_group in models.AdminGroup.objects.all():
-                group = ldap_source.LdapGroup.get_group(
-                    ldap_conn,
-                    config,
-                    admin_group.ldap_dn,
-                    admin_group.ldap_dn,
-                )
-                for user in group.userlist():
-                    key = 'email'
-                    if 'username' in user:
-                        key = 'username'
-                    if user[key] == username:
-                        group = Group.objects.get(pk=admin_group.group_id)
-                        break
-
-            if not group:
-                return None
-            try:
-                user = User.objects.get(username=username)
-            except User.DoesNotExist:
-                user = User(username=username, password='not used')
-                user.save()
-            user.groups.add(group)
-            return user
-        except Exception, e:
+        else:
+            msg = '''Failed to log in "%s" as a superuser. Password incorrect.
+            ''' % username
+            log.info(msg)
             return None
 
     def authenticate_netkes(self, username, password):
@@ -263,15 +202,19 @@ class NetkesBackend(ModelBackend):
             user.groups.add(group)
             return user
         else:
-            log.info('''Failed to authenticate "%s". Username or password
-                        incorrect.''' % username)
+            msg = '''Failed to authenticate "%s". Username or password incorrect.
+            ''' % username 
+            log.info(msg)
 
     def authenticate(self, username=None, password=None):
         user = self.authenticate_superuser(username, password)
         if user:
             return user
 
-        return self.authenticate_netkes(username, password)
+        config = read_config_file()
+        if config['api_user']:
+            return self.authenticate_netkes(username, password)
+        return None
 
     def get_user(self, user_id):
             try:
@@ -286,14 +229,47 @@ class LoginForm(forms.Form):
     username = forms.CharField(max_length=90)
     password = forms.CharField(widget=forms.PasswordInput)
 
+def hash_password(new_password):
+    hash_ = sha256(new_password).digest()
+    salt = '$2a$14$' + b64encode(hash_[:16]).rstrip('=')
+    new_pass = bcrypt.hashpw(new_password, salt)
+    api_pass = new_pass[len(salt):]
+
+    return new_pass, api_pass
+
 def initial_setup(username, password):
-    print 'in initial'
+    new_pass, api_pass = hash_password(password)
+
     config_mgr_ = config_mgr.ConfigManager(config_mgr.default_config())
     config_mgr_.config['api_user'] = username
-    config_mgr_.config['api_password'] = password
+    config_mgr_.config['api_password'] = api_pass
+    config_mgr_.config['local_password'] = new_pass
     config_mgr_.apply_config()
 
-    call(['/opt/openmanage/bin/first_setup.sh', username])
+def create_initial_group():
+    config_mgr_ = config_mgr.ConfigManager(config_mgr.default_config())
+    api = get_api(config_mgr_.config)
+
+    plans = api.list_plans()
+    unlimited = [x for x in plans if x['storage_bytes'] == 1000000001000000000]
+    if unlimited:
+        info = api.info()
+        data = {
+            'name': info['company_name'],
+            'plan_id': unlimited[0]['plan_id'],
+            'webapi_enable': True,
+            'check_domain': False,
+        }
+        group_id = api.create_group(data)
+        data = dict(group_id=group_id,
+                    type='dn',
+                    ldap_id='',
+                    priority=0,
+                    user_source='local',
+                    admin_group=False,
+                   )
+        config_mgr_.config['groups'].append(data)
+        config_mgr_.apply_config()
 
 def login_user(request):
     form = LoginForm()
@@ -301,7 +277,7 @@ def login_user(request):
         form = LoginForm(request.POST)
         if form.is_valid():
             password = form.cleaned_data['password']
-            username = form.cleaned_data['username']
+            username = form.cleaned_data['username'].strip()
             user = authenticate(username=username,
                                 password=password)
             if user and user.is_active:
@@ -310,9 +286,20 @@ def login_user(request):
                 log_admin_action(request, 'logged in')# from ip: %s' % remote_addr)
                 config = read_config_file()
 
-                print 'pass', config['api_password']
                 if not config['api_password']:
                     initial_setup(username, password)
+                    config = read_config_file()
+                    api = get_api(config)
+                    if api.backup():
+                        log_admin_action(request, 'restoring from backup')
+                        subprocess.call(['/opt/openmanage/bin/run_restore_omva.sh',])
+                    elif not config['groups']:
+                        create_initial_group()
+
+                config_mgr_ = config_mgr.ConfigManager(config_mgr.default_config())
+                api = get_api(config_mgr_.config)
+                subprocess.call(['/opt/openmanage/bin/first_setup.sh', 
+                                 api.info()['brand_identifier']])
 
                 request.session['username'] = username
 
@@ -360,7 +347,78 @@ def get_api(config):
         config['api_user'],
         config['api_password'],
     )
+
+    FUNCTIONS_TO_CACHE = [
+        'list_plans',
+        'quota',
+        'info',
+        'enterprise_features',
+        'enterprise_settings',
+        'list_groups',
+        'list_shares_for_brand',
+        'get_user_count',
+        'list_devices',
+        'list_shares',
+        'list_users',
+    ]
+    FUNCTIONS_TO_INVALIDATE_CACHE = {
+        'update_enterprise_settings': ['enterprise_settings'],
+        'create_group': ['list_groups'],
+        'edit_group': ['list_groups'],
+        'delete_group': ['list_groups', 'list_users'],
+        'create_user': ['list_users'],
+        'edit_user': ['list_users'],
+        'delete_user': ['list_users'],
+    }
+    
+    def check_list_users(name, args, kwargs):
+        if (name == 'list_users' and 
+            args == (25, 0) 
+            and not kwargs):
+            return True
+        return False
+
+    def cache_api(fun):
+        def dec(*args, **kwargs):
+            name = fun.__name__
+            if name in FUNCTIONS_TO_INVALIDATE_CACHE:
+                for f in FUNCTIONS_TO_INVALIDATE_CACHE[name]:
+                    cache.delete(f)
+            if name in FUNCTIONS_TO_CACHE or check_list_users(name, args, kwargs):
+                value = cache.get(name)
+                if not value:
+                    value = fun(*args, **kwargs)
+                    cache.set(name, value)
+                return value
+            else:
+                return fun(*args, **kwargs)
+        return dec
+
+    for attr in dir(api):
+        fun_ = getattr(api, attr)
+        if (callable(fun_) and 
+            (attr in FUNCTIONS_TO_CACHE or 
+             attr in FUNCTIONS_TO_INVALIDATE_CACHE)):
+            setattr(api, attr, cache_api(fun_))
     return api
+
+def get_billing_api(config):
+    billing_api = BillingApi.create(
+        django_settings.BILLING_API_URL,
+        config['api_user'],
+        config['api_password'],
+    )
+    return billing_api
+
+
+def get_billing_info(config):
+    billing_info = cache.get('billing_info')
+    if not billing_info:
+        billing_api = get_billing_api(config)
+        billing_info = billing_api.billing_info()
+        cache.set('billing_info', billing_info, 60 * 15)
+    return billing_info
+
 
 def enterprise_required(fun):
     def new_fun(request, *args, **kwargs):
@@ -370,10 +428,7 @@ def enterprise_required(fun):
         config = read_config_file()
         api = get_api(config)
         account_info = dict()
-        quota = cache.get('quota')
-        if not quota:
-            quota = api.quota()
-            cache.set('quota', quota, 60 * 15)
+        quota = api.quota()
         account_info['device_count'] = quota['device_count']
         account_info['share_count'] = quota['share_count']
         account_info['space_used'] = quota['bytes_used']
@@ -383,14 +438,15 @@ def enterprise_required(fun):
         if not account_info['space_available']:
             account_info['show_available'] = False
             account_info['space_available'] = account_info['space_allocated']
-        user_count = cache.get('user_count')
-        if not user_count:
-            user_count = api.get_user_count()
-            cache.set('user_count', user_count, 60 * 5)
+        user_count = api.get_user_count()
         account_info['total_users'] = user_count
         account_info['total_groups'] = len(config['groups'])
         account_info['total_auth_codes'] = models.AdminSetupTokensUse.objects.count()
         account_info['api_user'] = config['api_user']
+        account_info['info'] = api.info()
+        
+        with open('/opt/openmanage/etc/OpenManage_version.txt') as f:
+            account_info['version'] = f.readlines()[0]
         return fun(request, api, account_info, config,
                    request.session['username'], *args, **kwargs)
     return new_fun
@@ -401,7 +457,7 @@ def download_logs(request, api, account_info, config, username):
     filename = 'openmanage-logs-%s.tar.bz2' % date
     path = '/opt/openmanage/tmp_logs/%s' % filename
 
-    call(['/opt/openmanage/bin/gather_logs.sh', date])
+    subprocess.call(['/opt/openmanage/bin/gather_logs.sh', date])
 
     response = HttpResponse(FileWrapper(open(path)),
                             mimetype='application/bzip2')
@@ -577,9 +633,32 @@ def manage(request, api, account_info, config, username):
         username=username,
         account_info=account_info,
         account_name=account_name,
+        billing_info=get_billing_info(config),
     ),
     RequestContext(request))
 
+@enterprise_required
+def fingerprint(request, api, account_info, config, username):
+    brand_identifier = api.info()['brand_identifier']
+
+    layers = serial.loads(server.get_escrow_layers(brand_identifier))
+
+    # Generate fingerprint
+    h = sha256()
+    for key_id, key in layers:
+        s = '{0}{1}'.format(key_id, key.publickey().exportKey('DER'))
+        h.update(s)
+    fingerprint = enumerate(key_to_english(h.digest()).split(' '))
+    fingerprint = ' '.join([word for x, word in fingerprint \
+                            if x % 2 == 0])
+    
+    return render_to_response('fingerprint.html', dict(
+        user=request.user,
+        username=username,
+        account_info=account_info,
+        fingerprint=fingerprint,
+    ),
+    RequestContext(request))
 
 # Benny's da_paginator
 def pageit(sub, api, page, extra):

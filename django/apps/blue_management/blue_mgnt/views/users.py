@@ -2,18 +2,21 @@ import datetime
 from base64 import b32encode
 import csv
 
-from views import enterprise_required, render_to_response, log_admin_action
+from views import enterprise_required, log_admin_action
 from views import ReadOnlyWidget, get_base_url, SIZE_OF_GIGABYTE
 from views import pageit
+from settings import PasswordForm
 from groups import get_config_group
 
 from django import forms
+from django.core.cache import cache
 from django.core.urlresolvers import reverse
 from django.forms.formsets import formset_factory
 from django.template import RequestContext
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render_to_response
 
 from netkes.account_mgr.user_source import local_source
+import openmanage.models as openmanage_models
 
 class UserDetailWidget(ReadOnlyWidget):
     def render(self, name, value, attrs):
@@ -92,7 +95,41 @@ def get_group(groups, group_name):
         if group['name'].lower() == group_name.lower():
             return group
 
-def get_new_user_csv_form(api, groups, config, request):
+def create_user(api, account_info, config, data):
+    email = data['email']
+    api.create_user(data)
+    # Set a blank password so that the password can be set 
+    # through the set password email.
+    local_source.set_user_password(local_source._get_db_conn(config),
+                                   email, '') 
+    api.send_activation_email(email, dict(template_name='set_password'))
+    cache.delete('account_info')
+    cache.delete('user_count')
+
+def _csv_create_users(api, account_info, groups, config, request, csv_data):
+    for x, row in enumerate(csv_data):
+        group = get_group(groups, row['group_name'])
+        group_id = group['group_id']
+        config_group = get_config_group(config, group_id)
+        if config_group['user_source'] != 'local':
+            msg = 'Invalid data in row %s.' % x
+            return x, forms.ValidationError(msg + ' group_name must be a local group')
+        plan_id = get_plan_id(groups, group_id) 
+        user_info = dict(
+            email=row['email'],
+            name=row['name'],
+            group_id=group_id,
+            plan_id=plan_id,
+        )
+        try:
+            create_user(api, account_info, config, user_info)
+            log_admin_action(request, 'create user through csv: %s' % user_info)
+        except api.DuplicateEmail:
+            msg = 'Invalid data in row %s. Email already in use' % x
+            return x, forms.ValidationError(msg)
+    return x + 1, None
+
+def get_new_user_csv_form(api, groups, account_info, config, request):
     class UserCSVForm(forms.Form):
         csv_file = forms.FileField(label='User CSV')
 
@@ -104,46 +141,31 @@ def get_new_user_csv_form(api, groups, config, request):
                 msg = 'Invalid data in row %s.' % x
                 if 'email' not in row:
                     raise forms.ValidationError(msg + ' email is required')
+                if '@' not in row['email']:
+                    raise forms.ValidationError(msg + ' invalid email')
                 if 'name' not in row:
                     raise forms.ValidationError(msg + ' name is required')
-                if 'password' not in row:
-                    raise forms.ValidationError(msg + ' password is required')
                 if 'group_name' not in row:
                     raise forms.ValidationError(msg + ' group_name is required')
 
             csv_data = csv.DictReader(data)
-            for x, row in enumerate(csv_data):
-                group = get_group(groups, row['group_name'])
-                group_id = group['group_id']
-                config_group = get_config_group(config, group_id)
-                if config_group['user_source'] != 'local':
-                    msg = 'Invalid data in row %s.' % x
-                    raise forms.ValidationError(msg + ' group_name must be a local group')
-                plan_id = get_plan_id(groups, group_id) 
-                user_info = dict(
-                    email=row['email'],
-                    name=row['name'],
-                    group_id=group_id,
-                    plan_id=plan_id,
-                )
-                try:
-                    api.create_user(user_info)
-                    local_source.set_user_password(local_source._get_db_conn(config),
-                                                   row['email'], row['password'])
-                    log_admin_action(request, 'create user through csv: %s' % user_info)
-                except api.DuplicateEmail:
-                    msg = 'Invalid data in row %s. Email already in use' % x
-                    raise forms.ValidationError(msg)
+            msg = False
+            created, e = _csv_create_users(api, account_info, groups, 
+                                           config, request, csv_data)
+            if created > 0:
+                cache.delete('account_info')
+                cache.delete('user_count')
+            if e is not None:
+                raise e
             return data
     return UserCSVForm
 
-def get_new_user_form(api, features, config, local_groups, groups, request):
+def get_new_user_form(api, features, account_info, config, local_groups, groups, request):
     class NewUserForm(forms.Form):
         if not features['email_as_username']:
             username = forms.CharField(max_length=45)
         email = forms.EmailField()
         name = forms.CharField(max_length=45)
-        password = forms.CharField(max_length=64, widget=forms.PasswordInput)
         group_id = forms.ChoiceField(local_groups, label='Group')
 
         def clean_username(self):
@@ -161,7 +183,6 @@ def get_new_user_form(api, features, config, local_groups, groups, request):
             name = cleaned_data.get('name', '')
             group_id = cleaned_data['group_id']
             username = cleaned_data.get('username', '')
-            password = cleaned_data.get('password', '')
 
             valid_username = username
             if not hasattr(self, username):
@@ -173,9 +194,7 @@ def get_new_user_form(api, features, config, local_groups, groups, request):
                 if username:
                     data.update(dict(username=username))
                 try:
-                    api.create_user(data)
-                    local_source.set_user_password(local_source._get_db_conn(config),
-                                                   email, password)
+                    create_user(api, account_info, config, data)
                     log_admin_action(request, 'create user: %s' % data)
                 except api.DuplicateEmail:
                     self._errors['email'] = self.error_class(["Email address already in use"])
@@ -221,8 +240,8 @@ def users(request, api, account_info, config, username, saved=False):
     if not search:
         search = request.POST.get('search', '')
 
-    UserCSVForm = get_new_user_csv_form(api, groups, config, request)
-    NewUserForm = get_new_user_form(api, features, config, local_groups, groups, request)
+    UserCSVForm = get_new_user_csv_form(api, groups, account_info, config, request)
+    NewUserForm = get_new_user_form(api, features, account_info, config, local_groups, groups, request)
 
     class BaseUserFormSet(forms.formsets.BaseFormSet):
         def clean(self):
@@ -310,6 +329,8 @@ def users(request, api, account_info, config, username, saved=False):
                     orig_email = form.cleaned_data['orig_email']
                     api.delete_user(orig_email)
                     log_admin_action(request, 'delete user "%s"' % orig_email)
+                    cache.delete('account_info')
+                    cache.delete('user_count')
                 return redirect(reverse('blue_mgnt:users_saved') + '?search=%s' % search)
 
     index = 0
@@ -317,7 +338,7 @@ def users(request, api, account_info, config, username, saved=False):
         if user['is_local_user']:
             user['form'] = tmp_user_formset[index]
             index += 1
-
+    
     return render_to_response('index.html', dict(
         all_users=initial,
         user=request.user,
@@ -345,6 +366,10 @@ def users(request, api, account_info, config, username, saved=False):
 def user_detail(request, api, account_info, config, username, email, saved=False):
     user = api.get_user(email)
     devices = api.list_devices(email)
+    if devices:
+        user['last_backup_complete'] = max(x['last_backup_complete'] for x in devices)
+    else:
+        user['last_backup_complete'] = None
     features = api.enterprise_features()
     local_user = is_local_user(config, user['group_id'])
     groups = api.list_groups()
@@ -355,14 +380,6 @@ def user_detail(request, api, account_info, config, username, email, saved=False
             name = forms.CharField(max_length=45)
             email = forms.EmailField()
             group_id = forms.ChoiceField(local_groups, label='Group')
-            password = forms.CharField(max_length=64, 
-                                       widget=forms.PasswordInput,
-                                       required=False
-                                      )
-            repeat_password = forms.CharField(max_length=64, 
-                                              widget=forms.PasswordInput,
-                                              required=False
-                                             )
             enabled = forms.BooleanField(required=False)
         else:
             name = forms.CharField(widget=ReadOnlyWidget, required=False, max_length=45)
@@ -375,24 +392,13 @@ def user_detail(request, api, account_info, config, username, email, saved=False
             enabled = forms.BooleanField(widget=ReadOnlyWidget, required=False)
         bonus_gigs = forms.IntegerField(label="Bonus GBs")
 
-        def clean(self):
-            cleaned_data = super(UserForm, self).clean()
-            password = cleaned_data.get("password")
-            repeat_password = cleaned_data.get("repeat_password")
-
-            if password != repeat_password:
-                msg = "must match password"
-                self._errors['repeat_password'] = self.error_class([msg])
-                del cleaned_data['password']
-                del cleaned_data['repeat_password']
-            return cleaned_data
-
     data = dict()
     data.update(user)
     data['bonus_gigs'] = user['bonus_bytes'] / SIZE_OF_GIGABYTE
     if not local_user:
         data['group_id'] = get_group_name(groups, data['group_id'])
     user_form = UserForm(initial=data)
+    password_form = PasswordForm()
     if request.method == 'POST':
         if request.POST.get('form', '') == 'resend_email':
             log_admin_action(request, 'resent activation email for %s ' % email)
@@ -405,20 +411,29 @@ def user_detail(request, api, account_info, config, username, email, saved=False
                 if local_user:
                     data.update(user_form.cleaned_data)
                     del data['bonus_gigs']
-                    del data['repeat_password']
-                if 'password' in data:
-                    if data['password']:
-                        local_source.set_user_password(local_source._get_db_conn(config),
-                                                    email, data['password'])
-                    del data['password']
+                    if email != data['email']:
+                        try:
+                            password = openmanage_models.Password.objects.get(email=email)
+                            password.update_email(data['email'])
+                        except openmanage_models.Password.DoesNotExist:
+                            pass
                 if request.user.has_perm('blue_mgnt.can_edit_bonus_gigs'):
                     data['bonus_bytes'] = user_form.cleaned_data['bonus_gigs'] * SIZE_OF_GIGABYTE
                 if data:
                     log_admin_action(request, 'edit user "%s" with data: %s' % (email, data))
                     api.edit_user(email, data)
                 return redirect('blue_mgnt:user_detail_saved', data.get('email', email))
+        if request.POST.get('form', '') == 'password':
+            password_form = PasswordForm(request.POST)
+            if password_form.is_valid():
+                log_admin_action(request, 'change password for: %s' % email)
+                password = password_form.cleaned_data['password']
+                local_source.set_user_password(local_source._get_db_conn(config),
+                                                email, password)
+                return redirect('blue_mgnt:user_detail_saved', data.get('email', email))
         if request.POST.get('form', '') == 'delete_user':
             if request.user.has_perm('blue_mgnt.can_manage_users'):
+                log_admin_action(request, 'delete user %s' % email)
                 api.delete_user(email)
                 return redirect('blue_mgnt:users')
         if request.POST.get('form', '') == 'edit_share':
@@ -434,10 +449,12 @@ def user_detail(request, api, account_info, config, username, email, saved=False
         shares=api.list_shares(email),
         share_url=get_base_url(),
         username=username,
+        local_user=local_user,
         email=email,
         api_user=user,
         storage_login=get_login_link(data['username']),
         user_form=user_form,
+        password_form=password_form,
         features=features,
         account_info=account_info,
         datetime=datetime,

@@ -4,9 +4,9 @@ import subprocess
 import glob
 from base64 import b32encode
 
-from views import enterprise_required, render_to_response, log_admin_action, get_base_url
+from views import enterprise_required, log_admin_action, get_base_url
 from django.template import RequestContext
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render_to_response
 from django.db import connection
 from django import forms
 from django.core.urlresolvers import reverse
@@ -92,6 +92,7 @@ def auth_codes(request, api, account_info, config, username, saved=False):
             code = models.AdminSetupTokens.objects.get(token=request.POST['token'])
             code.expiry = datetime.datetime.now()
             code.save()
+            log_admin_action(request, 'Disabled code: %s' % request.POST['token'])
             return redirect(reverse('blue_mgnt:auth_codes_saved') +
                             '?show_inactive=%s' % show_inactive)
 

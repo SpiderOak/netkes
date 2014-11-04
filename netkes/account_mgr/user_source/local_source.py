@@ -82,7 +82,10 @@ def set_multi_passwords(db_conn, emails, passwords):
     """
     if len(emails) != len(passwords):
         raise TypeError("Argument lengths do not match!")
-    hashed_pws = (bcrypt.hashpw(pw, bcrypt.gensalt()) for pw in passwords)
+    hashed_pws = []
+    for pw in passwords:
+        hashed_pw = bcrypt.hashpw(pw, bcrypt.gensalt()) if pw else pw
+        hashed_pws.append(hashed_pw)
     cur = db_conn.cursor()
 
     cur.executemany(

@@ -6,11 +6,20 @@
 
 {% block body_classes %}user_detail {{ block.super }}{% endblock body_classes %}
 {% block breadcrumb %}<a href="{% url 'blue_mgnt:users' %}">Back to Users</a>{% endblock breadcrumb %}
-{% block modal_options %}{% include "partials/delete-user-widget.html" %}{% endblock modal_options %}
+{% block modal_options %}
+    {% include "partials/delete-user-widget.html" %}
+    {% include "partials/disable-user-widget.html" %}
+    {% include "partials/change-user-password-widget.html" %}
+{% endblock modal_options %}
 {% block navtab %}{% include "partials/navtab-widget.html" with active="users" %}{% endblock navtab %}
 {% block content %}
 <h1 class="page-header">
 	<i class="ss-icon">&#x1F464;</i> User Details
+    <div class="actions">
+        {% if devices|length > 0 %}
+        <a href="{{ storage_login }}" target="_blank" class="button button-primary-basic">Access User's Data</a>
+        {% endif %}
+    </div>
 </h1>
 
 {% if saved %}
@@ -25,7 +34,7 @@
     {% csrf_token %}
     <div class="" id="options">
         <fieldset>
-            <table class="widget-table widget-table-details">
+            <table id="widget-table-details" class="widget-table">
                 <tbody>
             {% if not features.email_as_username %}
             <tr>
@@ -60,7 +69,7 @@
                         <a href="{% url 'blue_mgnt:manage' %}">Manage page</a>.
                     </span>
                 </td>
-                {% elif field.html_name == 'bonus_gigs' %}
+                {% elif field.html_name == 'bonus_gigs' and not field.errors %}
                 <td id="hint">
                     <span>Add extra space for this specific user.</span>
                 </td>
@@ -76,23 +85,23 @@
                 <td class="toggle-controller link-primary"><span></span> all devices</td>
             </tr>
             <tr class="widget-overview">
-                <td></td>
+                <td>
                 <td colspan="2">
                     <table class="widget-table">
                         <thead>
                             <th>Name</th>
                             <th>Creation Time</th>
-                            <th>Last Logged In</th>
+                            <th>Last Backup Complete</th>
                         </thead>
                         <tbody>
                             {% for device in devices %}
                             <tr>
                                 <td>{{ device.name }}</td>
                                 <td>{{ device.creation_time|todate }}</td>
-                                <td>{% if device.last_login %}
-                                    {{ device.last_login|todate }}
+                                <td>{% if device.last_backup_complete  %}
+                                    {{ device.last_backup_complete |todate }}
                                     {% else %}
-                                    No login recorded
+                                    No backup recorded
                                     {% endif %}
                                 </td>
                             </tr>
@@ -152,7 +161,11 @@
             </tr>
             <tr>
                 <td><label>Storage GBs</label></td>
+                {% if api_user.storage_bytes < 1000000001000000000 %}
                 <td>{{ api_user.storage_bytes|sofilesizeformat }}</td>
+                {% else %}
+                <td>Unlimited</td>
+                {% endif %}
                 <td></td>
             </tr>
             <tr>
@@ -172,19 +185,19 @@
                 <td></td>
             </tr>
             <tr>
-                <td><label>Enabled</label></td>
-                <td>{{ api_user.enabled }}</td>
+                <td><label>Last Backup Complete</label></td>
+                <td>
+                    {% if api_user.last_backup_complete %}
+                    {{ api_user.last_backup_complete|todate }}
+                    {% else %}
+                    No backup recorded
+                    {% endif %}
+                </td>
                 <td></td>
             </tr>
             <tr>
-                <td><label>Storage Login</label></td>
-                <td>
-                    {% if devices|length > 0 %}
-                    <a href="{{ storage_login }}" target="_blank">storage login</a>
-                    {% else %}
-                    No devices created.
-                    {% endif %}
-                </td>
+                <td><label>Enabled</label></td>
+                <td>{{ api_user.enabled }}</td>
                 <td></td>
             </tr>
         </tbody>
@@ -196,7 +209,10 @@
                 <input type='hidden' value='edit_user' name='form'>
             </div>
             <div class="widget-splitactions float">
-                <button id="add-widget" class="button button-secondary">Delete User</button>
+                <button id="modal-trigger-delete_user" class="button button-secondary">Delete User</button>
+            {% if local_user %}
+                <button id="modal-trigger-change_user_password" class="button button-muted">Change User's Password</button>
+            {% endif %}
             </div>
     </form>
 {% endblock content %}

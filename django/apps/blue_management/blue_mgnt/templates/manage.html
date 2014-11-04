@@ -18,25 +18,49 @@
         <div class="manage-content">
             <h3>Groups<span>{{ account_info.total_groups }} Groups</span></h3>
             <p>Set the amount of storage space and other options for groups of users.</p>
-            <a href="{% url 'blue_mgnt:groups' %}" class="button button-primary-basic">Manage Groups</a>
+            <a href="{% url 'blue_mgnt:groups' %}" class="button button-primary-basic">
+                Manage Groups
+            </a>
         </div>
     </div>
     <div class="widget-manage-blocks">
-        <div class="manage-icon"><i class="ss-icon">&#x1F511;</i></div>
+        <div class="manage-icon"><i class="ss-icon">&#x1F4B2;</i></div>
         <div class="manage-content">
-            <h3>Auth Codes<span>{{ account_info.total_auth_codes }} Auth Codes</span></h3>
-            <p>Can be used instead of passwords to allow adminstrators to set up accounts.</p>
-            <a href="{% url 'blue_mgnt:auth_codes' %}" class="button button-primary-basic">Manage Auth Codes</a>
+            <h3>Billing Information{% if billing_info.current_plan %}<span>{{ billing_info.current_plan.quantity }} users</span>{% endif %}</h3>
+            <p>Manage your billing.{% if billing_info.current_card.last4 %} <a href="{% url 'blue_mgnt:billing_update_cc' %}">Update credit card</a>{% endif %}</p>
+            <a href="{% url 'blue_mgnt:billing' %}" class="button button-primary-basic">Manage Billing</a>
+        </div>
+    </div>
+    <div class="widget-manage-blocks">
+        <div class="manage-icon"><i class="ss-icon">&#x1F464;</i></div>
+        <div class="manage-content">
+            <h3>Fingerprint</h3>
+            <p>Your account fingerprint.</p>
+            <a href="{% url 'blue_mgnt:fingerprint' %}" class="button button-primary-basic">
+                View Fingerprint
+            </a>
         </div>
     </div>
 </div>
 <div class="right-col">
     <div class="widget-manage-blocks">
+        <div class="manage-icon"><i class="ss-icon">&#x1F511;</i></div>
+        <div class="manage-content">
+            <h3>Auth Codes<span>{{ account_info.total_auth_codes }} Auth Codes</span></h3>
+            <p>Can be used instead of passwords to allow adminstrators to set up accounts.</p>
+            <a href="{% url 'blue_mgnt:auth_codes' %}" class="button button-primary-basic">
+                Manage Auth Codes
+            </a>
+        </div>
+    </div>
+    <div class="widget-manage-blocks">
         <div class="manage-icon"><i class="ss-icon">&#x1F464;</i></div>
         <div class="manage-content">
             <h3>Account<span>{{ account_name|title }}</span></h3>
             <p>Settings for your account.</p>
-            <a href="{% url 'blue_mgnt:settings' %}" class="button button-primary-basic">Edit Account</a>
+            <a href="{% url 'blue_mgnt:settings' %}" class="button button-primary-basic">
+                Edit Account
+            </a>
         </div>
     </div>
 </div>

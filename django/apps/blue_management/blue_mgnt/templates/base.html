@@ -13,16 +13,16 @@
     {% block styles %}
     <link rel="stylesheet" href="/static/blue_mgnt/css/ss-standard.css" />
     {% comment %}
-    <link rel="stylesheet/less" href="/static/blue_mgnt/less/style.less" type="text/css" />
-    {% endcomment %}
     <link rel="stylesheet" href="/static/blue_mgnt/css/console-min.css" />
+    {% endcomment %}
+    <link rel="stylesheet/less" href="/static/blue_mgnt/less/style.less" type="text/css" />
     {% endblock styles %}
 
-	{% block jquery %}
-	<script src="/static/blue_mgnt/vendor/jquery-1.10.2.min.js" type="text/javascript"></script>
+    {% block jquery %}
+    <script src="/static/blue_mgnt/vendor/jquery-1.10.2.min.js" type="text/javascript"></script>
     {% comment %}
-    <script type="text/javascript" src="/static/blue_mgnt/vendor/less-1.5.0.min.js"></script>
     {% endcomment %}
+    <script type="text/javascript" src="/static/blue_mgnt/vendor/less-1.5.0.min.js"></script>
     <script src="/static/blue_mgnt/js/console.js" type="text/javascript"></script>
 	{% endblock jquery %}
 	<!--[if lt IE 9]>
@@ -47,9 +47,9 @@
 				</a>
 			</h1>
 			<ul>
-                <li>( {{ account_info.api_user|title }} )</li>
+                <li>{{ account_info.info.company_name }}</li>
 				<li>{{ username }}</li>
-                <li class="line"><a href="https://spideroak.com/business/blue/docs/">
+                <li class="line"><a target="_blank" href="https://spideroak.com/business/blue/docs/">
                     <i class="ss-icon">&#x2753;</i>Help
                 </a></li>
 				<li class="line"><a href="{% url "blue_mgnt:logout" %}"><i class="ss-icon">&#x1F512;</i>Logout</a></li>
@@ -84,6 +84,7 @@
 				<li><a href="https://spideroak.com/about/">About</a></li>
 				<li><a href="https://spideroak.com/privacy_policy">Privacy Policy</a></li>
 				<li><a href="https://spideroak.com/terms_of_use">Terms of Use</a></li>
+                <li>{{ account_info.version }}</li>
 			</ul>
 			<div class="spacer"><!--ZKP--></div>
 		</div>

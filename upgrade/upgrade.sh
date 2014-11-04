@@ -14,10 +14,7 @@ usage(){
     cat << __EOF__
 Usage:
 
-upgrade.sh <upgradefile> [<brand_id>]
-
-where <upgradefile> is a tarball, like openmanage-1.3.tar.bz2
-and <brand_id> is the enterprise brand, imported if not specified and available.
+upgrade.sh <version>
 
 Requirements:
 Must be run as root, e.g. with sudo!
@@ -37,21 +34,17 @@ fi
 
 . /etc/default/openmanage
 
-UPDATE_TARBALL=`readlink -e $1`
+VERSION=$1
+
+UPDATE_TARBALL="openmanage-$VERSION.tar.bz2"
 if [ ! -n "$UPDATE_TARBALL" ]; then
     echo "The upgrade file could not be found.  Exiting."
     exit
 fi
-BRAND=${2:-$OPENMANAGE_BRAND} # Loaded indirectly from /etc/default/openmanage.
-if [ ! -n "$BRAND" ]; then
-    echo "The enterprise ID could not be loaded.  Exiting."
-    exit
-fi
 
-echo "Starting upgrade using $UPDATE_TARBALL for enterprise $BRAND."
-read -p "Press <Enter> to continue; <Ctrl>-C to abort."
+echo "Starting upgrade using $UPDATE_TARBALL."
 
-CURRENT_DATE=$(date "+%y-%m-%d")
+CURRENT_DATE=$(date "+%y-%m-%d-%T")
 
 
 # Stop services.
@@ -62,10 +55,8 @@ done
 # Move out old openmanage
 mv /opt/openmanage /opt/openmanage.$CURRENT_DATE
 
-pushd /opt
-tar xjfv $UPDATE_TARBALL
-popd #/opt
-
+tar xjfv $UPDATE_TARBALL -C /opt
+ln -s /opt/openmanage-$VERSION /opt/openmanage
 echo "updated tarball"
 
 # Bring over configuration into the new stuff.
@@ -75,24 +66,28 @@ random_string="$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c 64;echo;)"
 secret_key="export DJANGO_SECRET_KEY=\"$random_string\""
 echo $secret_key >> /opt/openmanage/etc/openmanage_defaults 
 
-# Set the brand in the configuration
-echo "OPENMANAGE_BRAND=$BRAND" > /opt/openmanage/etc/brand
-
 echo "Updating database..."
 /opt/openmanage/upgrade/apply_sql.sh
-echo "Running additional update scripts..."
 
+echo "Running additional update scripts..."
 sudo bash -c "PYTHONPATH=/opt/openmanage python /opt/openmanage/upgrade/apply_scripts.py"
 
 apt-get -y remove python-crypto
 
 find /opt/openmanage/upgrade/resources/ -name '*.deb' | xargs dpkg -i
 
-pip install -r /opt/openmanage/upgrade/requirements.txt
+cat /opt/openmanage/upgrade/requirements.txt | xargs pip install
 
 # Restart services
 for SERVICE in openmanage admin_console; do
     sv up $SERVICE
 done
+
+# Backup VM
+sudo /opt/openmanage/bin/backup_omva.sh
+echo "Backup complete"
+
+# Set VM version
+python /opt/openmanage/bin/set_version.py $VERSION
 
 echo "Upgrade complete!"

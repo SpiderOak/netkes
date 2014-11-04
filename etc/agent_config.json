@@ -1,6 +1,7 @@
 {
     "api_password": "",
     "api_root": "https://spideroak.com/apis/accounts/v1/",
+    "billing_root": "https://spideroak.com/apis/billing/v1/",
     "api_user": "",
     "auth_method": "local",
     "db_pass": "initial",
