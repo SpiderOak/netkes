@@ -84,6 +84,8 @@ for SERVICE in openmanage admin_console; do
     sv up $SERVICE
 done
 
+sudo service nginx restart
+
 # Set VM version
 python /opt/openmanage/bin/set_version.py $VERSION
 
