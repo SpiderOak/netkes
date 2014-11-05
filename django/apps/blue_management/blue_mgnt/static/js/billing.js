@@ -340,7 +340,6 @@
                     type: "POST",
                     data: {
                         'coupon': this.model.get("coupon"),
-                        'quantity': this.model.get("quantity"),
                         'frequency': this.model.get("frequency"),
                     }
                 })
@@ -374,7 +373,6 @@
                     type: "POST",
                     data: {
                         'coupon': this.model.get("coupon"),
-                        'quantity': this.model.get("quantity"),
                         'frequency': this.model.get("frequency"),
                         'stripe_token': stripe_token
                     }

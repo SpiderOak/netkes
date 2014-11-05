@@ -22,7 +22,6 @@ class CouponCheckForm(forms.Form):
 
 class CreateSubscriptionForm(forms.Form):
     coupon = forms.CharField(required=False)
-    quantity = forms.IntegerField()
     frequency = forms.CharField()
     stripe_token = forms.CharField(required=False)
 
@@ -78,16 +77,9 @@ def create_subscription(request, api, account_info, config, username):
     if request.session.get('username') and request.method == 'POST':
         check_form = CreateSubscriptionForm(request.POST)
         if check_form.is_valid():
-            quantity = check_form.cleaned_data['quantity']
-            if account_info['total_users'] > quantity:
-                return json_response(request, {
-                    'success': False,
-                    'msg': 'Quantity lower than current users',
-                })
             billing_api = get_billing_api(config)
             resp = billing_api.create_subscription(
                 check_form.cleaned_data['coupon'],
-                check_form.cleaned_data['quantity'],
                 check_form.cleaned_data['frequency'],
                 check_form.cleaned_data['stripe_token'],
             )
