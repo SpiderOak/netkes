@@ -182,7 +182,7 @@ def main():
     candidate_to_purge_users = collect_users(api)
     users_to_purge = filter_users(config['only_empty'], config['older_than'],
                                   candidate_to_purge_users)
-    run_purge(api, users_to_purge)
+    run_purge(api, users_to_purge, config['dry_run'])
 
     return 0
 
