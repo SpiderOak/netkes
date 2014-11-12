@@ -366,9 +366,9 @@ def get_api(config):
         'create_group': ['list_groups'],
         'edit_group': ['list_groups'],
         'delete_group': ['list_groups', 'list_users'],
-        'create_user': ['list_users'],
+        'create_user': ['list_users', 'get_user_count'],
         'edit_user': ['list_users'],
-        'delete_user': ['list_users'],
+        'delete_user': ['list_users', 'get_user_count'],
     }
     
     def check_list_users(name, args, kwargs):

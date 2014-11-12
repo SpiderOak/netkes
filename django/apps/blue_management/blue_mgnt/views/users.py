@@ -9,7 +9,6 @@ from settings import PasswordForm
 from groups import get_config_group
 
 from django import forms
-from django.core.cache import cache
 from django.core.urlresolvers import reverse
 from django.forms.formsets import formset_factory
 from django.template import RequestContext
@@ -103,8 +102,6 @@ def create_user(api, account_info, config, data):
     local_source.set_user_password(local_source._get_db_conn(config),
                                    email, '') 
     api.send_activation_email(email, dict(template_name='set_password'))
-    cache.delete('account_info')
-    cache.delete('user_count')
 
 def _csv_create_users(api, account_info, groups, config, request, csv_data):
     for x, row in enumerate(csv_data):
@@ -152,9 +149,6 @@ def get_new_user_csv_form(api, groups, account_info, config, request):
             msg = False
             created, e = _csv_create_users(api, account_info, groups, 
                                            config, request, csv_data)
-            if created > 0:
-                cache.delete('account_info')
-                cache.delete('user_count')
             if e is not None:
                 raise e
             return data
@@ -329,8 +323,6 @@ def users(request, api, account_info, config, username, saved=False):
                     orig_email = form.cleaned_data['orig_email']
                     api.delete_user(orig_email)
                     log_admin_action(request, 'delete user "%s"' % orig_email)
-                    cache.delete('account_info')
-                    cache.delete('user_count')
                 return redirect(reverse('blue_mgnt:users_saved') + '?search=%s' % search)
 
     index = 0
