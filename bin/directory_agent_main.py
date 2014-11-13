@@ -119,6 +119,9 @@ Run %s -h for help.''' % (sys.argv[0],)
         log.error(str(e))
         return str(e)
 
+    if not config['dir_uri']:
+        return '''LDAP not configured. Exiting'''
+
     set_config(config)
     lockfile = get_lock()
     # Moving along, open the database

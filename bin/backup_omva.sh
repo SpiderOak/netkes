@@ -57,11 +57,13 @@ need_backup() {
 }
 
 main() {
-    lock || eexit "Script is already running. Exiting..."
-    need_backup || eexit "Nothing has changed since last backup. Exiting..."
     number=$(( ( RANDOM % 45 ) + 1 ))
     echo "sleeping for $number minutes to spread out backups"
     sleep ${number}m
+
+    lock || eexit "Script is already running. Exiting..."
+    need_backup || eexit "Nothing has changed since last backup. Exiting..."
+
     set_current_values
     python $OPENMANAGE_ROOT/bin/update_backup.py
 }
