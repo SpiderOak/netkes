@@ -86,7 +86,7 @@
 
     var BillingState = Backbone.Model.extend({
         defaults: {
-            quantity: 10,
+            quantity: null,
             frequency: "monthly",
             coupon: null,
             coupon_state: COUPON_STATES.NONE,
@@ -98,9 +98,10 @@
             has_cc: false
         },
         initialize: function() {
+            var quantity = Math.max(10, SMB.total_users);
+            this.set("quantity", quantity);
             if (SMB.current_plan_quantity && SMB.current_plan_frequency) {
                 this.set("has_current_plan", true);
-                this.set("quantity", SMB.current_plan_quantity); 
                 this.set("frequency", SMB.current_plan_frequency.replace(/^smb_/, "")); 
                 // assume that if they have a plan they have a cc on file
                 this.set("has_cc", true);
@@ -511,7 +512,11 @@
                 });
                 pager.switchTo("summary");
             } else {
-                console.log(data);
+                if (data && data.error) {
+                    this.setMessage(this.$cc, "error", data.error.message);
+                } else {
+                    console.log(data);
+                }
             }
         },
         clearMessage: function($child) {
@@ -662,7 +667,6 @@
         start: function(pager) {
             this.pager = pager;
             this.listenTo(this.pager, "switchTo", this.markSeen);
-            window.h = this;
             if (history.pushState) {
                 this.bindHistory();
             }
