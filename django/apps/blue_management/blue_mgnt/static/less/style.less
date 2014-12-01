@@ -1761,3 +1761,24 @@ body.password {
     }
   }
 }
+
+.dismiss_block {
+    position: relative;
+    &.center {
+        text-align: center;
+    }
+    span.dismiss {
+        position: absolute;
+        top: 0;
+        right: 5px;
+        a {
+            color: #fff;
+            padding: 0;
+            margin: 0;
+            text-decoration: none;
+            &:hover {
+                text-decoration: underline;
+            }
+        }
+    }
+}
