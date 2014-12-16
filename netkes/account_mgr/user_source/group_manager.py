@@ -80,6 +80,16 @@ def _process_query(db_conn, query, extras=None):
 
     return results
 
+
+def list_users_paged(api, user_count):
+    all_users = []
+    user_limit = 1000
+    for page in range((user_count / user_limit) + 1):
+        user_offset = user_limit * page
+        if user_offset < user_count:
+            all_users = all_users + api.list_users(user_limit, user_offset)
+    return all_users
+
 def _calculate_changes_against_db(db_conn, config, users):
     """
     Calculates the changes necessary by comparing our groups from LDAP to the DB.
@@ -213,7 +223,8 @@ def run_db_repair(config, db_conn):
 
     api = account_mgr.get_api(config)
 
-    spider_users = api.list_users()
+    user_count = api.get_user_count()
+    spider_users = list_users_paged(api, user_count)
     
     for spider_user in spider_users:
         first_name, sep, last_name = spider_user['name'].strip().partition(' ')
