@@ -13,6 +13,7 @@ from django.core.urlresolvers import reverse
 from django.forms.formsets import formset_factory
 from django.template import RequestContext
 from django.shortcuts import redirect, render_to_response
+from django.utils.safestring import mark_safe
 
 from netkes.account_mgr.user_source import local_source
 import openmanage.models as openmanage_models
@@ -106,6 +107,9 @@ def create_user(api, account_info, config, data):
 def _csv_create_users(api, account_info, groups, config, request, csv_data):
     for x, row in enumerate(csv_data):
         group = get_group(groups, row['group_name'])
+        if not group:
+            msg = 'Invalid data in row %s. Invalid Group' % x
+            return x, forms.ValidationError(msg)
         group_id = group['group_id']
         config_group = get_config_group(config, group_id)
         if config_group['user_source'] != 'local':
@@ -123,6 +127,14 @@ def _csv_create_users(api, account_info, groups, config, request, csv_data):
             log_admin_action(request, 'create user through csv: %s' % user_info)
         except api.DuplicateEmail:
             msg = 'Invalid data in row %s. Email already in use' % x
+            return x, forms.ValidationError(msg)
+        except api.PaymentRequired:
+            msg = ('Payment required. '
+                    'Please update your <a href="/billing/">billing</a> '
+                    'information to unlock your account.')
+            return x, forms.ValidationError(mark_safe(msg))
+        except api.DuplicateUsername:
+            msg = 'Invalid data in row %s. Username already in use' % x
             return x, forms.ValidationError(msg)
     return x + 1, None
 
@@ -192,6 +204,11 @@ def get_new_user_form(api, features, account_info, config, local_groups, groups,
                     log_admin_action(request, 'create user: %s' % data)
                 except api.DuplicateEmail:
                     self._errors['email'] = self.error_class(["Email address already in use"])
+                except api.PaymentRequired:
+                    msg = ('Payment required. '
+                           'Please update your <a href="/billing/">billing</a> '
+                           'information to unlock your account.')
+                    raise forms.ValidationError(mark_safe(msg))
                 except api.DuplicateUsername:
                     self._errors['username'] = self.error_class(["Username already in use"])
 

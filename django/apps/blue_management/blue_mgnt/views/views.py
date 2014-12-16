@@ -303,7 +303,7 @@ def login_user(request):
 
                 request.session['username'] = username
 
-                return redirect('blue_mgnt:index')
+                return redirect(request.GET.get('next', '/'))
             else:
                 errors = form._errors.setdefault(NON_FIELD_ERRORS , ErrorList())
                 errors.append('Invalid username or password')
@@ -423,7 +423,7 @@ def get_billing_info(config):
 def enterprise_required(fun):
     def new_fun(request, *args, **kwargs):
         if not request.session.get('username', False):
-            return redirect('blue_mgnt:login')
+            return redirect(reverse('blue_mgnt:login') + '?next=%s' % request.path)
 
         config = read_config_file()
         api = get_api(config)
@@ -627,12 +627,10 @@ def reports(request, api, account_info, config, username, saved=False):
 
 @enterprise_required
 def manage(request, api, account_info, config, username):
-    account_name = config['api_user'].replace("_", " ")
     return render_to_response('manage.html', dict(
         user=request.user,
         username=username,
         account_info=account_info,
-        account_name=account_name,
         billing_info=get_billing_info(config),
     ),
     RequestContext(request))

@@ -6,6 +6,11 @@
             </h2>
             <div class="spacer"><!--ZXP--></div>
             <form action="{% url 'blue_mgnt:users' %}" enctype="multipart/form-data" method="POST">
+                {% if new_user.non_field_errors %}
+                <span class="error-highlight">
+                    <span class="error-tag">{{ new_user.non_field_errors.0 }}</span>
+                </span>
+                {% endif %}
                 {% csrf_token %}
                 <input type="hidden" name="form" value="new_user">
                 <table class="widget-table">
