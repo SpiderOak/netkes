@@ -1,0 +1,314 @@
+{% extends "base.html" %}
+{% load filter_todate %}
+{% load so_filters %}
+
+{% block title %}Billing Information - Management Console{{ block.super }}{% endblock %}
+
+{% block body_classes %}billing {{ block.super }}{% endblock body_classes %}
+{% block breadcrumb %}<a href="{% url 'blue_mgnt:manage' %}">Back to Manage</a>{% endblock breadcrumb %}
+{% block navtab %}{% include "partials/navtab-widget.html" with active="manage" %}{% endblock navtab %}
+{% block content %}
+{% block billing_header %}
+<h1 class="page-header">
+  <i class="ss-icon">&#xE7B0;</i> Upgrade Your Plan
+  {% if billing_info.current_plan %}
+    <span class="header-note">current plan: {{ billing_info.current_plan.quantity }} users</span>
+  {% endif %}
+</h1>
+{% endblock billing_header %}
+
+<div id="billing-dropzone">
+</div>
+
+{% endblock content %}
+{% block js_templates %}
+<script type="text/x-swig-template" id="template-billing-nav">
+  <ul>
+    <li class="billing-nav-1 billing-nav-plan" data-target="plan">
+      <span><a>1</a></span>
+      <a>Plan</a>
+    </li>
+    <li class="billing-nav-2 billing-nav-payment" data-target="payment">
+      <span><a>2</a></span>
+      <a>Payment</a>
+    </li>
+    <li class="billing-nav-3 billing-nav-summary" data-target="summary">
+      <span><a>3</a></span>
+      <a>Summary</a>
+    </li>
+  </ul>
+</script>
+
+<script type="text/x-swig-template" id="template-billing-select-frequency">
+  <h2>Select Payment Frequency</h2>
+  <ul>
+    <li class="yearly-frequency" data-frequency="yearly">
+      Yearly
+      <span></span>
+    </li>
+    <li class="monthly-frequency" data-frequency="monthly">
+      Monthly
+      <span></span>
+    </li>
+  </ul>
+  <div class="spacer"><!--ZKP--></div>
+</script>
+
+<script type="text/x-swig-template" id="template-billing-select-coupon">
+  <h2>Promotional Code <span class="header-note">(optional)</span></h2>
+  <form class="so-form">
+    <fieldset>
+      <div>
+        <input type="text" id="promo_code_field" value=""><button class="button button-primary-basic" id="submit_promo_code">Update</button>
+        <% if msg %>
+          <div class="alert<% if msg_class %> alert-<%- msg_class %><% endif %>">
+            <p><%- msg|safe %></p>
+          </div>
+        <% endif %>
+        <div class="spacer"><!--ZKP--></div>
+    </fieldset>
+  </form>
+</script>
+
+<script type="text/x-swig-template" id="template-billing-cost-preview">
+  <h2>
+    <% if has_current_plan %>
+      New <%- frequency %> Cost
+    <% else %>
+      Plan Cost
+    <% endif %>
+  </h2>
+  <div class="so-form">
+    <fieldset>
+      <h3>
+        (Users: <%- quantity %>) $<%- price.str %>
+      </h3>
+    </fieldset>
+  </div>
+</script>
+
+<script type="text/x-swig-template" id="template-billing-next">
+  <button class="button button-primary-basic">Next</button>
+</script>
+
+<script type="text/x-swig-template" id="template-billing-plan">
+</script>
+
+<script type="text/x-swig-template" id="template-billing-payment">
+</script>
+
+<script type="text/x-swig-template" id="template-billing-summary">
+<h2>Summary</h2>
+</script>
+
+<script type="text/x-swig-template" id="template-billing-cc-type">
+  <div class="cc_type">
+    <ul>
+      <li data-value="visa"><img src="/static/blue_mgnt/img/payment_types/cc_visa.png" alt="Visa"></li>
+      <li data-value="amex"><img src="/static/blue_mgnt/img/payment_types/cc_amex.png" alt="American Express"></li>
+      <li data-value="mastercard"><img src="/static/blue_mgnt/img/payment_types/cc_mc.png" alt="MasterCard"></li>
+    </ul>
+  </div>
+</script>
+
+<script type="text/x-swig-template" id="template-billing-payment-method">
+  <h2>Select Payment Method</h2>
+  <ul>
+    <li class="payment-existing" data-method="existing">
+      Card on file
+      <span></span>
+    </li>
+    <li class="payment-new" data-method="new">
+      New card
+      <span></span>
+    </li>
+  </ul>
+  <div class="spacer"><!--ZKP--></div>
+</script>
+
+<script type="text/x-swig-template" id="template-billing-stripe-payment">
+  <form class="so-form">
+    <div class="cc-info">
+      <h3>Credit Card Information</h3>
+      <fieldset>
+        <div class="billing-stripe-name">
+          <label for="stripe_name">Name on Card</label>
+          <input id="stripe_name">
+          <div class="alert">
+            <p></p>
+          </div>
+        </div>
+        <div class="billing-stripe-cc">
+          <label for="stripe_cc">Card Number</label>
+          <input id="stripe_cc">
+          <div class="alert">
+            <p></p>
+          </div>
+        </div>
+        <div class="billing-stripe-csv">
+          <label for="stripe_csv">CSV Code</label>
+          <input id="stripe_csv">
+          <div class="alert">
+            <p></p>
+          </div>
+        </div>
+        <div class="billing-stripe-expiration">
+          <label>Expiration Date</label>
+          <select id="stripe_exp_month">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+            <option value="11">11</option>
+            <option value="12">12</option>
+          </select>
+          <select id="stripe_exp_year">
+            {% for y in cc_years %}
+            <option value="{{ y }}">{{ y }}</option>
+            {% endfor %}
+          </select>
+          <div class="alert">
+            <p></p>
+          </div>
+        </div>
+      </fieldset>
+
+    </div>
+
+    <div class="onfile-info">
+      <h3>Credit Card Information</h3>
+      <fieldset>
+        <div>
+          <label for="stripe_name">Card on file</label>
+          <p>&middot;&middot;&middot;&middot;&middot;&middot;&middot;&middot;&middot;&middot;&middot;&middot;&middot;&middot;&middot;&middot; {{ billing_info.current_card.last4|default:"" }}</p>
+        </div>
+      </fieldset>
+    </div>
+
+    <div class="billing-next">
+      <button class="button button-primary-basic">Next</button>
+      <p>You will have a chance to review your<br> order before your card is charged.</p>
+    </div>
+  </form>
+</script>
+
+<script type="text/x-swig-template" id="template-billing-loading">
+  <img src="/static/blue_mgnt/img/loader.gif">
+</script>
+
+<script type="text/x-swig-template" id="template-billing-alert">
+  <div><p></p></div>
+</script>
+
+<script type="text/x-swig-template" id="template-billing-overview">
+  <form class="so-form">
+    {% csrf_token %}
+    <fieldset>
+      <div>
+        <label>Selected Plan</label>
+        <p class="bubbly_strongs">
+          <strong><%- quantity %> users</strong>
+          at
+          <strong>$<%- price.str %></strong>
+        </p>
+        <span class="edit" data-target="plan"><a href="">edit</a></span>
+        <div class="spacer"><!--ZKP--></div>
+      </div>
+      <div>
+        <label>Payment Type</label>
+        <p><%- cc_type %></p>
+        <span class="edit" data-target="payment"><a href="">edit</a></span>
+        <div class="spacer"><!--ZKP--></div>
+      </div>
+      <div>
+        <label>Credit Card</label>
+        <p>&middot;&middot;&middot;&middot;&middot;&middot;&middot;&middot;<%- cc_last4 %></p>
+        <span class="edit" data-target="payment"><a href="">edit</a></span>
+        <div class="spacer"><!--ZKP--></div>
+      </div>
+      <% if has_current_plan %>
+      <div class="billing-summary-total">
+        <label>New <%- frequency %>:</label>
+        <p>$<%- price.int %> <span>(Account will be prorated)</span></p>
+        <div class="spacer"><!--ZKP--></div>
+      </div>
+      <% else %>
+      <div class="billing-summary-total">
+        <label>Total Due:</label>
+        <p>$<%- price.int %></p>
+        <div class="spacer"><!--ZKP--></div>
+      </div>
+      <% endif %>
+    </fieldset>
+    <div class="billing-next">
+      <button class="button button-primary-basic">Submit Order</button>
+    </div>
+  </form>
+</script>
+
+<script type="text/x-swig-template" id="template-billing-success">
+  <h1>Thank You!</h1>
+  <p id="billing-success-message">We are now processing your payment.<br>An email should arrive shortly to confirm your payment.</p>
+</script>
+
+<script type="text/x-swig-template" id="template-update-cc-overview">
+  <form class="so-form">
+    <fieldset>
+      <div>
+        <label>Payment Type</label>
+        <p><%- cc_type %></p>
+        <span class="edit" data-target="payment"><a href="">edit</a></span>
+        <div class="spacer"><!--ZKP--></div>
+      </div>
+      <div>
+        <label>Credit Card</label>
+        <p>&middot;&middot;&middot;&middot;&middot;&middot;&middot;&middot;<%- cc_last4 %></p>
+        <span class="edit" data-target="payment"><a href="">edit</a></span>
+        <div class="spacer"><!--ZKP--></div>
+      </div>
+    </fieldset>
+    <div class="billing-next">
+      <button class="button button-primary-basic">Update Card</button>
+    </div>
+  </form>
+</script>
+
+<script type="text/x-swig-template" id="template-update-cc-success">
+  <h1>Thank You!</h1>
+  <p id="billing-success-message">Your card has been updated.</p>
+</script>
+
+{% endblock js_templates %}
+
+{% block js_main %}
+<script type="text/javascript" src="/static/blue_mgnt/vendor/underscore-min.js"></script>
+<script type="text/javascript" src="/static/blue_mgnt/vendor/underscore.string.min.js"></script>
+<script type="text/javascript" src="/static/blue_mgnt/vendor/backbone-min.js"></script>
+<script type="text/javascript" src="/static/blue_mgnt/vendor/swig.min.js"></script>
+<script type="text/javascript" src="/static/blue_mgnt/vendor/jquery.payment.js"></script>
+<script type="text/javascript" src="https://js.stripe.com/v2/"></script>
+<script type="text/javascript">Stripe.setPublishableKey('{{ billing_info.stripe_public_key }}');</script>
+<script type="text/javascript">
+  var SMB = SMB || {};
+  SMB.total_users = {{ account_info.total_users }};
+  SMB.current_plan_quantity = {{ billing_info.current_plan.quantity|default:"null" }};
+  SMB.current_plan_frequency = {% if billing_info.current_plan.type %}"{{ billing_info.current_plan.type }}"{% else %}null{% endif %};
+  {% if billing_info.current_card.last4 %}
+  SMB.last4_on_file = "{{ billing_info.current_card.last4|default:"xxxx" }}";
+  {% else %}
+  SMB.last4_on_file = null;
+  {% endif %}
+</script>
+<script type="text/javascript" src="/static/blue_mgnt/js/billing.js"></script>
+{% block js_main_init %}
+<script type="text/javascript">
+  init_billing();
+</script>
+{% endblock js_main_init %}
+{% endblock js_main %}

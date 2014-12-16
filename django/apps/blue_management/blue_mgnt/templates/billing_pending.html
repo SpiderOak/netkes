@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load filter_todate %}
+{% load so_filters %}
+
+{% block title %}Billing Information - Management Console{{ block.super }}{% endblock %}
+
+{% block body_classes %}billing {{ block.super }}{% endblock body_classes %}
+{% block breadcrumb %}<a href="{% url 'blue_mgnt:manage' %}">Back to Manage</a>{% endblock breadcrumb %}
+{% block navtab %}{% include "partials/navtab-widget.html" with active="manage" %}{% endblock navtab %}
+{% block content %}
+<h1 class="page-header">
+	<i class="ss-icon">&#xE7B0;</i> Upgrade Your Plan
+        {% if billing_info.current_plan %}
+	<span class="header-note">current plan: {{ billing_info.current_plan.quantity }} users</span>
+        {% endif %}
+</h1>
+<p>
+	There is a payment currently being processed. Please wait a few minutes while your account is being updated.
+</p>
+{% endblock content %}

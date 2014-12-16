@@ -7,6 +7,7 @@ from views import groups
 from views import users
 from views import managementvm
 from views import settings
+from views import billing
 
 urlpatterns = patterns('',
     (r'^$', users.users, {}, 'index'),
@@ -30,6 +31,7 @@ urlpatterns = patterns('',
     (r'^shares/(?P<email>.+)/(?P<room_key>.+)/$', views.share_detail, {}, 'share_detail'),
     (r'^reports/$', views.reports, {}, 'reports'),
     (r'^manage/$', views.manage, {}, 'manage'),
+    (r'^manage/fingerprint/$', views.fingerprint, {}, 'fingerprint'),
     (r'^settings/$', settings.settings, {}, 'settings'),
     (r'^settings/saved/$', settings.settings, {'saved': True}, 'settings_saved'),
     (r'^settings/password/$', settings.password, {}, 'password'),
@@ -40,4 +42,8 @@ urlpatterns = patterns('',
     (r'^favicon\.ico$', RedirectView.as_view(url='/static/blue_mgnt/img/favicon.png')),
     (r'^codes/$', managementvm.auth_codes, {}, 'auth_codes'),
     (r'^codes/saved/$', managementvm.auth_codes, {'saved': True}, 'auth_codes_saved'),
+    (r'^billing/$', billing.billing, {}, 'billing'),
+    (r'^billing/update_cc/$', billing.billing_update_cc, {}, 'billing_update_cc'),
+    (r'^billing/check_coupon$', billing.check_coupon, {}, 'billing_check_coupon'),
+    (r'^billing/create_subscription$', billing.create_subscription, {}, 'billing_create_subscription'),
 )

@@ -3,6 +3,7 @@ import time
 import json
 import zlib
 import struct
+import logging
 from binascii import b2a_base64, a2b_base64
 from hashlib import sha256
 
@@ -23,6 +24,7 @@ def read_escrow_layer(escrow_keys, layer_data, sign_key=None):
     sign_key = public key of the user who has signed this layer
     """
 
+    log = logging.getLogger("read_escrow_layer") 
     header_format = "!HHHL"
     header_size = struct.calcsize(header_format)
 
@@ -53,6 +55,7 @@ def read_escrow_layer(escrow_keys, layer_data, sign_key=None):
     if sign_key is not None: 
         valid = sign_key.verify(sig_hmac, (bytes_to_long(sig), ))
         if not valid:
+            log.warn("Signature error: sig_hmac=%r sig=%r", sig_hmac, sig)
             raise ValueError("Signature error")
 
     payload_data = json.loads(zlib.decompress(payload))

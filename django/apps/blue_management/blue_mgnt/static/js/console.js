@@ -1,13 +1,21 @@
 function posModal(obj) {
     obj = $(obj);
     if ( obj.is(':visible') ) {
+        
+        if ( obj.css('left') > 0 ) {
+            obj.css({
+                'left' : '0',
+                'top' : '0'
+            });
+        }
 
         pos_left = Math.round(($(window).width() - obj.outerWidth()) / 2) + ($(document).scrollLeft());
         pos_top = Math.round(($(window).height() - obj.outerHeight()) / 2) + ($(document).scrollTop());
 
         obj.css({
             'left' : pos_left,
-            'top' : pos_top
+            'top' : pos_top,
+            'z-index' : '10000'
         });
     }
 }
@@ -15,7 +23,7 @@ function posModal(obj) {
 $(function() {
     // Shorten numeric inputs
     $(window).load(function() {
-        $input = $("input[type='text']").not('.widget-search-input, #id_username');
+        $input = $("input[type='text']").not('.widget-search-input, #id_username, #promo_code_field');
         var $size;
         $input.each(function() {
             if ( $(this).val().length < 1 ) {
@@ -35,39 +43,70 @@ $(function() {
         posModal('.modal-content');
         if ($('.widget-add-user .error-highlight').length) {
             $('.widget-add-user').show();
-            $('.widget-add-user-option').hide();
         }
         if ($('.widget-upload-csv .error-highlight').length) {
             $('.widget-upload-csv').show();
-            $('.widget-add-user-option').hide();
         }
     }
 
-    $('#add-widget').click(function(e){
+    $('#add-widget').click(function(e){ //TODO: Depreciate this
         e.preventDefault();
         $('.modal-wrapper').show().css('height', $(document).height());
         posModal('.modal-content');
     });
 
-    $('#option-add-user button').click(function(){
-            $('.widget-add-user-option').hide();
-            $('.widget-add-user').show();
+    $('[id^=modal-trigger-]').click(function(e) {
+        e.preventDefault();
+        var this_id = $(this).attr('id');
+        var this_name = this_id.lastIndexOf('-');
+        var this_refer = '#modal-refer-' + this_id.substring(this_name + 1);
+        console.log(this_id + ',' + this_refer);
+
+        var other_modals = $('[id^=modal-refer-]').not(this_refer);
+        if ( other_modals.is(':visible') ){
+            other_modals.hide();
+        }
+        
+        $(this_refer).closest('.modal-wrapper').show().css('height', $(document).height());
+        $(this_refer).show();
+        posModal(this_refer);
     });
 
-    $('#option-upload-csv button').click(function(){
-            $('.widget-add-user-option').hide();
-            $('.widget-upload-csv').show();
-    });
+    (function() {
+        function exposeWidget(trgt){
+            var $modal = $('.modal-wrapper');
+            $(".modal-item", $modal).each(function(i, el) {
+                $el = $(el);
+                $el.toggle($el.hasClass(trgt));
+            });
+            $modal.show().css('height', $(document).height());
+            posModal('.modal-content');
+        }
+
+        $('#option-add-user button').click(function(e){
+            e.preventDefault();
+            exposeWidget('widget-add-user');
+        });
+
+        $('#option-upload-csv button').click(function(e){
+            e.preventDefault();
+            exposeWidget('widget-upload-csv');
+        });
+    }());
 
     $('h2.page-header .actions').click(function() {
+        var thing = $(this).closest('[id^=modal-refer-]');
+        thing.hide();
+        console.log(thing.attr('id') + ' was hidden.');
         $('.widget-add-user').hide()
         $('.widget-upload-csv').hide();
-        $('.widget-add-user-option').show();
+        $('.modal-wrapper .modal-item').hide();
         $('.modal-wrapper').hide();
     });
 
     // Confirm delete
     $('.cancel-action').click(function() {
+        $(this).closest('[id^=modal-refer-]').hide();
         $('.modal-wrapper').hide();
     });
     
@@ -99,7 +138,7 @@ $(function() {
             'position' : 'relative',
             'z-index' : '1',
         });
-        $('.shield').css({
+        $('.shield').not('.reboot-message-wrapper').css({
             'position' : 'absolute',
             'z-index' : '10000'
         }).toggle();
@@ -179,4 +218,19 @@ function getCookie(name) {
     return cookieValue;
 }
 var csrftoken = getCookie('csrftoken');
+
+function csrfSafeMethod(method) {
+    // these HTTP methods do not require CSRF protection
+    return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+}
+
+$.ajaxSetup({
+    beforeSend: function(xhr, settings) {
+        if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+            xhr.setRequestHeader("X-CSRFToken", csrftoken);
+        }
+    }
 });
+});
+
+console.log("Console.js Loaded");

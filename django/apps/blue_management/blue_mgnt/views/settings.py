@@ -2,13 +2,19 @@ import datetime
 import pytz
 import subprocess 
 from IPy import IP
+from base64 import b64encode
+from hashlib import sha256
+import bcrypt
 
-from views import enterprise_required, render_to_response, log_admin_action
+from views import (
+    enterprise_required, render_to_response, 
+    log_admin_action, hash_password
+)
 
 from django import forms
 from django.forms.formsets import formset_factory
 from django.template import RequestContext
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render_to_response
 from django.contrib.auth.decorators import permission_required
 
 from interval.forms import IntervalFormField
@@ -37,7 +43,8 @@ def save_settings(request, api, options):
     cleaned_data = options.cleaned_data
     data = dict()
     data.update(cleaned_data)
-    del data['timezone']
+    if 'timezone' in data:
+        del data['timezone']
     if 'enable_local_users' in data: 
         del data['enable_local_users']
     if 'share_link_ttl' in data: 
@@ -55,12 +62,14 @@ def save_settings(request, api, options):
 
     config_mgr_ = config_mgr.ConfigManager(config_mgr.default_config())
     for var in AGENT_CONFIG_VARS:
-        config_mgr_.config[var] = cleaned_data[var]
+        if var in cleaned_data:
+            config_mgr_.config[var] = cleaned_data[var]
     config_mgr_.apply_config()
 
-    with open('/etc/timezone', 'w') as f:
-        f.write(cleaned_data['timezone'])
-    subprocess.call(['dpkg-reconfigure', '-f', 'noninteractive', 'tzdata'])
+    if 'timezone' in cleaned_data:
+        with open('/etc/timezone', 'w') as f:
+            f.write(cleaned_data['timezone'])
+        subprocess.call(['dpkg-reconfigure', '-f', 'noninteractive', 'tzdata'])
 
 
 class IPBlockForm(forms.Form):
@@ -104,23 +113,25 @@ def settings(request, api, account_info, config, username, saved=False):
             initial=datetime.timedelta(days=opts['versionpurge_interval'])
         )
         support_email = forms.EmailField(initial=opts['support_email'])
-        omva_url = forms.URLField(
-            label='OpenManage Virtual Appliance URL', 
-            initial=opts['omva_url'], 
-        )
-        timezone = forms.ChoiceField(
-            choices=[(x, x) for x in pytz.common_timezones],
-            initial=file('/etc/timezone').read().strip(),
-        )
+        if features['ldap']:
+            omva_url = forms.URLField(
+                label='OpenManage Virtual Appliance URL', 
+                initial=opts['omva_url'], 
+            )
+            timezone = forms.ChoiceField(
+                choices=[(x, x) for x in pytz.common_timezones],
+                initial=file('/etc/timezone').read().strip(),
+            )
 
         def __init__(self, *args, **kwargs):
             super(OpenmanageOptsForm, self).__init__(*args, **kwargs)
             
-            for var in AGENT_CONFIG_VARS:
-                self.fields[var] = forms.CharField(
-                    initial=config.get(var, ''), 
-                    required=False
-                )
+            if features['ldap']:
+                for var in AGENT_CONFIG_VARS:
+                    self.fields[var] = forms.CharField(
+                        initial=config.get(var, ''), 
+                        required=False
+                    )
 
     options = OpenmanageOptsForm()
 
@@ -209,7 +220,6 @@ class PasswordForm(forms.Form):
             raise forms.ValidationError('Passwords do not match.')
         return password
 
-
 @enterprise_required
 @permission_required('blue_mgnt.can_manage_settings', raise_exception=True)
 def password(request, api, account_info, config, username, saved=False):
@@ -221,9 +231,13 @@ def password(request, api, account_info, config, username, saved=False):
             if password_form.is_valid():
                 new_password = password_form.cleaned_data['password']
                 log_admin_action(request, 'change password')
-                api.update_enterprise_password(new_password)
+
+                new_pass, api_pass = hash_password(new_password)
+
+                api.update_enterprise_password(api_pass)
                 config_mgr_ = config_mgr.ConfigManager(config_mgr.default_config())
-                config_mgr_.config['api_password'] = new_password
+                config_mgr_.config['api_password'] = api_pass
+                config_mgr_.config['local_password'] = new_pass
                 config_mgr_.apply_config()
                 return redirect('blue_mgnt:password_saved')
 

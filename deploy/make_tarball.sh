@@ -46,7 +46,7 @@ mkdir $buildit_dir
 mkdir $buildit_dir/bin
 
 find $source_dir/bin/*.pyc -delete 2> /dev/null || true  # hack to make pipefail not fail
-cp $source_dir/bin/* $buildit_dir/bin
+cp -r $source_dir/bin/* $buildit_dir/bin
 
 # Copy libraries
 cp -r $source_dir/netkes $buildit_dir
@@ -65,12 +65,16 @@ popd > /dev/null #$buildit_dir/django
 # Copy over the upgrades
 cp -r $source_dir/upgrade $buildit_dir
 
+# Copy keys
+mkdir $buildit_dir/upgrade/keys
+cp $management_files/server.* $buildit_dir/upgrade/keys
+
 # Setup the SQL package
 mkdir $buildit_dir/sql
 cp $source_dir/sql/*.sql $buildit_dir/sql
 
 # Package the configuration files.
-included_management="openmanage_defaults apt_list py_list agent_config.json.sample"
+included_management="openmanage_defaults apt_list py_list agent_config.json.sample nginx_vhost crontab"
 mkdir $buildit_dir/etc
 for file in $included_management; do
     cp $source_dir/etc/$file $buildit_dir/etc
@@ -94,7 +98,7 @@ echo
 echo Making tarball...
 echo
 pushd $deploy_dir > /dev/null
-tar cjf openmanage-$version.tar.bz2 openmanage
+tar cjf openmanage-$version.tar.bz2 openmanage-$version
 popd > /dev/null
 
 echo Done setting up!
