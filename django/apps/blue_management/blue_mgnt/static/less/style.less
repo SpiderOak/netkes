@@ -1216,21 +1216,41 @@ body.password {
 }
 
 .error-alert {
-		 border: 1px solid #CC3239;
-		 background-color: lighten(#CC3239, 10%);
-		 padding: 10px;
-		 border-radius: 4px;
-		 margin: 10px 0;
-		 p {
-				 color: #fff;
-				 white-space: nowrap;
-				 &.error-list {
-						 position: relative;
-						 left: 20px;
-				 }
-		 }
- }
- span.error-highlight {
+    border: 1px solid #CC3239;
+    background-color: darken(#32CC39, 10%);
+    color: #fff;
+    margin-bottom: 10px;
+    padding: 10px;
+    border-radius: 4px;
+	p {
+	    color: #fff;
+		white-space: nowrap;
+		&.error-list {
+		    position: relative;
+			left: 20px;
+		}
+	}
+
+    &.center {
+        text-align: center;
+        width: 80%;
+        margin: 5px auto;
+    }
+
+    a {
+        color: #fff;
+        float: right;
+        top: -5px;
+        position: relative;
+        font-size: 12px;
+        text-decoration: none;
+        &:hover {
+            color: #efefef;
+        }
+    }
+}
+
+span.error-highlight {
 		 input {
 				 border-color: #CC3239!important;
 				 background-color: lighten(#CC3239, 40%);
@@ -1721,4 +1741,24 @@ body.password {
       background-color: #4c4c4c;
     }
   }
+}
+.dismiss_block {
+    position: relative;
+    &.center {
+        text-align: center;
+    }
+    span.dismiss {
+        position: absolute;
+        top: 0;
+        right: 5px;
+        a {
+            color: #fff;
+            padding: 0;
+            margin: 0;
+            text-decoration: none;
+            &:hover {
+                text-decoration: underline;
+            }
+        }
+    }
 }

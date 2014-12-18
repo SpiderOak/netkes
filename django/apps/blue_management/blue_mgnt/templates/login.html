@@ -7,6 +7,9 @@
 </div>
 <h1>Welcome back.</h1>
 <h2>Login below to access your management console.</h2>
+<div class="dismiss_block center" id="saved" style="display: none">
+    <p>If you haven't already, bookmark this page for future use.<span class="dismiss">[ <a href="">dismiss</a> ]</span></p>
+</div>
 <div class="login-wrapper">
     <div class="left-col">
     <form method="post" action="" id="log_in">
@@ -59,4 +62,18 @@
 </div>
 
 </div>
+<script>
+    (function() {
+        $(document).ready(function() {
+            if (!$.cookie('bookmark_dismiss')) {
+                $('.dismiss_block').show();
+            }
+            $('.dismiss').click(function(e) {
+                e.preventDefault();
+                $.cookie('bookmark_dismiss', true, {expires: 3650});
+                $('.dismiss_block').hide();
+            });
+        });
+    })($);
+</script>
 {% endblock content %}
