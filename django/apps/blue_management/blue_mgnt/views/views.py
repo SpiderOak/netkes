@@ -231,7 +231,7 @@ class LoginForm(forms.Form):
 
 def hash_password(new_password):
     hash_ = sha256(new_password).digest()
-    salt = '$2a$14$' + b64encode(hash_[:16]).rstrip('=')
+    salt = '$2a$14$' + b64encode(hash_[:16]).rstrip('=').replace('+', '.')
     new_pass = bcrypt.hashpw(new_password, salt)
     api_pass = new_pass[len(salt):]
 
