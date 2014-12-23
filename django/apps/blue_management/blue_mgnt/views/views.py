@@ -658,6 +658,44 @@ def fingerprint(request, api, account_info, config, username):
     ),
     RequestContext(request))
 
+
+class Pagination(object):
+    def __init__(self, count, page=1, per_page=25):
+        self.page = 1
+        try:
+            self.page = int(page)
+        except (TypeError, ValueError):
+            pass
+        self.per_page = per_page
+        self.paginator = Paginator(range(count), per_page, allow_empty_first_page=True)
+        self.num_pages = self.paginator.num_pages
+        last_page = self.paginator.num_pages
+        try:
+            self.paginator_page = self.paginator.page(self.page)
+        except InvalidPage as e:
+            self.paginator_page = self.paginator.page(last_page)
+            self.page = last_page
+
+        # populate self.page_range with list holding the page numbers to render in nav.
+        # self.page_range is (currently) hard-coded to always contain 10 items
+        # None values represent need to present '...' for skipped page ranges
+        self.page_range = self.paginator.page_range
+        if last_page <= 10:
+            pass
+        else:
+            if self.page - 2 > 3:
+                if self.page + 6 > last_page:
+                    self.page_range = [1, None] + self.page_range[-8:]
+                else:
+                    self.page_range = [1, None] + self.page_range[self.page-3:self.page+3] + [None, last_page]
+            else:
+                self.page_range = self.paginator.page_range[:8] + [None, last_page]
+
+    @property
+    def query_offset(self):
+        return max(0, self.paginator_page.start_index() - 1)
+
+
 # Benny's da_paginator
 def pageit(sub, api, page, extra):
     if not extra:
