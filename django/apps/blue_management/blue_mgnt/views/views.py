@@ -3,7 +3,7 @@ import datetime
 import csv
 import subprocess
 import urllib2
-from base64 import b32encode
+from base64 import b64encode
 import urlparse
 import ldap
 import logging
@@ -12,6 +12,7 @@ import hotshot
 import os
 import time
 import bcrypt
+from uuid import uuid4
 from hashlib import sha256
 from base64 import b64encode
 
@@ -341,6 +342,31 @@ def validate(request):
             return redirect('blue_mgnt:index')
     return HttpResponseForbidden("Enterprise management link is expired or invalid.", mimetype="text/plain")
 
+def get_method_prefix(fun):
+    key = "p/{0}".format(fun.__name__)
+    val = cache.get(key)
+    if val is None:
+        return update_method_prefix(fun)
+    return val
+
+def update_method_prefix(fun):
+    key = "p/{0}".format(fun.__name__)
+    val = b64encode(uuid4().bytes)
+    cache.set(key, val)
+    return val
+    
+def make_cache_key(fun, *args, **kwargs):
+    spec = tuple(args) + tuple(v for k, v in sorted(kwargs.iteritems()))
+    key = ["c", fun.__name__, get_method_prefix(fun)]
+    for i in spec:
+        if i is None:
+            key.append('')
+        elif isinstance(i, (int, float)):
+            key.append(str(i))
+        else:
+            key.append(b64encode(repr(i)))
+    return "/".join(key)
+        
 def get_api(config):
     api = Api.create(
         django_settings.ACCOUNT_API_URL,
@@ -371,24 +397,18 @@ def get_api(config):
         'delete_user': ['list_users', 'get_user_count'],
     }
     
-    def check_list_users(name, args, kwargs):
-        if (name == 'list_users' and 
-            args == (25, 0) 
-            and not kwargs):
-            return True
-        return False
-
     def cache_api(fun):
         def dec(*args, **kwargs):
             name = fun.__name__
             if name in FUNCTIONS_TO_INVALIDATE_CACHE:
                 for f in FUNCTIONS_TO_INVALIDATE_CACHE[name]:
-                    cache.delete(f)
-            if name in FUNCTIONS_TO_CACHE or check_list_users(name, args, kwargs):
-                value = cache.get(name)
+                    update_method_prefix(f)
+            if name in FUNCTIONS_TO_CACHE:
+                key = make_cache_key(fun, *args, **kwargs)
+                value = cache.get(key)
                 if not value:
                     value = fun(*args, **kwargs)
-                    cache.set(name, value)
+                    cache.set(key, value)
                 return value
             else:
                 return fun(*args, **kwargs)
