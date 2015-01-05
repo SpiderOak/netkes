@@ -44,6 +44,7 @@ mkdir $buildit_dir
 
 # Setup the base.
 mkdir $buildit_dir/bin
+mkdir $buildit_dir/etc
 
 find $source_dir/bin/*.pyc -delete 2> /dev/null || true  # hack to make pipefail not fail
 cp -r $source_dir/bin/* $buildit_dir/bin
@@ -75,7 +76,6 @@ cp $source_dir/sql/*.sql $buildit_dir/sql
 
 # Package the configuration files.
 included_management="openmanage_defaults apt_list py_list agent_config.json.sample nginx_vhost crontab"
-mkdir $buildit_dir/etc
 for file in $included_management; do
     cp $source_dir/etc/$file $buildit_dir/etc
 done

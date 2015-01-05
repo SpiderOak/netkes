@@ -23,7 +23,7 @@ if config['api_password']:
         config["api_password"],
     )
 
-    secret_box, nonce = create_secret_box(config['api_password'], config['api_user'])
+    secret_box, nonce = create_secret_box(config['local_password'], config['api_user'])
 
     date = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
     filename = 'openmanage-backup-%s.tar.bz2' % date
