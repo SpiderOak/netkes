@@ -388,13 +388,13 @@ def get_api(config):
         'list_users',
     ]
     FUNCTIONS_TO_INVALIDATE_CACHE = {
-        'update_enterprise_settings': ['enterprise_settings'],
-        'create_group': ['list_groups'],
-        'edit_group': ['list_groups'],
-        'delete_group': ['list_groups', 'list_users'],
-        'create_user': ['list_users', 'get_user_count'],
-        'edit_user': ['list_users'],
-        'delete_user': ['list_users', 'get_user_count'],
+        'update_enterprise_settings': [api.enterprise_settings],
+        'create_group': [api.list_groups],
+        'edit_group': [api.list_groups],
+        'delete_group': [api.list_groups, api.list_users],
+        'create_user': [api.list_users, api.get_user_count],
+        'edit_user': [api.list_users],
+        'delete_user': [api.list_users, api.get_user_count],
     }
     
     def cache_api(fun):
