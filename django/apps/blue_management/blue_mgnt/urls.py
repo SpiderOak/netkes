@@ -12,6 +12,7 @@ from views import billing
 urlpatterns = patterns('',
     (r'^$', users.users, {}, 'index'),
     (r'^saved/$', users.users, {'saved': True}, 'index_saved'),
+    (r'^clearcache/$', views.clear_cache, {}, 'clear_cache'),
     (r'^login/$', views.login_user, {}, 'login'),
     (r'^logout/$', views.logout, {}, 'logout'),
     (r'^escrowlogin/(?P<escrow_username>.+)/$', managementvm.escrow_login, {}, 'escrow_login'),

@@ -472,6 +472,11 @@ def enterprise_required(fun):
     return new_fun
 
 @enterprise_required
+def clear_cache(request, api, account_info, config, username): 
+    cache.clear()
+    return HttpResponse('Cache cleared')
+
+@enterprise_required
 def download_logs(request, api, account_info, config, username):
     date = datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
     filename = 'openmanage-logs-%s.tar.bz2' % date
