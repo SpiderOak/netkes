@@ -59,7 +59,7 @@ def read_escrow_layer(escrow_keys, layer_data, sign_key=None):
             raise ValueError("Signature error")
 
     payload_data = json.loads(zlib.decompress(payload))
-    for k, v in payload_data.iteritems():
+    for k, v in payload_data.items():
         payload_data[k] = a2b_base64(v)
 
     priv_key = escrow_keys[key_id]

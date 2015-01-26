@@ -7,7 +7,7 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'omva.settings'
 from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
 
-print "adding permissions"
+print("adding permissions")
 
 content_type = ContentType.objects.get_or_create(app_label='blue_mgnt', model='AccountsApi')[0]
 
@@ -45,4 +45,4 @@ permission = Permission.objects.get_or_create(codename='can_manage_logs',
                                        name='Can manage logs',
                                        content_type=content_type)
 
-print "permissions added!"
+print("permissions added!")

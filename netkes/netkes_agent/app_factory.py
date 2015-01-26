@@ -2,7 +2,7 @@ import logging
 import os
 import re
 
-from urllib import unquote
+from urllib.parse import unquote
 from wsgi_util.router import router
 from wsgi_util.http import BadRequest, SuperSimple, NotFound, Forbidden, ServerError
 from wsgi_util.post_util import read_postdata, read_querydata

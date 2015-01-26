@@ -50,7 +50,7 @@ def test_write_and_read_layers():
 
 def test_all():
     assert test_write_and_read_layers()
-    print "All tests complete"
+    print("All tests complete")
 
 if __name__ == "__main__":
     test_all()

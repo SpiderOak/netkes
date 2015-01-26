@@ -10,7 +10,7 @@ from django.core.cache import cache
 from django.views.decorators.csrf import csrf_exempt
 from django.core.exceptions import PermissionDenied
 
-from views import enterprise_required, log_admin_action, get_billing_api
+from .views import enterprise_required, log_admin_action, get_billing_api
 
 def json_response(request, data):
     return HttpResponse(json.dumps(data), content_type='application/json')
@@ -40,7 +40,7 @@ def _billing(request, api, account_info, config, username, tmpl):
         username=username,
         account_info=account_info,
         billing_info=billing_info,
-        cc_years=range(curr_year, curr_year+21),
+        cc_years=list(range(curr_year, curr_year+21)),
     )
     if current_plan and current_plan['status'] == 'pending':
         tmpl = 'billing_pending.html'

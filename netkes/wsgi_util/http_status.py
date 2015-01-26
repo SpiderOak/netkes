@@ -47,8 +47,8 @@ def messages():
         VERSION_NOT_SUPPORTED   = (505, "HTTP Version Not Supported"),
     )
     
-    messages = dict(status.itervalues())
-    status = dict((k, '%d %s' % v) for k, v in status.iteritems())
+    messages = dict(iter(status.values()))
+    status = dict((k, '%d %s' % v) for k, v in status.items())
     status['messages'] = messages
     return status
 

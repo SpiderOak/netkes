@@ -24,7 +24,7 @@ def save_key(key_id, keypair):
     key_fn = os.path.join(_ESCROW_KEYS_PATH, "%s.key" % (key_id, ))
     with open(key_fn, "ab") as fobj:
         dump((key_id, keypair, ), fobj)
-    print "Saved %s to %s" % ( key_id, key_fn, )
+    print("Saved %s to %s" % ( key_id, key_fn, ))
 
     return True
 
@@ -78,7 +78,7 @@ def create_base():
 
     write_config("base", base_id)
 
-    print "base key ID %s and cfg saved" % ( base_id, )
+    print("base key ID %s and cfg saved" % ( base_id, ))
 
     return True
 
@@ -105,7 +105,7 @@ def setup_brand(brand_identifier):
 
     write_config("brand.%s" % (brand_identifier, ), brand_id)
 
-    print "new keys and config saved for brand %s" % brand_identifier
+    print("new keys and config saved for brand %s" % brand_identifier)
 
     return brand_id, brand_identifier, layers
 
@@ -118,9 +118,9 @@ def run_as_utility():
         brand_identifier = sys.argv[sys.argv.index('setup_brand') + 1]
         setup_brand(brand_identifier)
     else:
-        print >>sys.stderr, "I don't know what you want me to do!"
+        print("I don't know what you want me to do!", file=sys.stderr)
 
-    print >>sys.stderr, "IF YOU HAVE CREATED NEW KEYS, BACK THEM UP NOW!"    
+    print("IF YOU HAVE CREATED NEW KEYS, BACK THEM UP NOW!", file=sys.stderr)    
 
 if __name__ == "__main__":
     run_as_utility()

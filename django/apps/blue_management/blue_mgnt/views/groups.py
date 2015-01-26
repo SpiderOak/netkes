@@ -1,6 +1,6 @@
-from views import enterprise_required, log_admin_action
-from views import ReadOnlyWidget, get_base_url, SIZE_OF_GIGABYTE
-from views import get_config_group
+from .views import enterprise_required, log_admin_action
+from .views import ReadOnlyWidget, get_base_url, SIZE_OF_GIGABYTE
+from .views import get_config_group
 
 from django import forms
 from django.core.urlresolvers import reverse
@@ -119,9 +119,9 @@ def groups(request, api, account_info, config, username, saved=False):
                         group_id = int(row['group_id'])
                         group = api.get_group(group_id)
                         api.edit_group(group_id, process_row(row))
-                    except (KeyError, ValueError), a:
+                    except (KeyError, ValueError) as a:
                         api.create_group(process_row(row))
-                except Exception, e:
+                except Exception as e:
                     raise forms.ValidationError('Invalid data in row %s' % x)
             return data
 
@@ -235,7 +235,7 @@ def groups(request, api, account_info, config, username, saved=False):
         group_csv=group_csv,
         features=features,
         groups=groups,
-        groups_and_data=zip(groups, initial),
+        groups_and_data=list(zip(groups, initial)),
         saved=saved,
         error=error,
         account_info=account_info,

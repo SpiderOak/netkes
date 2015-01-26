@@ -101,7 +101,7 @@ class TestLdapGroup(unittest.TestCase):
         conn = MagicMock()
 
         for object_class in ldap_source.LdapGroup._ou_object_classes:
-            print object_class
+            print(object_class)
             conn.conn.search_s.return_value = [ 
                 [ 
                     None, 

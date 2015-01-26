@@ -65,7 +65,7 @@ def parse_cmdline():
 
     # Prune it up a bit and return it as a dict.
     optdict = vars(options)
-    for key in optdict.keys():
+    for key in list(optdict.keys()):
         if optdict[key] is None:
             del optdict[key]
 
@@ -79,7 +79,7 @@ def process_config():
     
     try:
         validate_config(config)
-    except NetKesConfigError, e:
+    except NetKesConfigError as e:
         raise e
 
     if 'groups' not in config:

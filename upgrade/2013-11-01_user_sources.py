@@ -11,7 +11,7 @@ if 'user_source' not in config.config:
         'dir_name': USER_SOURCE_NAME,
     }
 
-    for key in list(config.config.iterkeys()):
+    for key in list(config.config.keys()):
         if key.startswith('dir_'):
             user_source[key] = config.config[key]
             del config.config[key]

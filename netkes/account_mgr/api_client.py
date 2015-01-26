@@ -1,35 +1,35 @@
 import json
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from base64 import b64encode
-from urllib import urlencode
-from urlparse import urljoin
+from urllib.parse import urlencode
+from urllib.parse import urljoin
 
 from netkes.Pandora.https import VerifiedHTTPSHandler
 
 
 _DEFAULT_HANDLERS = [
-    urllib2.ProxyHandler,
-    urllib2.HTTPDefaultErrorHandler,
-    urllib2.HTTPRedirectHandler,
-    urllib2.HTTPErrorProcessor,
-    urllib2.HTTPHandler,
+    urllib.request.ProxyHandler,
+    urllib.request.HTTPDefaultErrorHandler,
+    urllib.request.HTTPRedirectHandler,
+    urllib.request.HTTPErrorProcessor,
+    urllib.request.HTTPHandler,
 ]
 def _make_opener(url):
-    opener = urllib2.OpenerDirector()
+    opener = urllib.request.OpenerDirector()
     for handler_class in _DEFAULT_HANDLERS:
         opener.add_handler(handler_class())
     opener.add_handler(VerifiedHTTPSHandler())
     return opener
 
 
-class RequestWithMethod(urllib2.Request):
+class RequestWithMethod(urllib.request.Request):
     _method = None
 
     def set_method(self, method):
         self._method = method
 
     def get_method(self):
-        return self._method or urllib2.Request.get_method(self)
+        return self._method or urllib.request.Request.get_method(self)
 
 
 class ApiClient(object):
@@ -46,12 +46,16 @@ class ApiClient(object):
             self.username and
             'authorization' not in set(k.lower() for k in headers)
         ):
-            headers['authorization'] = 'Basic %s' % (
-                b64encode('%s:%s' % (
+            headers['authorization'] = 'Basic {}'.format(
+                b64encode(('%s:%s' % (
                     self.username, self.password
-                )).strip(),
+                )).encode()).strip().decode()
             )
-        req = RequestWithMethod(urljoin(self.base, path), data, headers)
+        base = self.base
+        encoded_data = None
+        if data:
+            encoded_data = data.encode()
+        req = RequestWithMethod(urljoin(self.base, path), encoded_data, headers)
         req.set_method(method)
         return self.opener.open(req)
 
@@ -59,10 +63,10 @@ class ApiClient(object):
         return self.open(path)
 
     def get_json(self, path):
-        return json.loads(self.get(path).read())
+        return json.loads(self.get(path).read().decode())
 
     def post(self, path, data, headers=None):
-        if not isinstance(data, basestring):
+        if not isinstance(data, str):
             data = urlencode(data)
         return self.open(path, data, headers)
 
@@ -72,7 +76,7 @@ class ApiClient(object):
     def post_json(self, path, data, headers=None):
         body = self.post_json_raw_response(path, data, headers).read()
         if body:
-            return json.loads(body)
+            return json.loads(body.decode())
         return None
 
     def delete(self, path, headers=None):

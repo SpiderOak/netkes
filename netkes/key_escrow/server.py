@@ -82,7 +82,7 @@ def read_escrow_data(brand_identifier, escrowed_data, layer_count=2,
         for layer_idx in range(layer_count):
             layer_data = read_escrow_layer(
                 _ESCROW_KEYS_CACHE, layer_data, sign_key)
-    except KeyError, err:
+    except KeyError as err:
         if not "Key not available for ID" in str(err):
             raise
         if _recur:

@@ -4,7 +4,7 @@ import subprocess
 import glob
 from base64 import b32encode
 
-from views import enterprise_required, log_admin_action, get_base_url
+from .views import enterprise_required, log_admin_action, get_base_url
 from django.template import RequestContext
 from django.shortcuts import redirect, render_to_response
 from django.db import connection
@@ -15,11 +15,10 @@ from django.forms.formsets import formset_factory
 from django.contrib.auth.decorators import permission_required
 from django.conf import settings as django_settings
 
-from interval.forms import IntervalFormField
-
 from blue_mgnt import models
 from netkes.account_mgr import setup_token
-from views import pageit, profile
+from .views import pageit
+from functools import reduce
 
 RESULTS_PER_PAGE = 25
 
@@ -45,13 +44,13 @@ def escrow_login(request, api, account_info, config, username,
     return redirect(get_login_link(escrow_username, data['token']))
 
 class CodeForm(forms.Form):
-    expiry_interval = IntervalFormField('D',
-                                        label='Expiry',
-                                        initial=datetime.timedelta(days=1))
+    expiry_interval = forms.IntegerField(label='Expiry',
+                                         initial=1,
+                                         min_value=1,
+                                         help_text='days',)
     no_devices_only = forms.BooleanField(required=False,
                                          initial=True,
                                          label='No Devices Only?',
-                                         help_text='testing it out'
                                         )
     single_use_only = forms.BooleanField(required=False,
                                          initial=True,
@@ -80,7 +79,8 @@ def auth_codes(request, api, account_info, config, username, saved=False):
             if new_code.is_valid():
                 data = dict(
                     token=setup_token.new_token(),
-                    expiry=new_code.cleaned_data['expiry_interval'] + datetime.datetime.now(),
+                    expiry=(datetime.timedelta(days=new_code.cleaned_data['expiry_interval']) 
+                            + datetime.datetime.now()),
                     no_devices_only=new_code.cleaned_data['no_devices_only'],
                     single_use_only=new_code.cleaned_data['single_use_only']
                 )

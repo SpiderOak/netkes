@@ -28,10 +28,10 @@ DATABASES = {
     }
 }
 
-DATABASE_ENGINE = 'postgresql_psycopg2'           # 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-DATABASE_NAME = 'openmanage'             # Or path to database file if using sqlite3.
-DATABASE_USER = 'admin_console'             # Not used with sqlite3.
-DATABASE_PASSWORD = 'iexyjtso'        # Not used with sqlite3.
+DATABASE_ENGINE = 'postgresql_psycopg2'
+DATABASE_NAME = 'openmanage'          
+DATABASE_USER = 'admin_console'      
+DATABASE_PASSWORD = 'iexyjtso'      
 DATABASE_HOST = 'localhost'
 DATABASE_PORT = ''
 
@@ -193,6 +193,6 @@ LOGGING = {
 }
 
 try:
-    from dev_settings import *
+    from .dev_settings import *
 except Exception:
     pass

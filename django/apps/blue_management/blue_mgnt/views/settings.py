@@ -6,7 +6,7 @@ from base64 import b64encode
 from hashlib import sha256
 import bcrypt
 
-from views import (
+from .views import (
     enterprise_required, render_to_response, 
     log_admin_action, hash_password
 )
@@ -17,7 +17,6 @@ from django.template import RequestContext
 from django.shortcuts import redirect, render_to_response
 from django.contrib.auth.decorators import permission_required
 
-from interval.forms import IntervalFormField
 from netkes.netkes_agent import config_mgr 
 
 AGENT_CONFIG_VARS = [
@@ -48,11 +47,11 @@ def save_settings(request, api, options):
     if 'enable_local_users' in data: 
         del data['enable_local_users']
     if 'share_link_ttl' in data: 
-        data['share_link_ttl'] = data['share_link_ttl'].days * 1440
+        data['share_link_ttl'] = data['share_link_ttl'] * 1440
     if 'autopurge_interval' in data:
-        data['autopurge_interval'] = data['autopurge_interval'].days
+        data['autopurge_interval'] = data['autopurge_interval']
     if 'versionpurge_interval' in data:
-        data['versionpurge_interval'] = data['versionpurge_interval'].days
+        data['versionpurge_interval'] = data['versionpurge_interval']
     for var in AGENT_CONFIG_VARS:
         if var in data:
             del data[var]
@@ -79,7 +78,7 @@ class IPBlockForm(forms.Form):
         data = self.cleaned_data['ip_block']
         try:
             ip = IP(data)
-        except ValueError, e:
+        except ValueError as e:
             raise forms.ValidationError('Invalid IP Block')
         return data
 
@@ -91,10 +90,11 @@ def settings(request, api, account_info, config, username, saved=False):
     features = api.enterprise_features()
 
     class OpenmanageOptsForm(forms.Form):
-        #share_link_ttl = IntervalFormField(
-        #    'D', 
+        #share_link_ttl = forms.IntegerField(
         #    label='Share Link Time-to-Live', 
-        #    initial=datetime.timedelta(minutes=opts['share_link_ttl'])
+        #    initial=opts['share_link_ttl'] / 1440,
+        #    min_value=0,
+        #    help_text='days',
         #)
         if features['ldap']:
             ad_domain = forms.CharField(
@@ -102,15 +102,17 @@ def settings(request, api, account_info, config, username, saved=False):
                 label='Restrict client installs to domain', 
                 initial=opts['ad_domain']
             )
-        autopurge_interval = IntervalFormField(
-            'D', 
+        autopurge_interval = forms.IntegerField(
             label='Deleted Items Automatic Purge', 
-            initial=datetime.timedelta(days=opts['autopurge_interval'])
+            initial=opts['autopurge_interval'],
+            min_value=0,
+            help_text='days',
         )
-        versionpurge_interval = IntervalFormField(
-            'D', 
+        versionpurge_interval = forms.IntegerField(
             label='Historical Version Automatic Purge', 
-            initial=datetime.timedelta(days=opts['versionpurge_interval'])
+            initial=opts['versionpurge_interval'],
+            min_value=0,
+            help_text='days',
         )
         support_email = forms.EmailField(initial=opts['support_email'])
         if features['ldap']:
@@ -120,7 +122,7 @@ def settings(request, api, account_info, config, username, saved=False):
             )
             timezone = forms.ChoiceField(
                 choices=[(x, x) for x in pytz.common_timezones],
-                initial=file('/etc/timezone').read().strip(),
+                initial=open('/etc/timezone').read().strip(),
             )
 
         def __init__(self, *args, **kwargs):

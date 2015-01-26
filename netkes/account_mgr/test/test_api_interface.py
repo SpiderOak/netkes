@@ -330,9 +330,9 @@ class TestCreateUser(unittest.TestCase):
         args, _ = self.run_api_call.call_args
 
         self.assertIs(sentinel.api_root, args[0])
-        assert sentinel.email in args[2].values()
-        assert sentinel.givenName in args[2].values()
-        assert sentinel.surname in args[2].values()
+        assert sentinel.email in list(args[2].values())
+        assert sentinel.givenName in list(args[2].values())
+        assert sentinel.surname in list(args[2].values())
 
     def test_create_run_api_call_exception(self):
         self.run_api_call.side_effect = Exception("DEADBEEF")

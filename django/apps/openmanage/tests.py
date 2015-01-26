@@ -1,6 +1,6 @@
 import unittest
 from mock import Mock, MagicMock, sentinel, patch
-import urllib 
+import urllib.request, urllib.parse, urllib.error 
 
 from django.test.client import Client
 from openmanage import models, views
@@ -83,7 +83,7 @@ class TestOpenmanage(unittest.TestCase):
         }
         auth = encrypt_with_layers(json.dumps(self.auth), self.sign_key, 
                                    self.brand_identifier)
-        username = urllib.quote('test_username')
+        username = urllib.parse.quote('test_username')
         self.post_data = {
             'brand_id': self.brand_identifier,
             'username': username,

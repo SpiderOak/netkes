@@ -1,6 +1,13 @@
 #!/bin/bash
 
+which python
+
 . /etc/default/openmanage
+
+source /home/openmanage/.virtualenvs/omva/bin/activate
+which python
+echo hi
+which gunicorn
 
 PID=/var/run/gunicorn_console.pid
 

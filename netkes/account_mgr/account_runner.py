@@ -44,12 +44,12 @@ class AccountRunner(object):
 
         :param changes_dict: Dictionary of user changes.
         """
-        for action in changes_dict.keys():
+        for action in list(changes_dict.keys()):
             fun = getattr(self, action)
             ok_users, fail_users = fun(changes_dict[action])
             if len(fail_users):
                 msg = "Got error during runall, aborted on action: %s" % (action,)
-                print msg
+                print(msg)
                 self._log.error(msg)
                 break
 
@@ -82,13 +82,13 @@ class AccountRunner(object):
                 time.sleep(.5)
                 try:
                     result = self._api.get_user(user['email'])
-                except self._api.Error, e:
+                except self._api.Error as e:
                     time.sleep(10)
-                    print 'try 2 getting:', user['email']
+                    print('try 2 getting:', user['email'])
                     result = self._api.get_user(user['email'])
-            except self._api.Error, e:
+            except self._api.Error as e:
                 msg = 'Unable to create %s. %s' % (tmp_user, e)
-                print msg
+                print(msg)
                 self._log.error(msg)
                 break
             user['avatar_id'] = result['avatar_id']

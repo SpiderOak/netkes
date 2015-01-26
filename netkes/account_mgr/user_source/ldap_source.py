@@ -18,7 +18,7 @@ import uuid
 try:
     from ldap.controls import SimplePagedResultsControl
 except ImportError:
-    print "Client LDAP does not support paged results"
+    print("Client LDAP does not support paged results")
 
 # MS ActiveDirectory does not properly give redirections; it passes
 # redirects to the LDAP library, which dutifully follows them, but
@@ -299,7 +299,7 @@ class LdapGroupGroup(LdapGroup):
         if not result_dict:
             return []
 
-        result_key, end_range = self._check_result_keys_for_range(result_dict.keys())
+        result_key, end_range = self._check_result_keys_for_range(list(result_dict.keys()))
         users = result_dict[result_key]
         if end_range is None:
             return users
@@ -323,7 +323,7 @@ class LdapGroupGroup(LdapGroup):
             # Add each user that matches
             if not user_details['firstname'] and not user_details['lastname']:
                 msg = 'Unable to process user %s. The user had no first name or last name.' % user_details
-                print msg
+                print(msg)
                 log.error(msg)
             elif user_details is not None:
                 user_list.append(user_details)

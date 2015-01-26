@@ -2,12 +2,12 @@ from django.conf.urls import *
 from django.conf import settings as django_settings
 from django.views.generic import RedirectView
 
-from views import views
-from views import groups
-from views import users
-from views import managementvm
-from views import settings
-from views import billing
+from .views import views
+from .views import groups
+from .views import users
+from .views import managementvm
+from .views import settings
+from .views import billing
 
 urlpatterns = patterns('',
     (r'^$', users.users, {}, 'index'),

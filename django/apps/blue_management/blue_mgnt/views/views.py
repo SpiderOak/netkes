@@ -1,14 +1,13 @@
 import os
 import datetime
+import codecs
 import csv
 import subprocess
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from base64 import b64encode
-import urlparse
-import ldap
+import urllib.parse
 import logging
 import math
-import hotshot
 import os
 import time
 import bcrypt
@@ -16,7 +15,7 @@ from uuid import uuid4
 from hashlib import sha256
 from base64 import b64encode
 
-from django.http import HttpResponse, HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseForbidden, StreamingHttpResponse
 from django.shortcuts import redirect, render_to_response
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ObjectDoesNotExist
@@ -38,10 +37,6 @@ from django.forms.forms import NON_FIELD_ERRORS
 from django.core.servers.basehttp import FileWrapper
 from django.core.cache import cache
 
-from interval.forms import IntervalFormField
-from mako.lookup import TemplateLookup
-from mako import exceptions
-
 from blue_mgnt import models
 from netkes.account_mgr.accounts_api import Api
 from netkes.account_mgr.billing_api import BillingApi
@@ -52,6 +47,7 @@ from netkes import account_mgr
 from key_escrow import server
 from Pandora import serial
 from Crypto.Util.RFC1751 import key_to_english
+import collections
 
 LOG = logging.getLogger('admin_actions')
 
@@ -63,41 +59,6 @@ SIZE_OF_GIGABYTE = 10 ** 9
 PROFILE_LOG_BASE = '/opt/openmanage/django_profile'
 
 
-def profile(log_file):
-    """Profile some callable.
-
-    This decorator uses the hotshot profiler to profile some callable (like
-    a view function or method) and dumps the profile data somewhere sensible
-    for later processing and examination.
-
-    It takes one argument, the profile log name. If it's a relative path, it
-    places it under the PROFILE_LOG_BASE. It also inserts a time stamp into the
-    file name, such that 'my_view.prof' become 'my_view-20100211T170321.prof',
-    where the time stamp is in UTC. This makes it easy to run and compare
-    multiple trials.
-    """
-
-    if not os.path.isabs(log_file):
-        log_file = os.path.join(PROFILE_LOG_BASE, log_file)
-
-    def _outer(f):
-        def _inner(*args, **kwargs):
-            # Add a timestamp to the profile output when the callable
-            # is actually called.
-            (base, ext) = os.path.splitext(log_file)
-            base = base + "-" + time.strftime("%Y%m%dT%H%M%S", time.gmtime())
-            final_log_file = base + ext
-
-            prof = hotshot.Profile(final_log_file)
-            try:
-                ret = prof.runcall(f, *args, **kwargs)
-            finally:
-                prof.close()
-            return ret
-
-        return _inner
-    return _outer
-
 def get_config_group(config, group_id):
     for group in config['groups']:
         if group['group_id'] == group_id:
@@ -106,8 +67,8 @@ def get_config_group(config, group_id):
 def get_base_url(url=None):
     if not url:
         url = read_config_file()['api_root']
-    split = urlparse.urlparse(url)
-    return urlparse.urlunsplit((split.scheme, split.netloc, '', '', ''))
+    split = urllib.parse.urlparse(url)
+    return urllib.parse.urlunsplit((split.scheme, split.netloc, '', '', ''))
 
 
 class LoginForm(forms.Form):
@@ -149,14 +110,16 @@ class NetkesBackend(ModelBackend):
             try:
                 api.ping()
                 initial_auth = True
-            except urllib2.HTTPError:
+            except urllib.error.HTTPError:
                 log.info('''Failed initial log in for "%s" as a superuser.
                          Password incorrect or unable to contact
                          accounts api''' % username)
                 return None
             
         local_pass = config.get('local_password', '')
-        if initial_auth or bcrypt.hashpw(password, local_pass) == local_pass:
+        hashed_pass = bcrypt.hashpw(password.encode('utf-8'), 
+                                    local_pass.encode('utf-8')).decode('utf-8')
+        if initial_auth or hashed_pass == local_pass:
             try:
                 user = User.objects.get(username=username)
             except ObjectDoesNotExist:
@@ -340,7 +303,8 @@ def validate(request):
         if user is not None:
             login(request, user)
             return redirect('blue_mgnt:index')
-    return HttpResponseForbidden("Enterprise management link is expired or invalid.", mimetype="text/plain")
+    return HttpResponseForbidden("Enterprise management link is expired or invalid.", 
+                                 content_type="text/plain")
 
 def get_method_prefix(fun):
     key = "p/{0}".format(fun.__name__)
@@ -351,12 +315,12 @@ def get_method_prefix(fun):
 
 def update_method_prefix(fun):
     key = "p/{0}".format(fun.__name__)
-    val = b64encode(uuid4().bytes)
+    val = b64encode(uuid4().bytes).decode()
     cache.set(key, val)
     return val
     
 def make_cache_key(fun, *args, **kwargs):
-    spec = tuple(args) + tuple(v for k, v in sorted(kwargs.iteritems()))
+    spec = tuple(args) + tuple(v for k, v in sorted(kwargs.items()))
     key = ["c", fun.__name__, get_method_prefix(fun)]
     for i in spec:
         if i is None:
@@ -416,7 +380,7 @@ def get_api(config):
 
     for attr in dir(api):
         fun_ = getattr(api, attr)
-        if (callable(fun_) and 
+        if (isinstance(fun_, collections.Callable) and 
             (attr in FUNCTIONS_TO_CACHE or 
              attr in FUNCTIONS_TO_INVALIDATE_CACHE)):
             setattr(api, attr, cache_api(fun_))
@@ -484,8 +448,8 @@ def download_logs(request, api, account_info, config, username):
 
     subprocess.call(['/opt/openmanage/bin/gather_logs.sh', date])
 
-    response = HttpResponse(FileWrapper(open(path)),
-                            mimetype='application/bzip2')
+    response = StreamingHttpResponse(open(path, 'rb'),
+                            content_type='application/bzip2')
     response['Content-Disposition'] = 'attachment; filename=%s' % filename
     return response
 
@@ -500,7 +464,7 @@ def users_csv(request, api, account_info, config, username):
 def list_users_paged(api, account_info):
     all_users = []
     user_limit = 1000
-    for page in range((account_info['total_users'] / user_limit) + 1):
+    for page in range((account_info['total_users'] // user_limit) + 1):
         user_offset = user_limit * page
         if user_offset < account_info['total_users']:
             all_users = all_users + api.list_users(user_limit, user_offset)
@@ -512,11 +476,12 @@ def users_csv_download(request, api, account_info, config, username):
     users = list_users_paged(api, account_info)
     features = api.enterprise_features()
 
-    response = HttpResponse(mimetype='text/csv')
+    response = HttpResponse(content_type='text/csv; charset=utf-8')
     response['Content-Disposition'] = 'attachment; filename=users.csv'
 
-    writer = csv.writer(response)
-    headers = [ 'name',
+    utf8_writer = codecs.getwriter('utf8')(response)
+    writer = csv.writer(utf8_writer)
+    headers = ['name',
                'email',
                'share_id',
                'creation_time',
@@ -529,9 +494,9 @@ def users_csv_download(request, api, account_info, config, username):
         headers = ['username'] + headers
     writer.writerow(headers)
     for user in users:
-        row = [user['name'].encode('utf-8'),
-               user['email'].encode('utf-8'),
-               (user['share_id'] if user['share_id'] else '').encode('utf-8'),
+        row = [user['name'],
+               user['email'],
+               (user['share_id'] if user['share_id'] else ''),
                user['creation_time'],
                user['last_login'],
                user['bytes_stored'],
@@ -543,7 +508,7 @@ def users_csv_download(request, api, account_info, config, username):
         if user['last_login']:
             row[4] = datetime.datetime.fromtimestamp(user['last_login'])
         if not features['email_as_username']:
-            row = [user['username'].encode('utf-8')] + row
+            row = [user['username']] + row
         writer.writerow(row)
 
     return response
@@ -692,7 +657,7 @@ class Pagination(object):
         except (TypeError, ValueError):
             pass
         self.per_page = per_page
-        self.paginator = Paginator(range(count), per_page, allow_empty_first_page=True)
+        self.paginator = Paginator(list(range(count)), per_page, allow_empty_first_page=True)
         self.num_pages = self.paginator.num_pages
         last_page = self.paginator.num_pages
         try:
@@ -748,7 +713,7 @@ def pageit(sub, api, page, extra):
     req='blue_mgnt:%s' % sub
 
     return dict(
-        item_count=range(item_count),
+        item_count=list(range(item_count)),
         ref=ref,
         req=req,
         page=page,

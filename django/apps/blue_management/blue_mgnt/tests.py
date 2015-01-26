@@ -24,20 +24,20 @@ DELETE_USER_DATA = {'form-0-orig_email': 'test0@test',
                     'form-TOTAL_FORMS': 1, 
                     'form-INITIAL_FORMS': 1 
                     }
-USER_DETAIL_USER_DATA = {u'name': u'test', 
-                         u'email': u'test@test.com',
-                         u'bonus_gigs': '5', 
-                         u'form': u'edit_user',
-                         u'group_id': u'1',
-                         u'enabled': True,
+USER_DETAIL_USER_DATA = {'name': 'test', 
+                         'email': 'test@test.com',
+                         'bonus_gigs': '5', 
+                         'form': 'edit_user',
+                         'group_id': '1',
+                         'enabled': True,
                          }
 
 def get_features(**kw):
-    features = {u'group_permissions': True, 
-                u'netkes': True, 
-                u'ldap': True, 
-                u'signup_restrictions': True, 
-                u'email_as_username': True
+    features = {'group_permissions': True, 
+                'netkes': True, 
+                'ldap': True, 
+                'signup_restrictions': True, 
+                'email_as_username': True
                }
     features.update(kw)
     return features
@@ -182,7 +182,7 @@ class TestViewAuth(unittest.TestCase):
         del call_data['form']
         del call_data['bonus_gigs']
 
-        edit_user.assert_called_once_with(u'test@test', call_data)
+        edit_user.assert_called_once_with('test@test', call_data)
 
 
 

@@ -1,6 +1,6 @@
 import json
-import urllib
-import urllib2
+import urllib.request, urllib.parse, urllib.error
+import urllib.request, urllib.error, urllib.parse
 import types
 import logging
 import time
@@ -15,7 +15,7 @@ class Error(Exception):
 class LogErrorMeta(type):
     '''Decorate all functions so that they log all Errors.'''
     def __new__(cls, name, bases, attrs):
-        for attr_name, attr_value in attrs.iteritems():
+        for attr_name, attr_value in attrs.items():
             if isinstance(attr_value, types.FunctionType):
                 attrs[attr_name] = cls.log_exceptions(attr_value)
 
@@ -37,9 +37,7 @@ class LogErrorMeta(type):
         return wrapper
         
 
-class Api(object):
-    __metaclass__ = LogErrorMeta
-
+class Api(object, metaclass=LogErrorMeta):
     class BadParams(Error):
         pass
     class PaymentRequired(Error):
@@ -110,7 +108,7 @@ class Api(object):
     def update_enterprise_settings(self, settings):
         try:
             return self.client.post_json('partner/settings', settings)
-        except urllib2.HTTPError, err:
+        except urllib.error.HTTPError as err:
             if err.code == 400:
                 raise self.BadParams()
             raise
@@ -118,7 +116,7 @@ class Api(object):
     def update_enterprise_password(self, new_password):
         try:
             return self.client.post_json('partner/password', new_password)
-        except urllib2.HTTPError, err:
+        except urllib.error.HTTPError as err:
             if err.code == 400:
                 raise self.BadParams()
             raise
@@ -129,13 +127,13 @@ class Api(object):
         return self.client.get_json('groups/')
 
     def search_groups(self, name):
-        return self.client.get_json('groups/?search=%s' % urllib.quote(name))
+        return self.client.get_json('groups/?search=%s' % urllib.parse.quote(name))
 
     def create_group(self, group_info):
         try:
             resp = self.client.post_json_raw_response(
                 'groups/', group_info)
-        except urllib2.HTTPError, err:
+        except urllib.error.HTTPError as err:
             if err.code == 400:
                 raise self.BadParams()
             elif err.code == 409:
@@ -150,7 +148,7 @@ class Api(object):
     def get_group(self, group_id):
         try:
             return self.client.get_json('groups/%d' % (group_id,))
-        except urllib2.HTTPError, err:
+        except urllib.error.HTTPError as err:
             if err.code == 404:
                 raise self.NotFound()
             raise
@@ -158,7 +156,7 @@ class Api(object):
     def edit_group(self, group_id, group_info):
         try:
             self.client.post_json('groups/%d' % (group_id,), group_info)
-        except urllib2.HTTPError, err:
+        except urllib.error.HTTPError as err:
             if err.code == 404:
                 raise self.NotFound()
             elif err.code == 400:
@@ -179,7 +177,7 @@ class Api(object):
                 self.client.delete('groups/%d?move_to=%d' % (group_id, new_group_id))
             else:
                 self.client.delete('groups/%d' % (group_id,))
-        except urllib2.HTTPError, err:
+        except urllib.error.HTTPError as err:
             if err.code == 404:
                 raise self.NotFound()
             raise
@@ -194,7 +192,7 @@ class Api(object):
             get_params['offset'] = offset
         query_string = ''
         if get_params:
-            query_string = '?%s' % urllib.urlencode(get_params)
+            query_string = '?%s' % urllib.parse.urlencode(get_params)
         return query_string
 
     def list_shares_for_brand(self, limit=None, offset=None):
@@ -225,14 +223,14 @@ class Api(object):
         query_string = self._create_query_string(limit, offset)
         if query_string:
             query_string = '&' + query_string
-        return self.client.get_json('users/?search=%s%s' % (urllib.quote(name_or_email), query_string))
+        return self.client.get_json('users/?search=%s%s' % (urllib.parse.quote(name_or_email), query_string))
     def get_user_count(self):
         return self.client.get_json('users/?action=user_count')['user_count']
 
     def create_user(self, user_info):
         try:
             return self.client.post_json('users/', user_info)
-        except urllib2.HTTPError, err:
+        except urllib.error.HTTPError as err:
             if err.code == 400:
                 raise self.BadParams()
             if err.code == 402:
@@ -244,7 +242,7 @@ class Api(object):
                 if 'email' in data['conflicts']:
                     raise self.DuplicateEmail()
                 elif 'plan_id' in data['conflicts']:
-                    print 'data', data
+                    print('data', data)
                     raise self.BadPlan()
                 elif 'group_id' in data['conflicts']:
                     raise self.BadGroup()
@@ -254,7 +252,7 @@ class Api(object):
         try:
             return self.client.get_json(
                 'users/%s' % (username_or_email,))
-        except urllib2.HTTPError, err:
+        except urllib.error.HTTPError as err:
             if err.code == 404:
                 raise self.NotFound()
             raise
@@ -263,7 +261,7 @@ class Api(object):
         try:
             return self.client.get_json(
                 'users/%s/devices' % (username_or_email,))
-        except urllib2.HTTPError, err:
+        except urllib.error.HTTPError as err:
             if err.code == 404:
                 raise self.NotFound()
             raise
@@ -289,7 +287,7 @@ class Api(object):
         try:
             return self.client.get_json(
                 'users/%s/shares/' % (username_or_email,))
-        except urllib2.HTTPError, err:
+        except urllib.error.HTTPError as err:
             if err.code == 404:
                 raise self.NotFound()
             raise
@@ -298,7 +296,7 @@ class Api(object):
         try:
             return self.client.get_json(
                 'users/%s/shares/%s' % (username_or_email, room_key))
-        except urllib2.HTTPError, err:
+        except urllib.error.HTTPError as err:
             if err.code == 404:
                 raise self.NotFound()
             raise
@@ -308,7 +306,7 @@ class Api(object):
         try:
             return self.client.post_json(
                 'users/%s/shares/%s?action=%s' % (username_or_email, room_key, action), {})
-        except urllib2.HTTPError, err:
+        except urllib.error.HTTPError as err:
             if err.code == 404:
                 raise self.NotFound()
             raise
@@ -317,7 +315,7 @@ class Api(object):
         try:
             self.client.post_json(
                 'users/%s' % (username_or_email,), user_info)
-        except urllib2.HTTPError, err:
+        except urllib.error.HTTPError as err:
             if err.code == 404:
                 raise self.NotFound()
             elif err.code == 400:
@@ -337,7 +335,7 @@ class Api(object):
     def delete_user(self, username_or_email):
         try:
             self.client.delete('users/%s' % (username_or_email,))
-        except urllib2.HTTPError, err:
+        except urllib.error.HTTPError as err:
             if err.code == 404:
                 raise self.NotFound()
             raise
@@ -346,7 +344,7 @@ class Api(object):
         try:
             self.client.post_json('users/%s?action=sendactivationemail' % (
                 username_or_email,), data)
-        except urllib2.HTTPError, err:
+        except urllib.error.HTTPError as err:
             if err.code == 404:
                 raise self.NotFound()
             elif err.code == 409:

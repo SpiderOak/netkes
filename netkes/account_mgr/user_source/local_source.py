@@ -89,7 +89,7 @@ def set_multi_passwords(db_conn, emails, passwords):
     cur = db_conn.cursor()
 
     cur.executemany(
-        "SELECT upsert_password(%s, %s)", itertools.izip(emails, hashed_pws)
+        "SELECT upsert_password(%s, %s)", zip(emails, hashed_pws)
     )
 
     db_conn.commit()

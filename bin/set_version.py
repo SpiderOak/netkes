@@ -5,8 +5,8 @@ from netkes.account_mgr.accounts_api import Api
 config = common.read_config_file()
 
 if len(sys.argv) != 2:
-    print "version is required"
-    print "python set_version.py 1.2.3"
+    print("version is required")
+    print("python set_version.py 1.2.3")
     sys.exit(0)
 
 if config['api_password']:

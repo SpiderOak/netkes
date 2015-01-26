@@ -268,7 +268,7 @@ class TestProcessQuery(unittest.TestCase):
         results = group_manager._process_query(self.db_conn, self.query)
 
         self.assertEqual(len(results), 1)
-        self.assertEqual(len(results[0].keys()), 1)
+        self.assertEqual(len(list(results[0].keys())), 1)
         self.assertEqual(results[0]['uniqueid'], sentinel.uniqueid)
 
     def test_works_multirows_noextras(self):
@@ -280,9 +280,9 @@ class TestProcessQuery(unittest.TestCase):
         results = group_manager._process_query(self.db_conn, self.query)
 
         self.assertEqual(len(results), 3)
-        self.assertEqual(len(results[0].keys()), 1)
+        self.assertEqual(len(list(results[0].keys())), 1)
 
-        for i in xrange(0,3):
+        for i in range(0,3):
             self.assertIs(results[i]['uniqueid'], id_array[i][0])
 
     def test_works_norows_extras(self):
@@ -315,7 +315,7 @@ class TestProcessQuery(unittest.TestCase):
         self.assertEqual(len(results),3)
         self.assertEqual(len(results[0]), 3)
 
-        for i in xrange(0,3):
+        for i in range(0,3):
             self.assertIs(results[i]['uniqueid'], test_array[i][0])
             self.assertIs(results[i]['field1'], test_array[i][1])
             self.assertIs(results[i]['field2'], test_array[i][2])

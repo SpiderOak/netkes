@@ -15,7 +15,7 @@ from django.http import (
 )
 from django.shortcuts import get_object_or_404
 
-import urllib
+import urllib.parse, urllib.error
 
 from common import get_config, read_config_file, set_config, validate_config, NetKesConfigError
 from account_mgr import authenticator
@@ -136,7 +136,7 @@ def login_required(fun):
                 log.error("Got bad request. Unable to load sign key")
                 return HttpResponseBadRequest()
 
-            decoded_user = urllib.unquote(username)
+            decoded_user = urllib.parse.unquote(username)
 
             try:
                 data =  server.read_escrow_data(

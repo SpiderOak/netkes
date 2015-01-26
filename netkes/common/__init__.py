@@ -10,6 +10,7 @@ import json
 import logging
 import os
 import os.path
+import codecs
 
 CONFIG_DIR = os.environ.get("OPENMANAGE_CONFIGDIR", 
                             "/opt/openmanage/etc")
@@ -36,7 +37,7 @@ def get_ssl_keys():
     key_fname = os.path.join(key_home, 'server.key')
     cert_fname = os.path.join(key_home, 'server.crt')
 
-    print key_fname+" "+ cert_fname
+    print(key_fname+" "+ cert_fname)
     if os.path.exists(key_fname) and os.path.exists(cert_fname):
         log.info("Using SSL key/cert: %s %s"% (key_fname, cert_fname,))
         return key_fname, cert_fname
@@ -75,10 +76,6 @@ def read_config_file(cmdline_option=None):
     with open(config_file) as json_fobj:
         fileconfig = json.load(json_fobj)
 
-    for key in fileconfig.keys():
-        if isinstance(fileconfig[key], unicode):
-            fileconfig[key] = fileconfig[key].encode('utf_8')
-
     config = merge_config(make_defaults(), fileconfig)
 
     return config
@@ -86,7 +83,7 @@ def read_config_file(cmdline_option=None):
 def merge_config(config, cmdline_opts):
     '''Merges the command-line options with the configuration file.'''
 
-    for key, value in cmdline_opts.iteritems():
+    for key, value in cmdline_opts.items():
         config[key] = value
 
     return config

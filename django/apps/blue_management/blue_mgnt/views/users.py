@@ -2,11 +2,11 @@ import datetime
 from base64 import b32encode
 import csv
 
-from views import enterprise_required, log_admin_action
-from views import Pagination
-from views import ReadOnlyWidget, get_base_url, SIZE_OF_GIGABYTE
-from settings import PasswordForm
-from groups import get_config_group
+from .views import enterprise_required, log_admin_action
+from .views import Pagination
+from .views import ReadOnlyWidget, get_base_url, SIZE_OF_GIGABYTE
+from .settings import PasswordForm
+from .groups import get_config_group
 
 from django import forms
 from django.core.urlresolvers import reverse
@@ -300,7 +300,7 @@ def users(request, api, account_info, config, username, saved=False):
                      is_local_user=is_local_user(config, x['group_id']),
                      group_name=get_group_name(groups, x['group_id']),
                     )
-    users = map(_user_to_dict, all_users)
+    users = list(map(_user_to_dict, all_users))
     local_users = [user for user in users if user['is_local_user']]
     for x, local_user in enumerate(local_users):
         local_user['index'] = x
@@ -351,7 +351,7 @@ def users(request, api, account_info, config, username, saved=False):
         show_disabled=show_disabled,
         search=search,
         search_back=search_back,
-        users_and_delete=zip(users, delete_user_formset),
+        users_and_delete=list(zip(users, delete_user_formset)),
         pagination=pagination,
     ),
     RequestContext(request))

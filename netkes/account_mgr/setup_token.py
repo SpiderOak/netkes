@@ -45,7 +45,7 @@ def create_token(db_conn, expiry=None, no_devices_only=True, single_use_only=Tru
 
     try:
         cur.execute(create_token_query, query_args)
-    except Exception, e:
+    except Exception as e:
         db_conn.rollback()
         raise e
     else:
