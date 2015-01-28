@@ -8,6 +8,7 @@ from .views import ReadOnlyWidget, get_base_url, SIZE_OF_GIGABYTE
 from .settings import PasswordForm
 from .groups import get_config_group
 
+from django.http import HttpResponseForbidden 
 from django import forms
 from django.core.urlresolvers import reverse
 from django.forms.formsets import formset_factory
@@ -322,14 +323,16 @@ def users(request, api, account_info, config, username, saved=False):
         else:
             tmp_user_formset = TmpUserFormSet(request.POST, prefix='tmp_user')
             delete_user_formset = DeleteUserFormSet(request.POST, prefix='delete_user')
-            if (request.user.has_perm('blue_mgnt.can_manage_users')
-                and tmp_user_formset.is_valid()
-                and delete_user_formset.is_valid()):
-                for form in delete_user_formset.deleted_forms:
-                    orig_email = form.cleaned_data['orig_email']
-                    api.delete_user(orig_email)
-                    log_admin_action(request, 'delete user "%s"' % orig_email)
-                return redirect(reverse('blue_mgnt:users_saved') + '?search=%s' % search)
+            if request.user.has_perm('blue_mgnt.can_manage_users'):
+                if (tmp_user_formset.is_valid()
+                    and delete_user_formset.is_valid()):
+                    for form in delete_user_formset.deleted_forms:
+                        orig_email = form.cleaned_data['orig_email']
+                        api.delete_user(orig_email)
+                        log_admin_action(request, 'delete user "%s"' % orig_email)
+                    return redirect(reverse('blue_mgnt:users_saved') + '?search=%s' % search)
+            else:
+                return HttpResponseForbidden()
 
     index = 0
     for user in users:

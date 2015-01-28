@@ -23,7 +23,7 @@ from functools import reduce
 RESULTS_PER_PAGE = 25
 
 def get_login_link(username, auth_token):
-    b32_username = b32encode(username).rstrip('=')
+    b32_username = b32encode(username).decode().rstrip('=')
     return '%s/storage/%s/escrowlogin-v2?auth_token=%s' % (get_base_url(),
                                                         b32_username,
                                                         auth_token
@@ -41,7 +41,7 @@ def escrow_login(request, api, account_info, config, username,
         single_use_only=False,
     )
     models.AdminSetupTokens.objects.create(**data)
-    return redirect(get_login_link(escrow_username, data['token']))
+    return redirect(get_login_link(escrow_username.encode(), data['token']))
 
 class CodeForm(forms.Form):
     expiry_interval = forms.IntegerField(label='Expiry',

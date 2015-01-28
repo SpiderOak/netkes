@@ -26,7 +26,7 @@ from django.forms.models import modelformset_factory
 from django.forms.formsets import formset_factory
 from django.forms import ModelForm
 from django.contrib.auth.models import User
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout as django_logout
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from django.conf import settings as django_settings
 from django.contrib.auth.models import Group, Permission
@@ -186,8 +186,6 @@ class NetkesBackend(ModelBackend):
             except User.DoesNotExist:
                 return None
 
-LdapBackend = NetkesBackend
-
 
 class LoginForm(forms.Form):
     username = forms.CharField(max_length=90)
@@ -279,32 +277,11 @@ def login_user(request):
     RequestContext(request))
 
 def logout(request):
+    django_logout(request)
     if 'username' in request.session:
         del request.session['username']
 
     return redirect('blue_mgnt:login')
-
-def validate(request):
-    '''
-    >>> from django.test.client import Client
-    >>> c = Client()
-    >>> r = c.get(reverse(validate))
-    >>> r.status_code
-    403
-
-    '''
-    try:
-        user = authenticate(hmac=request.GET['hmac'],
-                            ctime=request.GET['time'],
-                            partner_id=request.GET['partner'])
-    except KeyError:
-        pass
-    else:
-        if user is not None:
-            login(request, user)
-            return redirect('blue_mgnt:index')
-    return HttpResponseForbidden("Enterprise management link is expired or invalid.", 
-                                 content_type="text/plain")
 
 def get_method_prefix(fun):
     key = "p/{0}".format(fun.__name__)
@@ -328,7 +305,7 @@ def make_cache_key(fun, *args, **kwargs):
         elif isinstance(i, (int, float)):
             key.append(str(i))
         else:
-            key.append(b64encode(repr(i)))
+            key.append(b64encode(repr(i).encode()).decode())
     return "/".join(key)
         
 def get_api(config):

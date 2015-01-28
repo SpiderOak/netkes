@@ -40,7 +40,7 @@ def check_local_auth(db_conn, config, username, password):
     row = cur.fetchone()
 
     try:
-        return bcrypt.hashpw(password, row[1]) == row[1]
+        return bcrypt.hashpw(password.encode(), row[1].encode()).decode() == row[1]
     except ValueError:
         return False
 
@@ -84,8 +84,8 @@ def set_multi_passwords(db_conn, emails, passwords):
         raise TypeError("Argument lengths do not match!")
     hashed_pws = []
     for pw in passwords:
-        hashed_pw = bcrypt.hashpw(pw, bcrypt.gensalt()) if pw else pw
-        hashed_pws.append(hashed_pw)
+        hashed_pw = bcrypt.hashpw(pw.encode(), bcrypt.gensalt()) if pw else pw
+        hashed_pws.append(hashed_pw.decode())
     cur = db_conn.cursor()
 
     cur.executemany(
