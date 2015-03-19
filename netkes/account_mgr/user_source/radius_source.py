@@ -22,19 +22,9 @@ import pyrad.packet
 from pyrad.client import Client
 from pyrad.dictionary import Dictionary
 
+from netkes.account_mgr.user_source import ldap_source
 
-def process_username(username, chop_at_symbol=True):
-    """
-    Selectively splits a username of the form "foo@bar.com" into just "foo" 
-    for auth purposes.
-    """
-    
-    if chop_at_symbol:
-        username, _ = username.split('@', 1)
 
-    return username
-
-    
 def can_auth(config, username, password):
     """
     Performs authentication against a RADIUS server.
@@ -44,7 +34,7 @@ def can_auth(config, username, password):
 
     log.debug("Attempting RADIUS auth to %s for user %s" % (config['rad_server'], username,))
 
-    processed_user = process_username(username)
+    processed_user = ldap_source.get_auth_username(config, username)
 
     # Create a RADIUS client to communicate with the server.
     srv = Client(
