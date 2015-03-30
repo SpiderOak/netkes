@@ -652,11 +652,15 @@ def reports(request, api, account_info, config, username, saved=False):
 
 @enterprise_required
 def manage(request, api, account_info, config, username):
+    features = api.enterprise_features()
+    billing_info = None
+    if features['ldap'] == False:
+        billing_info = get_billing_info(config)
     return render_to_response('manage.html', dict(
         user=request.user,
         username=username,
         account_info=account_info,
-        billing_info=get_billing_info(config),
+        billing_info=billing_info,
     ),
     RequestContext(request))
 

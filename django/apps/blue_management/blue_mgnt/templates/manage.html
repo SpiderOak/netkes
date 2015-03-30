@@ -20,6 +20,7 @@
             </a>
         </div>
     </div>
+    {% if billing_info %}
     <div class="widget-manage-blocks">
         <div class="manage-icon"><i class="ss-icon">&#x1F4B2;</i></div>
         <div class="manage-content">
@@ -28,6 +29,7 @@
             <a href="{% url 'blue_mgnt:billing' %}" class="button button-primary-basic">Manage Billing</a>
         </div>
     </div>
+    {% endif %}
     <div class="widget-manage-blocks">
         <div class="manage-icon"><i class="ss-icon">&#x1F464;</i></div>
         <div class="manage-content">
