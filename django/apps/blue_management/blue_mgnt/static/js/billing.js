@@ -533,7 +533,10 @@
             $el.attr("class", "");
             $p.html(Templates["billing-cc-type"]());
             if (type) {
-                $("li[data-value=" + type + "]").addClass("active");
+                $("li[data-value]", $p).each(function(i, el) {
+                  var $el = $(el);
+                  $el.toggleClass("active", $el.attr("data-value") === type);
+                });
             }
         },
         setMessage: function($child, msg_class, msg) {

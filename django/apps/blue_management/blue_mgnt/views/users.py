@@ -3,8 +3,8 @@ from base64 import b32encode
 import csv
 
 from views import enterprise_required, log_admin_action
+from views import Pagination
 from views import ReadOnlyWidget, get_base_url, SIZE_OF_GIGABYTE
-from views import pageit
 from settings import PasswordForm
 from groups import get_config_group
 
@@ -13,6 +13,7 @@ from django.core.urlresolvers import reverse
 from django.forms.formsets import formset_factory
 from django.template import RequestContext
 from django.shortcuts import redirect, render_to_response
+from django.utils.safestring import mark_safe
 
 from netkes.account_mgr.user_source import local_source
 import openmanage.models as openmanage_models
@@ -106,6 +107,9 @@ def create_user(api, account_info, config, data):
 def _csv_create_users(api, account_info, groups, config, request, csv_data):
     for x, row in enumerate(csv_data):
         group = get_group(groups, row['group_name'])
+        if not group:
+            msg = 'Invalid data in row %s. Invalid Group' % x
+            return x, forms.ValidationError(msg)
         group_id = group['group_id']
         config_group = get_config_group(config, group_id)
         if config_group['user_source'] != 'local':
@@ -123,6 +127,14 @@ def _csv_create_users(api, account_info, groups, config, request, csv_data):
             log_admin_action(request, 'create user through csv: %s' % user_info)
         except api.DuplicateEmail:
             msg = 'Invalid data in row %s. Email already in use' % x
+            return x, forms.ValidationError(msg)
+        except api.PaymentRequired:
+            msg = ('Payment required. '
+                    'Please update your <a href="/billing/">billing</a> '
+                    'information to unlock your account.')
+            return x, forms.ValidationError(mark_safe(msg))
+        except api.DuplicateUsername:
+            msg = 'Invalid data in row %s. Username already in use' % x
             return x, forms.ValidationError(msg)
     return x + 1, None
 
@@ -192,6 +204,11 @@ def get_new_user_form(api, features, account_info, config, local_groups, groups,
                     log_admin_action(request, 'create user: %s' % data)
                 except api.DuplicateEmail:
                     self._errors['email'] = self.error_class(["Email address already in use"])
+                except api.PaymentRequired:
+                    msg = ('Payment required. '
+                           'Please update your <a href="/billing/">billing</a> '
+                           'information to unlock your account.')
+                    raise forms.ValidationError(mark_safe(msg))
                 except api.DuplicateUsername:
                     self._errors['username'] = self.error_class(["Username already in use"])
 
@@ -223,14 +240,13 @@ def get_login_link(username):
 
 @enterprise_required
 def users(request, api, account_info, config, username, saved=False):
-    page = int(request.GET.get('page', 1))
     show_disabled = int(request.GET.get('show_disabled', 1))
     search_back = request.GET.get('search_back', '')
     groups = api.list_groups()
     features = api.enterprise_features()
     search = request.GET.get('search', '')
     local_groups = get_local_groups(config, groups)
-    all_pages=pageit('users', api, page, None)
+    pagination = Pagination(api.get_user_count(), request.GET.get('page'))
     if not search:
         search = request.POST.get('search', '')
 
@@ -254,28 +270,21 @@ def users(request, api, account_info, config, username, saved=False):
     TmpUserForm = get_user_form(local_groups)
     TmpUserFormSet = formset_factory(TmpUserForm, extra=0, formset=BaseUserFormSet)
     DeleteUserFormSet = formset_factory(DeleteUserForm, extra=0, can_delete=True)
-    page = int(page)
-    user_limit = 25
-    user_offset = user_limit * (page - 1)
     if search_back == '1':
         search = ''
-        all_users = api.list_users(user_limit, user_offset)
+        all_users = api.list_users(pagination.per_page, pagination.query_offset)
     elif search:
-        all_users = api.search_users(search, user_limit, user_offset)
+        all_users = api.search_users(search, pagination.per_page, pagination.query_offset)
     else:
-        all_users = api.list_users(user_limit, user_offset)
-
-    next_page = len(all_users) == user_limit
-
-    all_users.sort(key=lambda x: x['creation_time'], reverse=True)
+        all_users = api.list_users(pagination.per_page, pagination.query_offset)
 
     if not show_disabled:
         all_users = [x for x in all_users if x['enabled']]
-    page_users = all_users
 
-    initial = []
-    for x in page_users:
-        entry = dict(username=x['username'],
+    all_users.sort(key=lambda x: x['creation_time'], reverse=True)
+
+    def _user_to_dict(x):
+        return dict(username=x['username'],
                      email=x['email'],
                      orig_email=x['email'],
                      user_detail=x['email'],
@@ -291,16 +300,13 @@ def users(request, api, account_info, config, username, saved=False):
                      is_local_user=is_local_user(config, x['group_id']),
                      group_name=get_group_name(groups, x['group_id']),
                     )
-        initial.append(entry)
-    local_users = []
-    for user_row in initial:
-        if user_row['is_local_user']:
-            local_users.append(user_row)
+    users = map(_user_to_dict, all_users)
+    local_users = [user for user in users if user['is_local_user']]
     for x, local_user in enumerate(local_users):
         local_user['index'] = x
 
     tmp_user_formset = TmpUserFormSet(initial=local_users, prefix='tmp_user')
-    delete_user_formset = DeleteUserFormSet(initial=initial, prefix='delete_user')
+    delete_user_formset = DeleteUserFormSet(initial=users, prefix='delete_user')
     user_csv = UserCSVForm()
     new_user = NewUserForm()
 
@@ -326,31 +332,27 @@ def users(request, api, account_info, config, username, saved=False):
                 return redirect(reverse('blue_mgnt:users_saved') + '?search=%s' % search)
 
     index = 0
-    for user in initial:
+    for user in users:
         if user['is_local_user']:
             user['form'] = tmp_user_formset[index]
             index += 1
     
     return render_to_response('index.html', dict(
-        all_users=initial,
         user=request.user,
-        page=page,
         config=config,
-        next_page=next_page,
         new_user=new_user,
         username=username,
         tmp_user_formset=tmp_user_formset,
         delete_user_formset=delete_user_formset,
         user_csv=user_csv,
         features=api.enterprise_features(),
-        page_users=page_users,
         saved=saved,
         account_info=account_info,
         show_disabled=show_disabled,
         search=search,
         search_back=search_back,
-        users_and_delete=zip(initial, delete_user_formset),
-        all_pages=all_pages,
+        users_and_delete=zip(users, delete_user_formset),
+        pagination=pagination,
     ),
     RequestContext(request))
 

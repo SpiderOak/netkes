@@ -42,6 +42,8 @@ class Api(object):
 
     class BadParams(Error):
         pass
+    class PaymentRequired(Error):
+        pass
     class NotFound(Error):
         pass
     class DuplicateGroupName(Error):
@@ -233,6 +235,8 @@ class Api(object):
         except urllib2.HTTPError, err:
             if err.code == 400:
                 raise self.BadParams()
+            if err.code == 402:
+                raise self.PaymentRequired()
             elif err.code == 409:
                 data = json.loads(err.read())
                 if 'username' in data['conflicts']:

@@ -10,7 +10,7 @@ config = config_mgr.ConfigManager(config_mgr.default_config())
 # It's unnecessary for new vms. 
 if config.config['api_password']:
     hash_ = sha256(config.config['api_password']).digest()
-    salt = '$2a$14$' + b64encode(hash_[:16]).rstrip('=')
+    salt = '$2a$14$' + b64encode(hash_[:16]).rstrip('=').replace('+', '.')
     new_pass = bcrypt.hashpw(config.config['api_password'], salt)
     api_pass = new_pass[len(salt):]
 

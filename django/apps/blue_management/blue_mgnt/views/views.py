@@ -3,7 +3,7 @@ import datetime
 import csv
 import subprocess
 import urllib2
-from base64 import b32encode
+from base64 import b64encode
 import urlparse
 import ldap
 import logging
@@ -12,6 +12,7 @@ import hotshot
 import os
 import time
 import bcrypt
+from uuid import uuid4
 from hashlib import sha256
 from base64 import b64encode
 
@@ -231,7 +232,7 @@ class LoginForm(forms.Form):
 
 def hash_password(new_password):
     hash_ = sha256(new_password).digest()
-    salt = '$2a$14$' + b64encode(hash_[:16]).rstrip('=')
+    salt = '$2a$14$' + b64encode(hash_[:16]).rstrip('=').replace('+', '.')
     new_pass = bcrypt.hashpw(new_password, salt)
     api_pass = new_pass[len(salt):]
 
@@ -303,7 +304,7 @@ def login_user(request):
 
                 request.session['username'] = username
 
-                return redirect('blue_mgnt:index')
+                return redirect(request.GET.get('next', '/'))
             else:
                 errors = form._errors.setdefault(NON_FIELD_ERRORS , ErrorList())
                 errors.append('Invalid username or password')
@@ -341,6 +342,31 @@ def validate(request):
             return redirect('blue_mgnt:index')
     return HttpResponseForbidden("Enterprise management link is expired or invalid.", mimetype="text/plain")
 
+def get_method_prefix(fun):
+    key = "p/{0}".format(fun.__name__)
+    val = cache.get(key)
+    if val is None:
+        return update_method_prefix(fun)
+    return val
+
+def update_method_prefix(fun):
+    key = "p/{0}".format(fun.__name__)
+    val = b64encode(uuid4().bytes)
+    cache.set(key, val)
+    return val
+    
+def make_cache_key(fun, *args, **kwargs):
+    spec = tuple(args) + tuple(v for k, v in sorted(kwargs.iteritems()))
+    key = ["c", fun.__name__, get_method_prefix(fun)]
+    for i in spec:
+        if i is None:
+            key.append('')
+        elif isinstance(i, (int, float)):
+            key.append(str(i))
+        else:
+            key.append(b64encode(repr(i)))
+    return "/".join(key)
+        
 def get_api(config):
     api = Api.create(
         django_settings.ACCOUNT_API_URL,
@@ -362,33 +388,27 @@ def get_api(config):
         'list_users',
     ]
     FUNCTIONS_TO_INVALIDATE_CACHE = {
-        'update_enterprise_settings': ['enterprise_settings'],
-        'create_group': ['list_groups'],
-        'edit_group': ['list_groups'],
-        'delete_group': ['list_groups', 'list_users'],
-        'create_user': ['list_users', 'get_user_count'],
-        'edit_user': ['list_users'],
-        'delete_user': ['list_users', 'get_user_count'],
+        'update_enterprise_settings': [api.enterprise_settings],
+        'create_group': [api.list_groups],
+        'edit_group': [api.list_groups],
+        'delete_group': [api.list_groups, api.list_users],
+        'create_user': [api.list_users, api.get_user_count],
+        'edit_user': [api.list_users],
+        'delete_user': [api.list_users, api.get_user_count],
     }
     
-    def check_list_users(name, args, kwargs):
-        if (name == 'list_users' and 
-            args == (25, 0) 
-            and not kwargs):
-            return True
-        return False
-
     def cache_api(fun):
         def dec(*args, **kwargs):
             name = fun.__name__
             if name in FUNCTIONS_TO_INVALIDATE_CACHE:
                 for f in FUNCTIONS_TO_INVALIDATE_CACHE[name]:
-                    cache.delete(f)
-            if name in FUNCTIONS_TO_CACHE or check_list_users(name, args, kwargs):
-                value = cache.get(name)
+                    update_method_prefix(f)
+            if name in FUNCTIONS_TO_CACHE:
+                key = make_cache_key(fun, *args, **kwargs)
+                value = cache.get(key)
                 if not value:
                     value = fun(*args, **kwargs)
-                    cache.set(name, value)
+                    cache.set(key, value)
                 return value
             else:
                 return fun(*args, **kwargs)
@@ -423,7 +443,7 @@ def get_billing_info(config):
 def enterprise_required(fun):
     def new_fun(request, *args, **kwargs):
         if not request.session.get('username', False):
-            return redirect('blue_mgnt:login')
+            return redirect(reverse('blue_mgnt:login') + '?next=%s' % request.path)
 
         config = read_config_file()
         api = get_api(config)
@@ -450,6 +470,11 @@ def enterprise_required(fun):
         return fun(request, api, account_info, config,
                    request.session['username'], *args, **kwargs)
     return new_fun
+
+@enterprise_required
+def clear_cache(request, api, account_info, config, username): 
+    cache.clear()
+    return HttpResponse('Cache cleared')
 
 @enterprise_required
 def download_logs(request, api, account_info, config, username):
@@ -627,12 +652,10 @@ def reports(request, api, account_info, config, username, saved=False):
 
 @enterprise_required
 def manage(request, api, account_info, config, username):
-    account_name = config['api_user'].replace("_", " ")
     return render_to_response('manage.html', dict(
         user=request.user,
         username=username,
         account_info=account_info,
-        account_name=account_name,
         billing_info=get_billing_info(config),
     ),
     RequestContext(request))
@@ -659,6 +682,44 @@ def fingerprint(request, api, account_info, config, username):
         fingerprint=fingerprint,
     ),
     RequestContext(request))
+
+
+class Pagination(object):
+    def __init__(self, count, page=1, per_page=25):
+        self.page = 1
+        try:
+            self.page = int(page)
+        except (TypeError, ValueError):
+            pass
+        self.per_page = per_page
+        self.paginator = Paginator(range(count), per_page, allow_empty_first_page=True)
+        self.num_pages = self.paginator.num_pages
+        last_page = self.paginator.num_pages
+        try:
+            self.paginator_page = self.paginator.page(self.page)
+        except InvalidPage as e:
+            self.paginator_page = self.paginator.page(last_page)
+            self.page = last_page
+
+        # populate self.page_range with list holding the page numbers to render in nav.
+        # self.page_range is (currently) hard-coded to always contain 10 items
+        # None values represent need to present '...' for skipped page ranges
+        self.page_range = self.paginator.page_range
+        if last_page <= 10:
+            pass
+        else:
+            if self.page - 2 > 3:
+                if self.page + 6 > last_page:
+                    self.page_range = [1, None] + self.page_range[-8:]
+                else:
+                    self.page_range = [1, None] + self.page_range[self.page-3:self.page+3] + [None, last_page]
+            else:
+                self.page_range = self.paginator.page_range[:8] + [None, last_page]
+
+    @property
+    def query_offset(self):
+        return max(0, self.paginator_page.start_index() - 1)
+
 
 # Benny's da_paginator
 def pageit(sub, api, page, extra):
