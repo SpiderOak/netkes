@@ -37,6 +37,7 @@ AGENT_CONFIG_VARS = [
     'dir_username_source',
     'listen_addr',
     'listen_port',
+    'send_activation_email',
 ]
 
 def save_settings(request, api, options):
@@ -128,10 +129,16 @@ def settings(request, api, account_info, config, username, saved=False):
             
             if features['ldap']:
                 for var in AGENT_CONFIG_VARS:
-                    self.fields[var] = forms.CharField(
-                        initial=config.get(var, ''), 
-                        required=False
-                    )
+                    if var in ['send_activation_email']:
+                        self.fields[var] = forms.BooleanField(
+                            initial=config.get(var, True), 
+                            required=False
+                        )
+                    else:
+                        self.fields[var] = forms.CharField(
+                            initial=config.get(var, ''), 
+                            required=False
+                        )
 
     options = OpenmanageOptsForm()
 

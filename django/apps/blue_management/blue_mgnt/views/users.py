@@ -105,7 +105,8 @@ def create_user(api, account_info, config, data):
     # through the set password email.
     local_source.set_user_password(local_source._get_db_conn(config),
                                    email, '') 
-    api.send_activation_email(email, dict(template_name='set_password'))
+    if config['send_activation_email']:
+        api.send_activation_email(email, dict(template_name='set_password'))
 
 def _csv_create_users(api, account_info, groups, config, request, csv_data):
     for x, row in enumerate(csv_data):
