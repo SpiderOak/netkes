@@ -16,7 +16,10 @@ from django.shortcuts import redirect, render_to_response
 from django.utils.safestring import mark_safe
 
 from netkes.account_mgr.user_source import local_source
+from blue_mgnt.models import BumpedUser
 import openmanage.models as openmanage_models
+
+SIZE_OF_BUMP = 5
 
 class UserDetailWidget(ReadOnlyWidget):
     def render(self, name, value, attrs):
@@ -430,6 +433,17 @@ def user_detail(request, api, account_info, config, username, email, saved=False
                 log_admin_action(request, 'delete user %s' % email)
                 api.delete_user(email)
                 return redirect('blue_mgnt:users')
+        if request.POST.get('form', '') == 'bump_space':
+            if request.user.has_perm('blue_mgnt.can_edit_bonus_gigs'):
+                log_admin_action(request, 'bump space for user %s' % email)
+                data = {
+                    'bonus_bytes': (data['bonus_gigs'] + SIZE_OF_BUMP) * SIZE_OF_GIGABYTE
+                }
+                api.edit_user(email, data)
+                time_to_reset = datetime.datetime.now() + datetime.timedelta(days=3)
+                BumpedUser.objects.create(email=email, 
+                                          time_to_reset_bonus_gb=time_to_reset)
+                return redirect('blue_mgnt:user_detail_saved', data.get('email', email))
         if request.POST.get('form', '') == 'edit_share':
             room_key = request.POST['room_key']
             enable = request.POST['enabled'] == 'False'

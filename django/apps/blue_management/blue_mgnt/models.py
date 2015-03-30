@@ -39,14 +39,19 @@ class AdminGroup(models.Model):
         db_table = 'admin_group'
 
 
-'''
-create table admin_group (
-    group_id int4 primary key,
-    ldap_dn text,
-    date_created timestamp not null default current_timestamp
-);
-grant select, insert, update on admin_group to admin_console;
-'''
+class BumpedUser(models.Model):
+    email = models.EmailField()
+    bonus_gb_reset = models.BooleanField(default=False)
+    time_to_reset_bonus_gb = models.DateTimeField()
+
+    class Meta:
+        db_table = 'bumped_user'
+
+    def __unicode__(self):
+        return '{}: {}, {}'.format(self.email, 
+                                   self.time_to_reset_bonus_gb, 
+                                   self.bonus_gb_reset)
+
 
 
 
