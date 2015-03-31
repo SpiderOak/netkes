@@ -16,6 +16,7 @@ from django.forms.formsets import formset_factory
 from django.template import RequestContext
 from django.shortcuts import redirect, render_to_response
 from django.contrib.auth.decorators import permission_required
+from django.core.cache import cache
 
 from interval.forms import IntervalFormField
 from netkes.netkes_agent import config_mgr 
@@ -180,6 +181,7 @@ def settings(request, api, account_info, config, username, saved=False):
                                 )
             sync_output = p.communicate()[0]
             if not sync_output:
+                cache.clear()
                 return redirect('blue_mgnt:settings_saved')
         elif request.POST.get('form', '') == 'rebuild_db':
             log_admin_action(request, 'Rebuild DB')
