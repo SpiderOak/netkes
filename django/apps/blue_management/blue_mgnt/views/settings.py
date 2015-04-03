@@ -238,7 +238,7 @@ def password(request, api, account_info, config, username, saved=False):
         if request.POST.get('form', '') == 'password':
             password_form = PasswordForm(request.POST)
             if password_form.is_valid():
-                new_password = password_form.cleaned_data['password']
+                new_password = password_form.cleaned_data['password'].encode('utf-8')
                 log_admin_action(request, 'change password')
 
                 new_pass, api_pass = hash_password(new_password)

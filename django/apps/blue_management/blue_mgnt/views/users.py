@@ -432,7 +432,7 @@ def user_detail(request, api, account_info, config, username, email, saved=False
             password_form = PasswordForm(request.POST)
             if password_form.is_valid():
                 log_admin_action(request, 'change password for: %s' % email)
-                password = password_form.cleaned_data['password']
+                password = password_form.cleaned_data['password'].encode('utf-8')
                 local_source.set_user_password(local_source._get_db_conn(config),
                                                 email, password)
                 return redirect('blue_mgnt:user_detail_saved', data.get('email', email))
