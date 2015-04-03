@@ -572,10 +572,19 @@ def shares(request, api, account_info, config, username, saved=False):
     opts = api.enterprise_settings()
     page = int(request.GET.get('page', 1))
 
-    user_limit = 25
+    user_limit = 10
     user_offset = user_limit * (page - 1)
     users = api.list_shares_for_brand(user_limit, user_offset)
-    next_page = len(users) == user_limit
+    # The api gives us shares per user and we only have count of the 
+    # total number of shares. We don't have the total number of users 
+    # who have shares. So we'll just guess for now.
+    fake_count = page * user_limit
+    if len(users) == user_limit:
+        fake_count += user_limit
+    pagination = Pagination(fake_count, 
+                            page,
+                            user_limit,
+                           )
 
     if request.method == 'POST':
         if request.POST.get('form', '') == 'edit_share':
@@ -597,11 +606,11 @@ def shares(request, api, account_info, config, username, saved=False):
         share_url=get_base_url(),
         sharing_enabled=opts['sharing_enabled'],
         page=page,
-        next_page=next_page,
         datetime=datetime,
         user=request.user,
         username=username,
         features=features,
+        pagination=pagination,
         users=users,
         account_info=account_info,
         saved=saved,

@@ -55,9 +55,33 @@
             {% endfor %}
         </tbody>
     </table>
-{% if page > 1 %}
-{% block pagination %}{% include "partials/pagination-widget.html" %}{% endblock pagination %}
+{% block pagination %}
+<div class="widget-pagination">
+{% if pagination.num_pages > 1 %}
+	<ul>
+		{% if pagination.paginator_page.has_previous %}
+			<li><a href="{% url 'blue_mgnt:shares' %}?page={{ pagination.paginator_page.previous_page_number }}">Previous</a></li>
+		{% endif %}
+
+		{% for page in pagination.page_range %}
+			{% if page %}
+				{% if page == pagination.page %}
+					<li class="active">{{ page }}</li>
+				{% else %}
+					<li><a href="{% url 'blue_mgnt:shares' %}?page={{ page }}">{{ page }}</a></li>
+				{% endif %}
+			{% else %}
+				<li>...</li>
+			{% endif %}
+		{% endfor %}
+
+		{% if pagination.paginator_page.has_next %}
+			<li><a href="{% url 'blue_mgnt:shares' %}?page={{ pagination.paginator_page.next_page_number }}">Next</a></li>
+		{% endif %}
+	</ul>
 {% endif %}
+</div>
+{% endblock pagination %}
 <div class="widget-actions">
     <div>
         <button class="button button-muted" id="add-widget">{{ sharing_enabled|yesno:"Disable, Enable" }} All ShareRooms</button>
