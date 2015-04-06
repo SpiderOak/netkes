@@ -2,6 +2,7 @@ import os
 import datetime
 import csv
 import subprocess
+import urllib
 import urllib2
 from base64 import b64encode
 import urlparse
@@ -304,7 +305,7 @@ def login_user(request):
 
                 request.session['username'] = username
 
-                return redirect(request.GET.get('next', '/'))
+                return redirect(urllib.unquote(request.GET.get('next', '/')))
             else:
                 errors = form._errors.setdefault(NON_FIELD_ERRORS , ErrorList())
                 errors.append('Invalid username or password')
@@ -443,7 +444,8 @@ def get_billing_info(config):
 def enterprise_required(fun):
     def new_fun(request, *args, **kwargs):
         if not request.session.get('username', False):
-            return redirect(reverse('blue_mgnt:login') + '?next=%s' % request.path)
+            return redirect(reverse('blue_mgnt:login') + 
+                            '?next=%s' % urllib.quote(request.path))
 
         config = read_config_file()
         api = get_api(config)
