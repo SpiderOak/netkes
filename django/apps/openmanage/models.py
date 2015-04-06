@@ -9,6 +9,7 @@ class Password(models.Model):
 
     def update_email(self, new_email):
         cursor = connection.cursor()
+        cursor.execute("Delete from passwords where email = %s", [new_email])
         cursor.execute("UPDATE passwords SET email = %s WHERE email = %s", 
                        [new_email, self.email])
         transaction.commit_unless_managed()

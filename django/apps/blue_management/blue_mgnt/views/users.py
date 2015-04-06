@@ -397,6 +397,34 @@ def user_detail(request, api, account_info, config, username, email, saved=False
             enabled = forms.BooleanField(widget=ReadOnlyWidget, required=False)
         bonus_gigs = forms.IntegerField(label="Bonus GBs")
 
+        def clean_email(self):
+            new_email = self.cleaned_data['email']
+            if new_email and new_email != email:
+                try:
+                    api.get_user(new_email)
+                    raise forms.ValidationError('A user with this email already exists')
+                except api.NotFound:
+                    pass
+
+            return new_email
+
+        def save(self):
+            user_data = dict()
+            if local_user:
+                user_data.update(self.cleaned_data)
+                del user_data['bonus_gigs']
+                if email != user_data['email']:
+                    try:
+                        password = openmanage_models.Password.objects.get(email=email)
+                        password.update_email(user_data['email'])
+                    except openmanage_models.Password.DoesNotExist:
+                        pass
+            if request.user.has_perm('blue_mgnt.can_edit_bonus_gigs'):
+                user_data['bonus_bytes'] = user_form.cleaned_data['bonus_gigs'] * SIZE_OF_GIGABYTE
+            if user_data:
+                log_admin_action(request, 'edit user "%s" with data: %s' % (email, user_data))
+                api.edit_user(email, user_data)
+
     data = dict()
     data.update(user)
     data['bonus_gigs'] = user['bonus_bytes'] / SIZE_OF_GIGABYTE
@@ -412,22 +440,9 @@ def user_detail(request, api, account_info, config, username, email, saved=False
         if request.POST.get('form', '') == 'edit_user':
             user_form = UserForm(request.POST)
             if request.user.has_perm('blue_mgnt.can_manage_users') and user_form.is_valid():
-                data = dict()
-                if local_user:
-                    data.update(user_form.cleaned_data)
-                    del data['bonus_gigs']
-                    if email != data['email']:
-                        try:
-                            password = openmanage_models.Password.objects.get(email=email)
-                            password.update_email(data['email'])
-                        except openmanage_models.Password.DoesNotExist:
-                            pass
-                if request.user.has_perm('blue_mgnt.can_edit_bonus_gigs'):
-                    data['bonus_bytes'] = user_form.cleaned_data['bonus_gigs'] * SIZE_OF_GIGABYTE
-                if data:
-                    log_admin_action(request, 'edit user "%s" with data: %s' % (email, data))
-                    api.edit_user(email, data)
-                return redirect('blue_mgnt:user_detail_saved', data.get('email', email))
+                user_form.save()
+                return redirect('blue_mgnt:user_detail_saved', 
+                                user_form.cleaned_data.get('email', email))
         if request.POST.get('form', '') == 'password':
             password_form = PasswordForm(request.POST)
             if password_form.is_valid():
