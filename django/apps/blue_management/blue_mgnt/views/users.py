@@ -380,6 +380,14 @@ def user_detail(request, api, account_info, config, username, email, saved=False
     groups = api.list_groups()
     local_groups = get_local_groups(config, groups)
 
+    reset_password_message = ''
+    pw = openmanage_models.Password.objects.filter(email=email)
+    if local_user:
+        if pw and pw[0].pw_hash:
+            reset_password_message = 'Send Password Reset Email'
+        else:
+            reset_password_message = 'Resend Welcome Email'
+
     class UserForm(forms.Form):
         if local_user:
             name = forms.CharField(max_length=45)
@@ -443,6 +451,12 @@ def user_detail(request, api, account_info, config, username, email, saved=False
                 user_form.save()
                 return redirect('blue_mgnt:user_detail_saved', 
                                 user_form.cleaned_data.get('email', email))
+        if request.POST.get('form', '') == 'reset_password':
+            if request.user.has_perm('blue_mgnt.can_manage_users'):
+                local_source.set_user_password(local_source._get_db_conn(config),
+                                               email, '') 
+                api.send_activation_email(email, dict(template_name='set_password'))
+                return redirect('blue_mgnt:user_detail_saved', email)
         if request.POST.get('form', '') == 'password':
             password_form = PasswordForm(request.POST)
             if password_form.is_valid():
@@ -488,6 +502,7 @@ def user_detail(request, api, account_info, config, username, email, saved=False
         password_form=password_form,
         features=features,
         account_info=account_info,
+        reset_password_message=reset_password_message,
         datetime=datetime,
         devices=devices,
         saved=saved,

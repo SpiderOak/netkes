@@ -219,10 +219,18 @@
                     <input type='submit' value="Bump Space" 
                      class="button button-muted" id="bump_space">
                 </form>
-            {% if local_user %}
-            <button id="modal-trigger-change_user_password" class="button button-muted">
-                Change User's Password
-            </button>
-            {% endif %}
+                {% if local_user %}
+                <button id="modal-trigger-change_user_password" class="button button-muted">
+                    Change User's Password
+                </button>
+                <div class="space-20none">
+                    <form method="POST" action="{% url 'blue_mgnt:user_detail' email %}">
+                        {% csrf_token %}
+                        <input type='hidden' value='reset_password' name='form'>
+                        <input type='submit' value="{{ reset_password_message }}" 
+                            class="button button-muted" id="reset_password">
+                    </form>
+                </div>
+                {% endif %}
             </div>
 {% endblock content %}
