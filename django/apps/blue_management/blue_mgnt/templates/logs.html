@@ -34,9 +34,8 @@
         {% endfor %}
     </tbody>
 </table>
-{% if page >= 1 %}
-{% block pagination %}{% include "partials/pagination-widget.html" %}{% endblock pagination %}
-{% endif %}
+
+{% include "partials/pagination-widget.html" %}
 
 <div class="widget-actions">
     <a class="rhs button button-primary-basic" href="/logs/download/">Download Logs</a>

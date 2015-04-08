@@ -29,55 +29,54 @@
     <p>{{ new_code.errors|length }} errors have been detected. Please see below for more information.</p>
 </div>
 {% endif %}
-    <table id="groups" class="widget-table">
-        <thead>
-            <tr class="bigger">
-                <th>Token</th>
-                <th>Created/Expires</th>
-                <th>Single Use?</th>
-                <th>No Devices?</th>
-                <th>Used</th>
+<table id="groups" class="widget-table">
+    <thead>
+        <tr class="bigger">
+            <th>Token</th>
+            <th>Created/Expires</th>
+            <th>Single Use?</th>
+            <th>No Devices?</th>
+            <th>Used</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for code in codes %}
+        <tr{% if code.new_token %} class="success"{% endif %}>
+            <td>{{ code.token }}
+                <div class="code-extra-info">
+                    {% if code.active %}
+                    <form method="post" action="{% url 'blue_mgnt:auth_codes' %}?show_inactive={{show_inactive }}">
+                        {% csrf_token %}
+                        <input type='submit' 
+                            value="Disable Code" 
+                            class="button button-muted thin" 
+                            id="edit_share" 
+                            style="display: inline-block">
+                        <input type='hidden' value='disable_code' name='form'>
+                        <input type='hidden' value='{{ code.token }}' name='token'>
+                    </form>
+                    {% else %}
+                        <span style="color:#ff0000">Disabled</span>
+                        {% endif %}
+                    </div>
+                </td>
+                <td>{{ code.date_created|todate }}<br />
+                {{ code.expiry|todate }}</td>
+                <td>{{ code.single_use_only }}</td>
+                <td>{{ code.no_devices_only }}</td>
+                <td>{{ code.used }}</td>
+                </tr><tr>
             </tr>
-        </thead>
-        <tbody>
-            {% for code in codes %}
-            <tr{% if code.new_token %} class="success"{% endif %}>
-                <td>{{ code.token }}
-                    <div class="code-extra-info">
-                        {% if code.active %}
-                        <form method="post" action="{% url 'blue_mgnt:auth_codes' %}?show_inactive={{show_inactive }}">
-                            {% csrf_token %}
-                            <input type='submit' 
-                                value="Disable Code" 
-                                class="button button-muted thin" 
-                                id="edit_share" 
-                                style="display: inline-block">
-                            <input type='hidden' value='disable_code' name='form'>
-                            <input type='hidden' value='{{ code.token }}' name='token'>
-                        </form>
-                        {% else %}
-                            <span style="color:#ff0000">Disabled</span>
-                            {% endif %}
-                        </div>
-                    </td>
-                    <td>{{ code.date_created|todate }}<br />
-                    {{ code.expiry|todate }}</td>
-                    <td>{{ code.single_use_only }}</td>
-                    <td>{{ code.no_devices_only }}</td>
-                    <td>{{ code.used }}</td>
-                    </tr><tr>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+        {% endfor %}
+    </tbody>
+</table>
 
-    {% if page > 1 %}
-    {% block pagination %}{% include "partials/pagination-widget.html" %}{% endblock pagination %}
-    {% endif %}
-    <div class="widget-actions">
-        <a href="{% url 'blue_mgnt:auth_codes' %}?show_inactive={{ show_inactive|yesno:"0, 1" }}" 
-            class="button button-muted">
-            {{ show_inactive|yesno:"Hide Disabled, Show Disabled" }} Auth Codes
-        </a>
-    </div>
+{% include "partials/pagination-widget.html" %}
+
+<div class="widget-actions">
+    <a href="{% url 'blue_mgnt:auth_codes' %}?show_inactive={{ show_inactive|yesno:"0,1" }}" 
+        class="button button-muted">
+        {{ show_inactive|yesno:"Hide Disabled, Show Disabled" }} Auth Codes
+    </a>
+</div>
 {% endblock content %}

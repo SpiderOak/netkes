@@ -4,7 +4,10 @@ import subprocess
 import glob
 from base64 import b32encode
 
-from views import enterprise_required, log_admin_action, get_base_url
+from views import (
+    enterprise_required, log_admin_action, get_base_url,
+    Pagination
+)
 from django.template import RequestContext
 from django.shortcuts import redirect, render_to_response
 from django.db import connection
@@ -21,7 +24,7 @@ from blue_mgnt import models
 from netkes.account_mgr import setup_token
 from views import pageit, profile
 
-RESULTS_PER_PAGE = 25
+RESULTS_PER_PAGE = 25 
 
 def get_login_link(username, auth_token):
     b32_username = b32encode(username).rstrip('=')
@@ -40,6 +43,7 @@ def escrow_login(request, api, account_info, config, username,
         expiry=datetime.datetime.now() + datetime.timedelta(minutes=1),
         no_devices_only=False,
         single_use_only=False,
+        auto_generated=True,
     )
     models.AdminSetupTokens.objects.create(**data)
     return redirect(get_login_link(escrow_username, data['token']))
@@ -66,13 +70,19 @@ def auth_codes(request, api, account_info, config, username, saved=False):
     show_inactive = int(request.GET.get('show_inactive', 1))
 
     user_offset = RESULTS_PER_PAGE * (page - 1)
-    codes = models.AdminSetupTokensUse.objects.order_by('-date_created')
+    codes = models.AdminSetupTokensUse.objects.filter(auto_generated=False)
+    codes = codes.order_by('-date_created')
     if not show_inactive:
         codes = codes.filter(active=True)
     code_count = codes.count()
     codes = codes[user_offset:user_offset + RESULTS_PER_PAGE]
-    next_page = code_count > (user_offset + RESULTS_PER_PAGE)
     new_code = CodeForm()
+
+    pagination = Pagination('blue_mgnt:auth_codes',
+                            code_count, 
+                            page,
+                            RESULTS_PER_PAGE,
+                           )
 
     if request.method == 'POST':
         if request.POST.get('form', '') == 'new_code':
@@ -100,7 +110,7 @@ def auth_codes(request, api, account_info, config, username, saved=False):
         page=page,
         show_inactive=show_inactive,
         new_code=new_code,
-        next_page=next_page,
+        pagination=pagination,
         datetime=datetime,
         user=request.user,
         username=username,
@@ -122,24 +132,27 @@ def logs(request, api, account_info, config, username, saved=False):
     log_search = os.path.join(django_settings.LOG_DIR,
                               '%s*' % django_settings.ADMIN_ACTIONS_LOG_FILENAME)
     log_entries = [open(x).readlines() for x in glob.glob(log_search)]
-    log_entries = sorted(reduce(list.__add__, log_entries), reverse=True)
-    log_entries = [log for log in log_entries if search.lower() in log.lower()]
+    log_entries = list(reversed(reduce(list.__add__, log_entries)))
+    if search:
+        log_entries = [log for log in log_entries if search.lower() in log.lower()]
 
-    count = len(log_entries)
+    pagination = Pagination('blue_mgnt:logs',
+                            len(log_entries), 
+                            page,
+                            RESULTS_PER_PAGE,
+                           )
+
     log_entries = log_entries[user_offset:user_offset + RESULTS_PER_PAGE]
-    next_page = count > (user_offset + RESULTS_PER_PAGE)
-    all_pages = pageit('logs', api, page, count)
 
     return render_to_response('logs.html', dict(
         page=page,
-        next_page=next_page,
+        pagination=pagination,
         datetime=datetime,
         search=search,
         user=request.user,
         username=username,
         log_entries=log_entries,
         account_info=account_info,
-        all_pages=all_pages,
     ),
     RequestContext(request))
 

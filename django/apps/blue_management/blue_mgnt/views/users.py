@@ -257,7 +257,10 @@ def users(request, api, account_info, config, username, saved=False):
     features = api.enterprise_features()
     search = request.GET.get('search', '')
     local_groups = get_local_groups(config, groups)
-    pagination = Pagination(api.get_user_count(), request.GET.get('page'))
+    pagination = Pagination('blue_mgnt:users',
+                            api.get_user_count(),
+                            request.GET.get('page'),
+                           )
     if not search:
         search = request.POST.get('search', '')
 

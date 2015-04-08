@@ -583,7 +583,8 @@ def shares(request, api, account_info, config, username, saved=False):
     fake_count = page * user_limit
     if len(users) == user_limit:
         fake_count += user_limit
-    pagination = Pagination(fake_count, 
+    pagination = Pagination('blue_mgnt:shares',
+                            fake_count, 
                             page,
                             user_limit,
                            )
@@ -700,12 +701,13 @@ def fingerprint(request, api, account_info, config, username):
 
 
 class Pagination(object):
-    def __init__(self, count, page=1, per_page=25):
+    def __init__(self, url, count, page=1, per_page=25):
         self.page = 1
         try:
             self.page = int(page)
         except (TypeError, ValueError):
             pass
+        self.url = url
         self.per_page = per_page
         self.paginator = Paginator(range(count), per_page, allow_empty_first_page=True)
         self.num_pages = self.paginator.num_pages

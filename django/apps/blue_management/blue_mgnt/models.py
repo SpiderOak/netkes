@@ -6,8 +6,9 @@ class AdminSetupTokensUse(models.Model):
     token = models.CharField(max_length=40, primary_key=True)
     date_created = models.DateTimeField()
     expiry = models.DateTimeField()
-    no_devices_only = models.BooleanField()
-    single_use_only = models.BooleanField()
+    no_devices_only = models.BooleanField(default=False)
+    single_use_only = models.BooleanField(default=False)
+    auto_generated = models.BooleanField(default=False)
     used = models.BooleanField()
     active = models.BooleanField()
 
@@ -22,8 +23,9 @@ class AdminSetupTokens(models.Model):
     token = models.CharField(max_length=40, primary_key=True)
     date_created = models.DateTimeField(auto_now_add=True)
     expiry = models.DateTimeField()
-    no_devices_only = models.BooleanField()
-    single_use_only = models.BooleanField()
+    no_devices_only = models.BooleanField(default=False)
+    single_use_only = models.BooleanField(default=False)
+    auto_generated = models.BooleanField(default=False)
 
     class Meta:
         db_table = 'admin_setup_tokens'
