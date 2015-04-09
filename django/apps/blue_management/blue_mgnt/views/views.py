@@ -499,33 +499,27 @@ def users_csv(request, api, account_info, config, username):
     ),
     RequestContext(request))
 
-def list_users_paged(api, account_info):
-    all_users = []
-    user_limit = 1000
-    for page in range((account_info['total_users'] / user_limit) + 1):
-        user_offset = user_limit * page
-        if user_offset < account_info['total_users']:
-            all_users = all_users + api.list_users(user_limit, user_offset)
-    return all_users
-
 @enterprise_required
 def users_csv_download(request, api, account_info, config, username):
     log_admin_action(request, 'download user csv')
-    users = list_users_paged(api, account_info)
+    users = api.list_users()
     features = api.enterprise_features()
 
     response = HttpResponse(mimetype='text/csv')
     response['Content-Disposition'] = 'attachment; filename=users.csv'
 
     writer = csv.writer(response)
-    headers = [ 'name',
+    headers = ['name',
                'email',
                'share_id',
                'creation_time',
                'last_login',
                'bytes_stored',
                'storage_bytes',
+               'bonus_bytes',
                'group_id',
+               'share_count',
+               'device_count',
                'enabled']
     if not features['email_as_username']:
         headers = ['username'] + headers
@@ -538,7 +532,10 @@ def users_csv_download(request, api, account_info, config, username):
                user['last_login'],
                user['bytes_stored'],
                user['storage_bytes'],
+               user['bonus_bytes'],
                user.get('group_id', ''),
+               len(user['share_rooms']),
+               user['num_devices'],
                user['enabled']]
         if user['creation_time']:
             row[3] = datetime.datetime.fromtimestamp(user['creation_time'])
