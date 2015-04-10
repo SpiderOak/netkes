@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Configure directory_agent to roate on size
+# Configure directory_agent to rotate on size
 
 set -e
 set -x
