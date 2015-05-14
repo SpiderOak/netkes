@@ -16,6 +16,7 @@ from django.forms.formsets import formset_factory
 from django.template import RequestContext
 from django.shortcuts import redirect, render_to_response
 from django.contrib.auth.decorators import permission_required
+from django.core.cache import cache
 
 from interval.forms import IntervalFormField
 from netkes.netkes_agent import config_mgr 
@@ -37,6 +38,7 @@ AGENT_CONFIG_VARS = [
     'dir_username_source',
     'listen_addr',
     'listen_port',
+    'send_activation_email',
 ]
 
 def save_settings(request, api, options):
@@ -128,10 +130,16 @@ def settings(request, api, account_info, config, username, saved=False):
             
             if features['ldap']:
                 for var in AGENT_CONFIG_VARS:
-                    self.fields[var] = forms.CharField(
-                        initial=config.get(var, ''), 
-                        required=False
-                    )
+                    if var in ['send_activation_email']:
+                        self.fields[var] = forms.BooleanField(
+                            initial=config.get(var, True), 
+                            required=False
+                        )
+                    else:
+                        self.fields[var] = forms.CharField(
+                            initial=config.get(var, ''), 
+                            required=False
+                        )
 
     options = OpenmanageOptsForm()
 
@@ -173,6 +181,7 @@ def settings(request, api, account_info, config, username, saved=False):
                                 )
             sync_output = p.communicate()[0]
             if not sync_output:
+                cache.clear()
                 return redirect('blue_mgnt:settings_saved')
         elif request.POST.get('form', '') == 'rebuild_db':
             log_admin_action(request, 'Rebuild DB')
@@ -229,7 +238,7 @@ def password(request, api, account_info, config, username, saved=False):
         if request.POST.get('form', '') == 'password':
             password_form = PasswordForm(request.POST)
             if password_form.is_valid():
-                new_password = password_form.cleaned_data['password']
+                new_password = password_form.cleaned_data['password'].encode('utf-8')
                 log_admin_action(request, 'change password')
 
                 new_pass, api_pass = hash_password(new_password)

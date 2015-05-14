@@ -2,6 +2,7 @@ import os
 import datetime
 import csv
 import subprocess
+import urllib
 import urllib2
 from base64 import b64encode
 import urlparse
@@ -277,7 +278,7 @@ def login_user(request):
     if request.method == 'POST':
         form = LoginForm(request.POST)
         if form.is_valid():
-            password = form.cleaned_data['password']
+            password = form.cleaned_data['password'].encode('utf-8')
             username = form.cleaned_data['username'].strip()
             user = authenticate(username=username,
                                 password=password)
@@ -304,7 +305,7 @@ def login_user(request):
 
                 request.session['username'] = username
 
-                return redirect(request.GET.get('next', '/'))
+                return redirect(urllib.unquote(request.GET.get('next', '/')))
             else:
                 errors = form._errors.setdefault(NON_FIELD_ERRORS , ErrorList())
                 errors.append('Invalid username or password')
@@ -443,7 +444,8 @@ def get_billing_info(config):
 def enterprise_required(fun):
     def new_fun(request, *args, **kwargs):
         if not request.session.get('username', False):
-            return redirect(reverse('blue_mgnt:login') + '?next=%s' % request.path)
+            return redirect(reverse('blue_mgnt:login') + 
+                            '?next=%s' % urllib.quote(request.path))
 
         config = read_config_file()
         api = get_api(config)
@@ -497,33 +499,27 @@ def users_csv(request, api, account_info, config, username):
     ),
     RequestContext(request))
 
-def list_users_paged(api, account_info):
-    all_users = []
-    user_limit = 1000
-    for page in range((account_info['total_users'] / user_limit) + 1):
-        user_offset = user_limit * page
-        if user_offset < account_info['total_users']:
-            all_users = all_users + api.list_users(user_limit, user_offset)
-    return all_users
-
 @enterprise_required
 def users_csv_download(request, api, account_info, config, username):
     log_admin_action(request, 'download user csv')
-    users = list_users_paged(api, account_info)
+    users = api.list_users()
     features = api.enterprise_features()
 
     response = HttpResponse(mimetype='text/csv')
     response['Content-Disposition'] = 'attachment; filename=users.csv'
 
     writer = csv.writer(response)
-    headers = [ 'name',
+    headers = ['name',
                'email',
                'share_id',
                'creation_time',
                'last_login',
                'bytes_stored',
                'storage_bytes',
+               'bonus_bytes',
                'group_id',
+               'share_count',
+               'device_count',
                'enabled']
     if not features['email_as_username']:
         headers = ['username'] + headers
@@ -536,7 +532,10 @@ def users_csv_download(request, api, account_info, config, username):
                user['last_login'],
                user['bytes_stored'],
                user['storage_bytes'],
+               user['bonus_bytes'],
                user.get('group_id', ''),
+               len(user['share_rooms']),
+               user['num_devices'],
                user['enabled']]
         if user['creation_time']:
             row[3] = datetime.datetime.fromtimestamp(user['creation_time'])
@@ -572,10 +571,20 @@ def shares(request, api, account_info, config, username, saved=False):
     opts = api.enterprise_settings()
     page = int(request.GET.get('page', 1))
 
-    user_limit = 25
+    user_limit = 10
     user_offset = user_limit * (page - 1)
     users = api.list_shares_for_brand(user_limit, user_offset)
-    next_page = len(users) == user_limit
+    # The api gives us shares per user and we only have count of the 
+    # total number of shares. We don't have the total number of users 
+    # who have shares. So we'll just guess for now.
+    fake_count = page * user_limit
+    if len(users) == user_limit:
+        fake_count += user_limit
+    pagination = Pagination('blue_mgnt:shares',
+                            fake_count, 
+                            page,
+                            user_limit,
+                           )
 
     if request.method == 'POST':
         if request.POST.get('form', '') == 'edit_share':
@@ -597,11 +606,11 @@ def shares(request, api, account_info, config, username, saved=False):
         share_url=get_base_url(),
         sharing_enabled=opts['sharing_enabled'],
         page=page,
-        next_page=next_page,
         datetime=datetime,
         user=request.user,
         username=username,
         features=features,
+        pagination=pagination,
         users=users,
         account_info=account_info,
         saved=saved,
@@ -652,11 +661,15 @@ def reports(request, api, account_info, config, username, saved=False):
 
 @enterprise_required
 def manage(request, api, account_info, config, username):
+    features = api.enterprise_features()
+    billing_info = None
+    if features['ldap'] == False:
+        billing_info = get_billing_info(config)
     return render_to_response('manage.html', dict(
         user=request.user,
         username=username,
         account_info=account_info,
-        billing_info=get_billing_info(config),
+        billing_info=billing_info,
     ),
     RequestContext(request))
 
@@ -685,12 +698,13 @@ def fingerprint(request, api, account_info, config, username):
 
 
 class Pagination(object):
-    def __init__(self, count, page=1, per_page=25):
+    def __init__(self, url, count, page=1, per_page=25):
         self.page = 1
         try:
             self.page = int(page)
         except (TypeError, ValueError):
             pass
+        self.url = url
         self.per_page = per_page
         self.paginator = Paginator(range(count), per_page, allow_empty_first_page=True)
         self.num_pages = self.paginator.num_pages

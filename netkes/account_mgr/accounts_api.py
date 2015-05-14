@@ -186,12 +186,17 @@ class Api(object):
 
     ### Shares
 
-    def _create_query_string(self, limit, offset):
+    def _create_query_string(self, limit, offset, 
+                             search=None, group_id=None):
         get_params = dict()
         if limit:
             get_params['limit'] = limit
         if offset:
             get_params['offset'] = offset
+        if search:
+            get_params['search'] = search
+        if group_id:
+            get_params['group_id'] = group_id
         query_string = ''
         if get_params:
             query_string = '?%s' % urllib.urlencode(get_params)
@@ -221,11 +226,10 @@ class Api(object):
         query_string = self._create_query_string(limit, offset)
         return self.client.get_json('users/%s' % query_string)
 
-    def search_users(self, name_or_email, limit=None, offset=None):
-        query_string = self._create_query_string(limit, offset)
-        if query_string:
-            query_string = '&' + query_string
-        return self.client.get_json('users/?search=%s%s' % (urllib.quote(name_or_email), query_string))
+    def search_users(self, name_or_email=None, limit=None, offset=None, group_id=None):
+        query_string = self._create_query_string(limit, offset, name_or_email, group_id)
+        return self.client.get_json('users/%s' % query_string)
+
     def get_user_count(self):
         return self.client.get_json('users/?action=user_count')['user_count']
 

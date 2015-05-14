@@ -6,8 +6,9 @@ class AdminSetupTokensUse(models.Model):
     token = models.CharField(max_length=40, primary_key=True)
     date_created = models.DateTimeField()
     expiry = models.DateTimeField()
-    no_devices_only = models.BooleanField()
-    single_use_only = models.BooleanField()
+    no_devices_only = models.BooleanField(default=False)
+    single_use_only = models.BooleanField(default=False)
+    auto_generated = models.BooleanField(default=False)
     used = models.BooleanField()
     active = models.BooleanField()
 
@@ -22,8 +23,9 @@ class AdminSetupTokens(models.Model):
     token = models.CharField(max_length=40, primary_key=True)
     date_created = models.DateTimeField(auto_now_add=True)
     expiry = models.DateTimeField()
-    no_devices_only = models.BooleanField()
-    single_use_only = models.BooleanField()
+    no_devices_only = models.BooleanField(default=False)
+    single_use_only = models.BooleanField(default=False)
+    auto_generated = models.BooleanField(default=False)
 
     class Meta:
         db_table = 'admin_setup_tokens'
@@ -39,14 +41,19 @@ class AdminGroup(models.Model):
         db_table = 'admin_group'
 
 
-'''
-create table admin_group (
-    group_id int4 primary key,
-    ldap_dn text,
-    date_created timestamp not null default current_timestamp
-);
-grant select, insert, update on admin_group to admin_console;
-'''
+class BumpedUser(models.Model):
+    email = models.EmailField()
+    bonus_gb_reset = models.BooleanField(default=False)
+    time_to_reset_bonus_gb = models.DateTimeField()
+
+    class Meta:
+        db_table = 'bumped_user'
+
+    def __unicode__(self):
+        return '{}: {}, {}'.format(self.email, 
+                                   self.time_to_reset_bonus_gb, 
+                                   self.bonus_gb_reset)
+
 
 
 

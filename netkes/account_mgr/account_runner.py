@@ -78,20 +78,12 @@ class AccountRunner(object):
                 tmp_user['username'] = user['username']
 
             try:
-                self._api.create_user(tmp_user)
-                time.sleep(.5)
-                try:
-                    result = self._api.get_user(user['email'])
-                except self._api.Error, e:
-                    time.sleep(10)
-                    print 'try 2 getting:', user['email']
-                    result = self._api.get_user(user['email'])
+                result = self._api.create_user(tmp_user)
             except self._api.Error, e:
                 msg = 'Unable to create %s. %s' % (tmp_user, e)
-                print msg
                 self._log.error(msg)
                 break
-            user['avatar_id'] = result['avatar_id']
+            user['avatar_id'] = result['user']['avatar_id']
             cur = self._db_conn.cursor()
             cur.execute(self._ADD_USERS_STATEMENT, user)
             created_users.append(user)

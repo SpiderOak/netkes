@@ -55,9 +55,7 @@
             {% endfor %}
         </tbody>
     </table>
-{% if page > 1 %}
-{% block pagination %}{% include "partials/pagination-widget.html" %}{% endblock pagination %}
-{% endif %}
+{% include "partials/pagination-widget.html" %}
 <div class="widget-actions">
     <div>
         <button class="button button-muted" id="add-widget">{{ sharing_enabled|yesno:"Disable, Enable" }} All ShareRooms</button>

@@ -16,6 +16,22 @@ from account_mgr.user_source import ldap_source
 from account_mgr import account_runner
 from common import get_config
 
+_USERS_TO_CREATE_NO_USERNAME_QUERY = '''
+SELECT
+l.uniqueid, l.email, l.givenname, l.surname, l.group_id
+FROM ldap_users l
+LEFT OUTER JOIN users u ON l.uniqueid = u.uniqueid
+WHERE u.uniqueid IS NULL;
+'''
+
+_USERS_TO_CREATE_WITH_USERNAME_QUERY = '''
+SELECT
+l.uniqueid, l.username, l.email, l.givenname, l.surname, l.group_id
+FROM ldap_users l
+LEFT OUTER JOIN users u ON l.uniqueid = u.uniqueid
+WHERE u.uniqueid IS NULL;
+'''
+
 _USERS_TO_CREATE_QUERY = '''
 SELECT
 l.uniqueid, l.email, l.givenname, l.surname, l.group_id
@@ -124,10 +140,12 @@ def _calculate_changes_against_db(db_conn, config, users):
     log.debug('Creating users:')
     if 'dir_email_source' in get_config():
         create_attrs = ['username', 'email', 'firstname', 'lastname', 'group_id']
+        users_create_query = _USERS_TO_CREATE_WITH_USERNAME_QUERY
     else:
         create_attrs = ['email', 'firstname', 'lastname', 'group_id']
+        users_create_query = _USERS_TO_CREATE_NO_USERNAME_QUERY
     
-    api_actions['create'] = _process_query(db_conn, _USERS_TO_CREATE_QUERY,
+    api_actions['create'] = _process_query(db_conn, users_create_query,
                                            create_attrs)
     log.debug('Enabling users:')
     api_actions['enable'] = _process_query(db_conn, _USERS_TO_ENABLE_QUERY,

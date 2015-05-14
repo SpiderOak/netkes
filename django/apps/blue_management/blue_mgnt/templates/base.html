@@ -6,6 +6,7 @@
 	<meta name="description" content="{% block meta_description %}{% endblock meta_description %}" />
 	<meta name="keywords" content="{% block meta_keywords %}{% endblock meta_keywords %}" />
 	<meta name="robots" content="{% block meta_bots %}noindex, nofollow{% endblock meta_bots %}" />
+    <meta http-equiv="refresh" content="905" />
 
 	{% block base_styles %}
 	{% endblock base_styles %}
@@ -69,11 +70,20 @@
 		<div class="account-overview">
 			<ul>
 				<li>
-                <i class="ss-icon">&#x1F464;</i> <strong>Total Users:</strong> {{account_info.total_users}}</li>
+                    <i class="ss-icon">&#x1F464;</i> 
+                    <strong>Total Users:</strong> 
+                    {{account_info.total_users}}
+                </li>
 				<li>
-                <i class="ss-icon">&#x1F465;</i> <strong>Total Groups:</strong> {{account_info.total_groups}}</li>
+                    <i class="ss-icon">&#x1F465;</i> 
+                    <strong>Total Groups:</strong> 
+                    {{account_info.total_groups}}
+                </li>
 				<li>
-                <i class="ss-icon">&#x1F511;</i> <strong>Total Auth Codes:</strong> {{account_info.total_auth_codes }}</li>
+                    <i class="ss-icon">&#xEE00;</i> 
+                    <strong>Total Shares:</strong> 
+                    {{account_info.share_count }}
+                </li>
 			</ul>
 		</div>
 		<div class="spacer"><!--ZKP--></div>
@@ -86,7 +96,7 @@
 		<div class="content">{% block content %}{% endblock content %}</div>
         <div class="spacer"><!--ZKP--></div>
 		<div class="footer">
-			<p>Copyright &copy; 2014 Spideroak. All Rights Reserved.</p>
+			<p>Copyright &copy; {% now "Y" %} Spideroak. All Rights Reserved.</p>
 			<ul>
 				<li><a href="https://spideroak.com/about/">About</a></li>
 				<li><a href="https://spideroak.com/privacy_policy">Privacy Policy</a></li>

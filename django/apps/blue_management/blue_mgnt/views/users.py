@@ -1,6 +1,7 @@
 import datetime
 from base64 import b32encode
 import csv
+import re
 
 from views import enterprise_required, log_admin_action
 from views import Pagination
@@ -16,7 +17,16 @@ from django.shortcuts import redirect, render_to_response
 from django.utils.safestring import mark_safe
 
 from netkes.account_mgr.user_source import local_source
+from blue_mgnt.models import BumpedUser
 import openmanage.models as openmanage_models
+
+SIZE_OF_BUMP = 5
+
+new_user_value_re_tests = {
+    "avatar": {
+        'username': re.compile(r'^[a-zA-Z][a-zA-Z0-9_]{3,37}$'),
+    },
+}
 
 class UserDetailWidget(ReadOnlyWidget):
     def render(self, name, value, attrs):
@@ -102,7 +112,8 @@ def create_user(api, account_info, config, data):
     # through the set password email.
     local_source.set_user_password(local_source._get_db_conn(config),
                                    email, '') 
-    api.send_activation_email(email, dict(template_name='set_password'))
+    if config['send_activation_email']:
+        api.send_activation_email(email, dict(template_name='set_password'))
 
 def _csv_create_users(api, account_info, groups, config, request, csv_data):
     for x, row in enumerate(csv_data):
@@ -246,7 +257,10 @@ def users(request, api, account_info, config, username, saved=False):
     features = api.enterprise_features()
     search = request.GET.get('search', '')
     local_groups = get_local_groups(config, groups)
-    pagination = Pagination(api.get_user_count(), request.GET.get('page'))
+    pagination = Pagination('blue_mgnt:users',
+                            api.get_user_count(),
+                            request.GET.get('page'),
+                           )
     if not search:
         search = request.POST.get('search', '')
 
@@ -369,6 +383,14 @@ def user_detail(request, api, account_info, config, username, email, saved=False
     groups = api.list_groups()
     local_groups = get_local_groups(config, groups)
 
+    reset_password_message = ''
+    pw = openmanage_models.Password.objects.filter(email=email)
+    if local_user:
+        if pw and pw[0].pw_hash:
+            reset_password_message = 'Send Password Reset Email'
+        else:
+            reset_password_message = 'Resend Welcome Email'
+
     class UserForm(forms.Form):
         if local_user:
             name = forms.CharField(max_length=45)
@@ -386,6 +408,34 @@ def user_detail(request, api, account_info, config, username, email, saved=False
             enabled = forms.BooleanField(widget=ReadOnlyWidget, required=False)
         bonus_gigs = forms.IntegerField(label="Bonus GBs")
 
+        def clean_email(self):
+            new_email = self.cleaned_data['email']
+            if new_email and new_email != email:
+                try:
+                    api.get_user(new_email)
+                    raise forms.ValidationError('A user with this email already exists')
+                except api.NotFound:
+                    pass
+
+            return new_email
+
+        def save(self):
+            user_data = dict()
+            if local_user:
+                user_data.update(self.cleaned_data)
+                del user_data['bonus_gigs']
+                if email != user_data['email']:
+                    try:
+                        password = openmanage_models.Password.objects.get(email=email)
+                        password.update_email(user_data['email'])
+                    except openmanage_models.Password.DoesNotExist:
+                        pass
+            if request.user.has_perm('blue_mgnt.can_edit_bonus_gigs'):
+                user_data['bonus_bytes'] = user_form.cleaned_data['bonus_gigs'] * SIZE_OF_GIGABYTE
+            if user_data:
+                log_admin_action(request, 'edit user "%s" with data: %s' % (email, user_data))
+                api.edit_user(email, user_data)
+
     data = dict()
     data.update(user)
     data['bonus_gigs'] = user['bonus_bytes'] / SIZE_OF_GIGABYTE
@@ -401,27 +451,20 @@ def user_detail(request, api, account_info, config, username, email, saved=False
         if request.POST.get('form', '') == 'edit_user':
             user_form = UserForm(request.POST)
             if request.user.has_perm('blue_mgnt.can_manage_users') and user_form.is_valid():
-                data = dict()
-                if local_user:
-                    data.update(user_form.cleaned_data)
-                    del data['bonus_gigs']
-                    if email != data['email']:
-                        try:
-                            password = openmanage_models.Password.objects.get(email=email)
-                            password.update_email(data['email'])
-                        except openmanage_models.Password.DoesNotExist:
-                            pass
-                if request.user.has_perm('blue_mgnt.can_edit_bonus_gigs'):
-                    data['bonus_bytes'] = user_form.cleaned_data['bonus_gigs'] * SIZE_OF_GIGABYTE
-                if data:
-                    log_admin_action(request, 'edit user "%s" with data: %s' % (email, data))
-                    api.edit_user(email, data)
-                return redirect('blue_mgnt:user_detail_saved', data.get('email', email))
+                user_form.save()
+                return redirect('blue_mgnt:user_detail_saved', 
+                                user_form.cleaned_data.get('email', email))
+        if request.POST.get('form', '') == 'reset_password':
+            if request.user.has_perm('blue_mgnt.can_manage_users'):
+                local_source.set_user_password(local_source._get_db_conn(config),
+                                               email, '') 
+                api.send_activation_email(email, dict(template_name='set_password'))
+                return redirect('blue_mgnt:user_detail_saved', email)
         if request.POST.get('form', '') == 'password':
             password_form = PasswordForm(request.POST)
             if password_form.is_valid():
                 log_admin_action(request, 'change password for: %s' % email)
-                password = password_form.cleaned_data['password']
+                password = password_form.cleaned_data['password'].encode('utf-8')
                 local_source.set_user_password(local_source._get_db_conn(config),
                                                 email, password)
                 return redirect('blue_mgnt:user_detail_saved', data.get('email', email))
@@ -430,6 +473,17 @@ def user_detail(request, api, account_info, config, username, email, saved=False
                 log_admin_action(request, 'delete user %s' % email)
                 api.delete_user(email)
                 return redirect('blue_mgnt:users')
+        if request.POST.get('form', '') == 'bump_space':
+            if request.user.has_perm('blue_mgnt.can_edit_bonus_gigs'):
+                log_admin_action(request, 'bump space for user %s' % email)
+                data = {
+                    'bonus_bytes': (data['bonus_gigs'] + SIZE_OF_BUMP) * SIZE_OF_GIGABYTE
+                }
+                api.edit_user(email, data)
+                time_to_reset = datetime.datetime.now() + datetime.timedelta(days=3)
+                BumpedUser.objects.create(email=email, 
+                                          time_to_reset_bonus_gb=time_to_reset)
+                return redirect('blue_mgnt:user_detail_saved', data.get('email', email))
         if request.POST.get('form', '') == 'edit_share':
             room_key = request.POST['room_key']
             enable = request.POST['enabled'] == 'False'
@@ -451,6 +505,7 @@ def user_detail(request, api, account_info, config, username, email, saved=False
         password_form=password_form,
         features=features,
         account_info=account_info,
+        reset_password_message=reset_password_message,
         datetime=datetime,
         devices=devices,
         saved=saved,

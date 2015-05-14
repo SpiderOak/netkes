@@ -40,8 +40,8 @@
             <tr>
                 <td><label>Username</label></td>
                 <td>{{ api_user.username }}</td>
+                <td></td>
             </tr>
-            <td></td>
             {% endif %}
             {% for field in user_form %}
             <tr>
@@ -208,11 +208,29 @@
                 <input type='submit' value="Save Changes" class="rhs button button-primary-basic" id="edit_user">
                 <input type='hidden' value='edit_user' name='form'>
             </div>
-            <div class="widget-splitactions float">
-                <button id="modal-trigger-delete_user" class="button button-secondary">Delete User</button>
-            {% if local_user %}
-                <button id="modal-trigger-change_user_password" class="button button-muted">Change User's Password</button>
-            {% endif %}
-            </div>
     </form>
+            <div class="widget-splitactions float">
+                <button id="modal-trigger-delete_user" class="button button-secondary">
+                    Delete User
+                </button>
+                <form method="POST" action="{% url 'blue_mgnt:user_detail' email %}">
+                    {% csrf_token %}
+                    <input type='hidden' value='bump_space' name='form'>
+                    <input type='submit' value="Bump Space" 
+                     class="button button-muted" id="bump_space">
+                </form>
+                {% if local_user %}
+                <button id="modal-trigger-change_user_password" class="button button-muted">
+                    Change User's Password
+                </button>
+                <div class="space-20none">
+                    <form method="POST" action="{% url 'blue_mgnt:user_detail' email %}">
+                        {% csrf_token %}
+                        <input type='hidden' value='reset_password' name='form'>
+                        <input type='submit' value="{{ reset_password_message }}" 
+                            class="button button-muted" id="reset_password">
+                    </form>
+                </div>
+                {% endif %}
+            </div>
 {% endblock content %}
