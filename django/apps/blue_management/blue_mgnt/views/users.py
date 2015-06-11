@@ -266,11 +266,11 @@ def is_local_user(config, group_id):
 def get_login_link(username):
     return reverse('blue_mgnt:escrow_login', args=[username])
 
-UserColumn = namedtuple('UserColumn', [
-    'name',
-    'header',
-    'type',
-])
+class UserColumn(object):
+    def __init__(self, name, header, type_):
+        self.name = name
+        self.header = header
+        self.type = type_
 
 USER_COLUMNS = [
     UserColumn('username', 'Username', 'text'),
@@ -336,6 +336,7 @@ def users(request, api, account_info, config, username, saved=False):
                             api.get_user_count(),
                             request.GET.get('page'),
                            )
+    order_by = request.GET.get('order_by')
 
     if features['email_as_username']:
         default_columns = 'name,email,group_id,bytes_stored'
@@ -343,6 +344,11 @@ def users(request, api, account_info, config, username, saved=False):
         default_columns = 'username,name,email,group_id,bytes_stored'
     columns = [x.strip() for x in request.GET.get('columns', default_columns).split(',')]
     user_columns, error = get_user_columns(columns)
+    for column in user_columns:
+        if column.name == order_by:
+            column.order_by = '-%s' % column.name
+        else:
+            column.order_by = column.name
 
     UserCSVForm = get_new_user_csv_form(api, groups, account_info, config, request)
     NewUserForm = get_new_user_form(api, features, account_info, 
@@ -355,7 +361,10 @@ def users(request, api, account_info, config, username, saved=False):
     if search:
         all_users = api.search_users(search, pagination.per_page, pagination.query_offset)
     else:
-        all_users = api.list_users(pagination.per_page, pagination.query_offset)
+        all_users = api.list_users(pagination.per_page, 
+                                   pagination.query_offset,
+                                   order_by=order_by,
+                                  )
 
     if not show_disabled:
         all_users = [x for x in all_users if x['enabled']]
@@ -398,6 +407,7 @@ def users(request, api, account_info, config, username, saved=False):
                 return redirect(reverse('blue_mgnt:users_saved') + '?search=%s' % search)
     
     return render_to_response('users.html', dict(
+        order_by=order_by,
         error=error,
         user_columns=user_columns,
         user=request.user,

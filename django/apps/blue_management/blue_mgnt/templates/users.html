@@ -46,7 +46,9 @@
     <thead>
         <th>&nbsp;</th>
         {% for column in user_columns %}
-        <th>{{ column.header }}</th>
+        <th><a href="{% url 'blue_mgnt:users' %}?page={{ pagination.paginator_page.number }}&order_by={{ column.order_by }}">
+                {{ column.header }}
+        </a></th>
         {% endfor %}
         <th>User Detail</th>
         <th>
