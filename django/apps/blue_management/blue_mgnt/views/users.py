@@ -501,7 +501,7 @@ def user_detail(request, api, account_info, config, username, email, saved=False
             if request.user.has_perm('blue_mgnt.can_manage_users') and user_form.is_valid():
                 user_form.save()
                 return redirect('blue_mgnt:user_detail_saved', 
-                                user_form.cleaned_data.get('email', email))
+                                user_form.cleaned_data.get('email') or email)
         if request.POST.get('form', '') == 'reset_password':
             if request.user.has_perm('blue_mgnt.can_manage_users'):
                 local_source.set_user_password(local_source._get_db_conn(config),
