@@ -3,6 +3,7 @@ from base64 import b32encode
 import csv
 import re
 from collections import namedtuple
+import urllib
 
 from views import enterprise_required, log_admin_action
 from views import Pagination
@@ -332,17 +333,20 @@ def users(request, api, account_info, config, username, saved=False):
     features = api.enterprise_features()
     search = request.GET.get('search', '')
     local_groups = get_local_groups(config, groups)
+    user_count = api.get_user_count()
     pagination = Pagination('blue_mgnt:users',
-                            api.get_user_count(),
+                            user_count,
                             request.GET.get('page'),
                            )
-    order_by = request.GET.get('order_by')
+    order_by = request.GET.get('order_by', '')
+    search_by = request.GET.get('search_by', '')
 
     if features['email_as_username']:
         default_columns = 'name,email,group_id,bytes_stored'
     else:
         default_columns = 'username,name,email,group_id,bytes_stored'
-    columns = [x.strip() for x in request.GET.get('columns', default_columns).split(',')]
+    column_arg = request.GET.get('columns', default_columns)
+    columns = [x.strip() for x in column_arg.split(',')]
     user_columns, error = get_user_columns(columns)
     for column in user_columns:
         if column.name == order_by:
@@ -364,6 +368,7 @@ def users(request, api, account_info, config, username, saved=False):
         all_users = api.list_users(pagination.per_page, 
                                    pagination.query_offset,
                                    order_by=order_by,
+                                   search_by=search_by,
                                   )
 
     if not show_disabled:
@@ -384,6 +389,11 @@ def users(request, api, account_info, config, username, saved=False):
                               user_formset, config,
                               user_columns, groups
                              )
+    get_args = urllib.urlencode(dict(
+        order_by=order_by,
+        search_by=search_by,
+        columns=column_arg
+    ))
 
     if request.method == 'POST':
         if request.POST.get('form', '') == 'csv':
@@ -408,6 +418,9 @@ def users(request, api, account_info, config, username, saved=False):
     
     return render_to_response('users.html', dict(
         order_by=order_by,
+        search_by=search_by,
+        columns=column_arg,
+        get_args=get_args,
         error=error,
         user_columns=user_columns,
         user=request.user,
@@ -424,7 +437,6 @@ def users(request, api, account_info, config, username, saved=False):
         search=search,
         user_rows=user_rows,
         pagination=pagination,
-        columns=columns,
     ),
     RequestContext(request))
 

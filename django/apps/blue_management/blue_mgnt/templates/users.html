@@ -46,7 +46,7 @@
     <thead>
         <th>&nbsp;</th>
         {% for column in user_columns %}
-        <th><a href="{% url 'blue_mgnt:users' %}?page={{ pagination.paginator_page.number }}&order_by={{ column.order_by }}">
+        <th><a href="{% url 'blue_mgnt:users' %}?page={{ pagination.paginator_page.number }}&order_by={{ column.order_by }}&search_by={{ search_by|urlencode }}&columns={{ columns }}">
                 {{ column.header }}
         </a></th>
         {% endfor %}
@@ -146,7 +146,7 @@
         <a href="{% url 'blue_mgnt:users' %}?show_disabled={{ show_disabled|yesno:"0,1" }}&search={{ search }}#user_table" class="button button-muted">
             {{ show_disabled|yesno:"Hide,Show" }} Disabled Users
         </a>
-        <a href="{% url 'blue_mgnt:users_csv_download' %}" class="button button-muted">Download CSV</a>
+        <a href="{% url 'blue_mgnt:users_csv_download' %}?{{ get_args }}" class="button button-muted">Download CSV</a>
 	</div>
 </div>
 </form>

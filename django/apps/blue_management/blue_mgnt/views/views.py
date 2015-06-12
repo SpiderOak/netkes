@@ -16,6 +16,7 @@ import bcrypt
 from uuid import uuid4
 from hashlib import sha256
 from base64 import b64encode
+from collections import namedtuple
 
 from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import redirect, render_to_response
@@ -502,8 +503,10 @@ def users_csv(request, api, account_info, config, username):
 @enterprise_required
 def users_csv_download(request, api, account_info, config, username):
     log_admin_action(request, 'download user csv')
-    users = api.list_users()
     features = api.enterprise_features()
+    order_by = request.GET.get('order_by')
+    search_by = request.GET.get('search_by')
+    users = api.list_users(order_by=order_by, search_by=search_by,)
 
     response = HttpResponse(mimetype='text/csv')
     response['Content-Disposition'] = 'attachment; filename=users.csv'
@@ -642,6 +645,7 @@ def share_detail(request, api, account_info, config, username, email,
     ),
     RequestContext(request))
 
+Report = namedtuple('Report', ['title', 'description', 'query'])
 
 @enterprise_required
 def reports(request, api, account_info, config, username, saved=False):
@@ -649,7 +653,25 @@ def reports(request, api, account_info, config, username, saved=False):
     average_stored = (account_info['space_used'] or  0) / total_users
     average_stored = round(average_stored / SIZE_OF_GIGABYTE, 2)
     average_num_devices = round((account_info['device_count'] or 0) / total_users, 2)
+
+    reports = [
+        Report("Users who haven't backed up recently",
+               "This report shows users who have backed up in the "
+               "last month, but have not backed up in the last two weeks.",
+               "?search_by=recently_stopped_uploading=2592000|1209600"),
+        Report("Largest storage size",
+               "See the users with the most backed up.",
+               "?order_by=-bytes_stored"),
+        Report("Most bonus GB",
+               "See the users with the most bonus space.",
+               "?order_by=-bonus_bytes&columns=name%2Cemail%2Cgroup_id%2Cbytes_stored%2Cbonus_bytes"),
+        Report("Disabled users with the most stored",
+               "",
+               "?order_by=-bytes_stored&search_by=enabled=0&columns=name%2Cemail%2Cgroup_id%2Cbytes_stored%2Cenabled"),
+    ]
+    
     return render_to_response('reports.html', dict(
+        reports=reports,
         username=username,
         account_info=account_info,
         average_stored=average_stored,
