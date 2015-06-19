@@ -46,7 +46,13 @@
     <thead>
         <th>&nbsp;</th>
         {% for column in user_columns %}
-        <th><a href="{% url 'blue_mgnt:users' %}?page={{ pagination.paginator_page.number }}&order_by={{ column.order_by }}&search_by={{ search_by|urlencode }}&columns={{ columns }}">
+        <th>
+            {% if order_by == column.name %}
+                <span class="asc ordering"><i class="ss-icon">&#xF500;</i></span>
+            {% elif order_by == "-"|add:column.name %}
+                <span class="desc ordering"><i class="ss-icon">&#xF501;</i></span>
+                {% endif %}
+            <a href="{% url 'blue_mgnt:users' %}?page={{ pagination.paginator_page.number }}&order_by={{ column.order_by }}&search_by={{ search_by|urlencode }}&columns={{ columns }}">
                 {{ column.header }}
         </a></th>
         {% endfor %}
