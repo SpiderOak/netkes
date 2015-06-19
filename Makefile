@@ -46,3 +46,5 @@ setup_dev:
 	sudo ln -s /home/openmanage/netkes/etc/service/ /opt/openmanage/etc/service && \
 	cp -r /opt/openmanage/django/apps.orig/blue_management/blue_mgnt/static/fonts/ /opt/openmanage/django/apps/blue_management/blue_mgnt/static/fonts/
 
+mc_css:
+	lessc -x ~/netkes/django/apps/blue_management/blue_mgnt/static/less/style.less > ~/netkes/django/apps/blue_management/blue_mgnt/static/css/console-min.css
