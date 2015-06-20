@@ -9,7 +9,30 @@
 <h1 class="page-header">
 	<i class="ss-icon">&#x1F464;</i> Users
     <div class="actions">
-        <div id="option-add-user" class="inline-short">
+        <div id="option-filter-columns" class="inline-standard">
+            <button id="filter-columns" class="button button-primary-basic">Filter Columns<span class="dropdown"><i class="ss-icon">&#x25BE;</i></span></button>
+            <div class="filter-menu modal-content" data-visibility="false">
+                <form action="{% url 'blue_mgnt:users' %}" method="GET">
+                    {{ column_form }}
+                </form>
+                {% comment %}
+                <form action="{% url 'blue_mgnt:users' %}" method="GET">
+                    <ul>
+                        {% for item in all_user_columns %}
+                        <li>
+                        <input type="checkbox" value="{{ item.name }}"{% for match in user_coulmns %}
+                            {% if match.name == item.name %} checked="checked"{% endif %}
+                            {% endfor %}>
+                            <span class="text">{{ item.header }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    <button class="button thin button-primary-basic">Apply</button>
+                </form>
+                {% endcomment %}
+            </div>
+        </div>
+        <div id="option-add-user" class="inline-standard">
 		    <button id="" class="button button-primary-basic">Add User</button>
         </div>
         <div id="option-upload-csv" class="inline-short">

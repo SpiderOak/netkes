@@ -347,6 +347,41 @@ h1.page-header {
                 background-color: #929292;
             }
         }
+        .dropdown {
+            i {
+                font-size: 10px;
+                color: #fff;
+                padding: 0 0 0 4px;
+                vertical-align: bottom;
+            }
+        }
+        .filter-menu {
+            visibility: hidden;
+            background-color: #fff;
+            position: absolute;
+            width: 500px;
+            text-align: center;
+            padding-left: 35px;
+            form {
+                width: 470px;
+                margin: 10px auto;
+                text-align: left;
+            }
+            button {
+                float: right;
+                margin: -30px 50px 0 0;
+            }
+            ul {
+                list-style-type: none;
+                columns: 3;
+                -webkit-columns: 3;
+                -moz-columns: 3;
+            }
+            span.text {
+                font-size: 12px;
+                vertical-align: middle;
+            }
+        }
     }
 }
 
@@ -1414,6 +1449,11 @@ td.first-time-user {
     max-width: 261px;
     display: inline-block;
 }
+
+.inline-standard {
+    display:inline-block
+}
+
 .billing {
     .billing-nav {
         @ORDERNAV_WIDTH: 700px;
