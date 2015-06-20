@@ -367,9 +367,12 @@ h1.page-header {
                 margin: 10px auto;
                 text-align: left;
             }
+            a.button {
+                padding: 3px 18px;
+            }
             button {
-                float: right;
-                margin: -30px 50px 0 0;
+                float: none;
+                margin: 20px 50px 0 0;
             }
             ul {
                 list-style-type: none;
@@ -377,9 +380,17 @@ h1.page-header {
                 -webkit-columns: 3;
                 -moz-columns: 3;
             }
-            span.text {
+            label {
                 font-size: 12px;
                 vertical-align: middle;
+                &[for=id_columns_0]{
+                    display: none;
+                }
+            }
+            .options-filter-apply {
+                display: block;
+                width: 100%;
+                text-align: center;
             }
         }
     }

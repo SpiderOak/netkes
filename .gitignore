@@ -16,3 +16,9 @@ django/apps/blue_management/blue_mgnt/fonts*
 django/apps/blue_management/blue_mgnt/fonts/*
 django/omva/settings.py
 *.pyc
+
+#Added by benny
+bin/bin
+django/apps/blue_management/blue_mgnt/static/fonts/*
+upgrade/resources/*
+

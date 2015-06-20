@@ -346,7 +346,9 @@ def users(request, api, account_info, config, username, saved=False):
         default_columns = 'name,email,group_id,bytes_stored'
     else:
         default_columns = 'username,name,email,group_id,bytes_stored'
-    column_arg = request.GET.get('columns', default_columns)
+    column_arg = request.GET.getlist('columns', default_columns)
+    if type(column_arg) is list:
+        column_arg = ','.join(map(str, column_arg))
     columns = [x.strip() for x in column_arg.split(',')]
     user_columns, error = get_user_columns(columns)
     for column in user_columns:
@@ -397,11 +399,11 @@ def users(request, api, account_info, config, username, saved=False):
     ))
 
     class UserColumnsForm(forms.Form):
-        checkfield = forms.MultipleChoiceField(required=False,
+        columns = forms.MultipleChoiceField(required=False,
                 choices=[(item.name, item.header) for item in USER_COLUMNS],
                 widget=forms.CheckboxSelectMultiple)
 
-    column_form = UserColumnsForm()
+    column_form = UserColumnsForm(initial={'columns': columns})
 
     if request.method == 'POST':
         if request.POST.get('form', '') == 'csv':
@@ -446,7 +448,7 @@ def users(request, api, account_info, config, username, saved=False):
         user_rows=user_rows,
         pagination=pagination,
         all_user_columns=all_user_columns,
-        coulmn_form=column_form,
+        column_form=column_form,
     ),
     RequestContext(request))
 

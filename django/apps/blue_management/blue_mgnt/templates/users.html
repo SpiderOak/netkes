@@ -14,22 +14,11 @@
             <div class="filter-menu modal-content" data-visibility="false">
                 <form action="{% url 'blue_mgnt:users' %}" method="GET">
                     {{ column_form }}
+                    <div class="options-filter-apply">
+                        <a href="{% url 'blue_mgnt:users' %}" class="button thin button-muted">Reset</a>
+                        <button class="button thin button-primary-basic">Apply</button>
+                    </div>
                 </form>
-                {% comment %}
-                <form action="{% url 'blue_mgnt:users' %}" method="GET">
-                    <ul>
-                        {% for item in all_user_columns %}
-                        <li>
-                        <input type="checkbox" value="{{ item.name }}"{% for match in user_coulmns %}
-                            {% if match.name == item.name %} checked="checked"{% endif %}
-                            {% endfor %}>
-                            <span class="text">{{ item.header }}</span>
-                        </li>
-                        {% endfor %}
-                    </ul>
-                    <button class="button thin button-primary-basic">Apply</button>
-                </form>
-                {% endcomment %}
             </div>
         </div>
         <div id="option-add-user" class="inline-standard">
