@@ -656,14 +656,18 @@ def reports(request, api, account_info, config, username, saved=False):
 
     reports = [
         Report("Users who haven't backed up recently",
-               "This report shows users who have backed up in the "
-               "last month, but have not backed up in the last two weeks.",
+               "Users who have backed up in the last month, "
+               "but have not backed up in the last two weeks.",
                "?search_by=recently_stopped_uploading=2592000|1209600"),
+        Report("Active accounts",
+               "Users who have logged into "
+               "SpiderOak within the past two weeks.",
+               "?search_by=last_login>%s" % (int(time.time()) - 1209600)),
         Report("Largest storage size",
-               "See the users with the most backed up.",
+               "The users with the most backed up.",
                "?order_by=-bytes_stored"),
         Report("Most bonus GB",
-               "See the users with the most bonus space.",
+               "The users with the most bonus space.",
                "?order_by=-bonus_bytes&columns=name%2Cemail%2Cgroup_id%2Cbytes_stored%2Cbonus_bytes"),
         Report("Disabled users with the most stored",
                "",
