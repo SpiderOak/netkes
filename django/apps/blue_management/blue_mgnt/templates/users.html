@@ -9,7 +9,19 @@
 <h1 class="page-header">
 	<i class="ss-icon">&#x1F464;</i> Users
     <div class="actions">
-        <div id="option-add-user" class="inline-short">
+        <div id="option-filter-columns" class="inline-standard">
+            <button id="filter-columns" class="button button-primary-basic">Filter Columns<span class="dropdown"><i class="ss-icon">&#x25BE;</i></span></button>
+            <div class="filter-menu modal-content" data-visibility="false">
+                <form action="{% url 'blue_mgnt:users' %}" method="GET">
+                    {{ column_form }}
+                    <div class="options-filter-apply">
+                        <a href="{% url 'blue_mgnt:users' %}" class="button thin button-muted">Reset</a>
+                        <button class="button thin button-primary-basic">Apply</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div id="option-add-user" class="inline-standard">
 		    <button id="" class="button button-primary-basic">Add User</button>
         </div>
         <div id="option-upload-csv" class="inline-short">
