@@ -7,8 +7,8 @@
 #
 
 set -x
-#set -e
-#set -o pipefail
+set -e
+set -o pipefail
 
 usage(){
     cat << __EOF__
