@@ -15,8 +15,7 @@ ADMINS = ()
 
 MANAGERS = ADMINS
 
-common.set_config(common.read_config_file())
-config = common.get_config()
+config = common.read_config_file()
 
 DATABASES = {
     'default': {
