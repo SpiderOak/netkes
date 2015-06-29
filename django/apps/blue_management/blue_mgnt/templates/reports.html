@@ -41,14 +41,16 @@
 </div>
 {% for report in reports %}
 <div class="row">
-    <div class="widget-manage-blocks">
-        <div class="manage-icon"><i class="ss-icon">&#xF000;</i></div>
+    <div class="widget-manage-blocks long">
+        <div class="manage-icon"><i class="ss-icon">&#x2139;</i></div>
         <div class="manage-content">
             <h3>{{ report.title }}</h3>
             <p>{{ report.description }}</p>
-            <a href="{% url 'blue_mgnt:users' %}{{ report.query }}">browse users</a>
-            <a href="{% url 'blue_mgnt:users_csv_download' %}{{ report.query }}">download csv</a>
-            <a href="{% url 'blue_mgnt:users' %}{{ report.query }}" class="button button-primary-basic">Send weekly email</a>
+            <a href="{% url 'blue_mgnt:users' %}{{ report.query }}" class="button thin button-primary-basic">browse users</a>
+            <a href="{% url 'blue_mgnt:users_csv_download' %}{{ report.query }}" class="button thin button-primary-basic">download csv</a>
+            {% comment %}
+            <a href="{% url 'blue_mgnt:users' %}{{ report.query }}" class="button thin button-primary-basic">Send weekly email</a>
+            {% endcomment %}
         </div>
     </div>
 </div>

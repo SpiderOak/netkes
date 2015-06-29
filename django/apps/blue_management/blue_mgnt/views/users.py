@@ -60,7 +60,7 @@ def get_user_form(local_groups):
     return UserForm
 
 
-def get_base_user_form_set(api):
+def get_base_user_form_set(api, request):
     class BaseUserFormSet(forms.formsets.BaseFormSet):
         def clean(self):
             if any(self.errors):
@@ -360,7 +360,7 @@ def users(request, api, account_info, config, username, saved=False):
     UserCSVForm = get_new_user_csv_form(api, groups, account_info, config, request)
     NewUserForm = get_new_user_form(api, features, account_info,
                                     config, local_groups, groups, request)
-    BaseUserFormSet = get_base_user_form_set(api)
+    BaseUserFormSet = get_base_user_form_set(api, request)
     UserForm = get_user_form(local_groups)
     UserFormSet = formset_factory(UserForm, extra=0, formset=BaseUserFormSet)
     DeleteUserFormSet = formset_factory(DeleteUserForm, extra=0, can_delete=True)
