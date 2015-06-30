@@ -231,7 +231,7 @@ class Api(object):
     def search_users(self, name_or_email=None, limit=None, offset=None, group_id=None):
         query_string = self._create_query_string(limit=limit, 
                                                  offset=offset, 
-                                                 name_or_email=name_or_email, 
+                                                 search=name_or_email, 
                                                  group_id=group_id)
         return self.client.get_json('users/%s' % query_string)
 

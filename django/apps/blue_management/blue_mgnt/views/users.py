@@ -334,9 +334,10 @@ def users(request, api, account_info, config, username, saved=False):
     search = request.GET.get('search', '')
     local_groups = get_local_groups(config, groups)
     user_count = api.get_user_count()
+    page = request.GET.get('page', 1)
     pagination = Pagination('blue_mgnt:users',
                             user_count,
-                            request.GET.get('page'),
+                            page,
                            )
     order_by = request.GET.get('order_by', '')
     search_by = request.GET.get('search_by', '')
@@ -373,6 +374,12 @@ def users(request, api, account_info, config, username, saved=False):
                                    order_by=order_by,
                                    search_by=search_by,
                                   )
+
+    if len(all_users) < pagination.per_page:
+        pagination = Pagination('blue_mgnt:users',
+                                page * pagination.per_page,
+                                page,
+                               )
 
     if not show_disabled:
         all_users = [x for x in all_users if x['enabled']]
