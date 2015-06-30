@@ -488,7 +488,15 @@ def user_detail(request, api, account_info, config, username, email, saved=False
                 widget=ReadOnlyWidget, required=False
             )
             enabled = forms.BooleanField(widget=ReadOnlyWidget, required=False)
-        bonus_gigs = forms.IntegerField(label="Bonus GBs")
+        bonus_gigs = forms.IntegerField(
+            label="Bonus GBs",
+            help_text='Add extra space for this specific user.'
+        )
+        purgehold_active = forms.BooleanField(
+            label="Purgehold Active",
+            help_text="If set deleted data will not be purged from the system.",\
+            required=False,
+        )
 
         def clean_email(self):
             new_email = self.cleaned_data['email']
@@ -503,6 +511,7 @@ def user_detail(request, api, account_info, config, username, email, saved=False
 
         def save(self):
             user_data = dict()
+            user_data['purgehold_active'] = self.cleaned_data['purgehold_active']
             if local_user:
                 user_data.update(self.cleaned_data)
                 del user_data['bonus_gigs']
@@ -540,7 +549,9 @@ def user_detail(request, api, account_info, config, username, email, saved=False
             if request.user.has_perm('blue_mgnt.can_manage_users'):
                 local_source.set_user_password(local_source._get_db_conn(config),
                                                email, '')
-                api.send_activation_email(email, dict(template_name='set_password'))
+                api.send_activation_email(email, dict(template_name='set_password',
+                                                      reg_code='not used'
+                                                     ))
                 return redirect('blue_mgnt:user_detail_saved', email)
         if request.POST.get('form', '') == 'password':
             password_form = PasswordForm(request.POST)

@@ -55,6 +55,8 @@ def save_settings(request, api, options):
         data['autopurge_interval'] = data['autopurge_interval'].days
     if 'versionpurge_interval' in data:
         data['versionpurge_interval'] = data['versionpurge_interval'].days
+    if 'purgehold_duration' in data:
+        data['purgehold_duration'] = data['purgehold_duration'].days * 86400
     for var in AGENT_CONFIG_VARS:
         if var in data:
             del data[var]
@@ -107,12 +109,20 @@ def settings(request, api, account_info, config, username, saved=False):
         autopurge_interval = IntervalFormField(
             'D', 
             label='Deleted Items Automatic Purge', 
-            initial=datetime.timedelta(days=opts['autopurge_interval'])
+            initial=datetime.timedelta(days=opts['autopurge_interval']),
+            required=False,
         )
         versionpurge_interval = IntervalFormField(
             'D', 
             label='Historical Version Automatic Purge', 
-            initial=datetime.timedelta(days=opts['versionpurge_interval'])
+            initial=datetime.timedelta(days=opts['versionpurge_interval']),
+            required=False,
+        )
+        purgehold_duration = IntervalFormField(
+            'D', 
+            label='Purgehold Duration', 
+            initial=datetime.timedelta(seconds=opts['purgehold_duration']),
+            required=False,
         )
         support_email = forms.EmailField(initial=opts['support_email'])
         if features['ldap']:
