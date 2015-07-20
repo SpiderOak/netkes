@@ -14,8 +14,11 @@
             <div class="filter-menu modal-content" data-visibility="false">
                 <form action="{% url 'blue_mgnt:users' %}" method="GET">
                     {{ column_form }}
+                    <input type="hidden" name="page" value="{{ pagination.paginator_page.number }}" />
+                    <input type="hidden" name="order_by" value="{{ column.order_by }}" />
+                    <input type="hidden" name="search_by" value="{{ search_by|urlencode }}" />
                     <div class="options-filter-apply">
-                        <a href="{% url 'blue_mgnt:users' %}" class="button thin button-muted">Reset</a>
+                        <a href="{% url 'blue_mgnt:users' %}?page={{ pagination.paginator_page.number }}&order_by={{ column.order_by }}&search_by={{ search_by|urlencode }}" class="button thin button-muted">Reset</a>
                         <button class="button thin button-primary-basic">Apply</button>
                     </div>
                 </form>
@@ -139,13 +142,17 @@
         <tr>
             <td colspan="7" class="first-time-user">
                 <div>
+                {% if account_info.total_users %}
+                    <p>No users found.</p>
+                {% else %}
                     <p>Begin setting up your account<br />by adding users here.</p>
-                <div id="option-add-user" class="inline-medium">
-                    <button id="" class="button button-primary-basic">Manually Add Your First User</button>
-                </div>
-                <div id="option-upload-csv" class="inline-medium">
-                    <button id="" class="button button-primary-basic">Import Users via CSV</button>
-                </div>
+                    <div id="option-add-user" class="inline-medium">
+                        <button id="" class="button button-primary-basic">Manually Add Your First User</button>
+                    </div>
+                    <div id="option-upload-csv" class="inline-medium">
+                        <button id="" class="button button-primary-basic">Import Users via CSV</button>
+                    </div>
+                {% endif %}
                 </div>
             </td>
         </tr>

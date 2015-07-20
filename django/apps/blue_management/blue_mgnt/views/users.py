@@ -287,6 +287,7 @@ USER_COLUMNS = [
     UserColumn('plan_id', 'Plan', 'plan'),
     UserColumn('group_id', 'Group', 'group'),
     UserColumn('enabled', 'Enabled', 'text'),
+    UserColumn('purgehold_active', 'Purgehold Active', 'text'),
 ]
 
 def get_user_columns(columns):
@@ -334,13 +335,13 @@ def users(request, api, account_info, config, username, saved=False):
     search = request.GET.get('search', '')
     local_groups = get_local_groups(config, groups)
     user_count = api.get_user_count()
-    page = request.GET.get('page', 1)
+    page = int(request.GET.get('page', 1))
     pagination = Pagination('blue_mgnt:users',
                             user_count,
                             page,
                            )
     order_by = request.GET.get('order_by', '')
-    search_by = request.GET.get('search_by', '')
+    search_by = urllib.unquote(request.GET.get('search_by', ''))
     all_user_columns = USER_COLUMNS
 
     if features['email_as_username']:
@@ -400,6 +401,7 @@ def users(request, api, account_info, config, username, saved=False):
                               user_columns, groups
                              )
     get_args = urllib.urlencode(dict(
+        search=search,
         order_by=order_by,
         search_by=search_by,
         columns=column_arg

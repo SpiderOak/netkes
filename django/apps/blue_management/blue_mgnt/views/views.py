@@ -672,6 +672,9 @@ def reports(request, api, account_info, config, username, saved=False):
         Report("Disabled users with the most stored",
                "",
                "?order_by=-bytes_stored&search_by=enabled=0&columns=name%2Cemail%2Cgroup_id%2Cbytes_stored%2Cenabled"),
+        Report("Purgehold active",
+               "Users whose deleted data will not be purged from the system.",
+               "?search_by=purgehold_active=1&columns=name,email,bytes_stored,group_id,purgehold_active"),
     ]
     
     return render_to_response('reports.html', dict(
