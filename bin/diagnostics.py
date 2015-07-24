@@ -109,6 +109,7 @@ if __name__ == '__main__':
     print api.ping()
 
     # Verify that a setting can be changed via the accounts_api.
+    # This might be better/safer if we created a 'dummy' setting for the purpose of testing.
     print_message("TESTING EDIT SETTINGS")
 
     current_autopurge = api.enterprise_settings()['autopurge_interval']
