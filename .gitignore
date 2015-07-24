@@ -10,6 +10,7 @@ docs/_build*
 *.crt*
 *.csr*
 *.tar.bz2
+.idea*
 
 #Added to protect propriarity fonts
 django/apps/blue_management/blue_mgnt/fonts*
