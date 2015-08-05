@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% load so_filters %}
+
+{% block title %}Users - Management Console{{ block.super }}{% endblock %}
+{% block body_classes %}home {{ block.super }}{% endblock body_classes %}
+{% block modal_options %}{% include "partials/add-user-widget.html" with active="users" %}{% endblock modal_options %}
+{% block navtab %}{% include "partials/navtab-widget.html" with active="users" %}{% endblock navtab %}
+{% block content %}
+<h1 class="page-header">
+	<i class="ss-icon">&#x1F464;</i> Users
+    <div class="actions">
+        <div id="option-filter-columns" class="inline-standard">
+            <button id="filter-columns" class="button button-primary-basic">Filter Columns<span class="dropdown"><i class="ss-icon">&#x25BE;</i></span></button>
+            <div class="filter-menu modal-content" data-visibility="false">
+                <form action="{% url 'blue_mgnt:users' %}" method="GET">
+                    {{ column_form }}
+                    <input type="hidden" name="page" value="{{ pagination.paginator_page.number }}" />
+                    <input type="hidden" name="order_by" value="{{ column.order_by }}" />
+                    <input type="hidden" name="search_by" value="{{ search_by|urlencode }}" />
+                    <div class="options-filter-apply">
+                        <a href="{% url 'blue_mgnt:users' %}?page={{ pagination.paginator_page.number }}&order_by={{ column.order_by }}&search_by={{ search_by|urlencode }}" class="button thin button-muted">Reset</a>
+                        <button class="button thin button-primary-basic">Apply</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div id="option-add-user" class="inline-standard">
+		    <button id="" class="button button-primary-basic">Add User</button>
+        </div>
+        <div id="option-upload-csv" class="inline-short">
+		    <button id="" class="button button-primary-basic">Add CSV</button>
+        </div>
+        <form action="{% url 'blue_mgnt:users' %}" method="GET">
+            <input name="show_disabled" type="hidden" value="{{ show_disabled }}">
+            {% if search %}
+                <a id="clear-search" href="{% url 'blue_mgnt:users' %}" class="">Clear Search</a>
+            {% endif %}
+            <input type="text" class="widget-search-input"  id="input_search" name="search" value="{{ search }}" placeholder="Find Users by Name or Email">
+            <input type="submit" class="search-button ss-icon" value="&#x1F50E;">
+        </form>
+	</div>
+</h1>
+{% if saved %}
+<p id="saved">Changes saved successfully!</p>
+{% endif %}
+{% if error %}
+<div class="error-alert">
+    <p>{{ error }}</p>
+</div>
+{% endif %}
+{% if new_user.errors %}
+<div class="error-alert">
+    <p>{{ new_user.errors|length }} errors have been detected. Please see below for more information.</p>
+</div>
+{% endif %}
+<form action="{% url 'blue_mgnt:users' %}" method="POST">
+    {% csrf_token %}
+    {{ delete_user_formset.management_form }}
+    {{ user_formset.management_form }}
+<table class="widget-table">
+    <thead>
+        <th>&nbsp;</th>
+        {% for column in user_columns %}
+        <th>
+            {% if order_by == column.name %}
+                <span class="asc ordering"><i class="ss-icon">&#xF500;</i></span>
+            {% elif order_by == "-"|add:column.name %}
+                <span class="desc ordering"><i class="ss-icon">&#xF501;</i></span>
+                {% endif %}
+            <a href="{% url 'blue_mgnt:users' %}?page={{ pagination.paginator_page.number }}&order_by={{ column.order_by }}&search_by={{ search_by|urlencode }}&columns={{ columns }}">
+                {{ column.header }}
+        </a></th>
+        {% endfor %}
+        <th>User Detail</th>
+        <th>
+            Delete?
+            <input id="sel_all" type="checkbox">
+        </th>
+    </thead>
+<tbody>
+    {% for user_row in user_rows %}
+        <tr>
+            {% for hidden in user_row.delete_form.hidden_fields %}
+                {{ hidden }}
+            {% endfor %}
+            <td>
+                <i class="ss-icon edit-status">
+                    {% if user_row.is_local_user %}
+                        &#x270E;
+                    {% else %}
+                        &#xE071;
+                    {% endif %}
+                </i>
+            </td>
+            {% for value, type in user_row.selected_columns %}
+                {% if type == 'bytes' %}
+                    <td style="text-align: center">{{ value|sofilesizeformat }}</td>
+                {% elif type == 'email' %}
+                    <td><a href="mailto:{{ value }}">
+                        {{ value }}
+                    </a></td>
+                {% elif type == 'group' %}
+                    {% if user_row.is_local_user %}
+                        {% for hidden in user_row.form.hidden_fields %}
+                            {{ hidden }}
+                        {% endfor %}
+                        {% for field in user_row.form.visible_fields %}
+                        <td>
+                            {% if field.errors %}
+                            {% for error in field.errors %}
+                            <span class="error-highlight">
+                                {{ field }}
+                                <span class="error-tag">{{ error }}</span>
+                            </span>
+                            {% endfor %}
+                            {% else %}
+                                {{ field }}
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                    {% else %}
+                        <td>{{ value }}</td>
+                    {% endif %}
+                {% else %}
+                    <td>{{ value }}</td>
+                {% endif %}
+            {% endfor %}
+            <td style="text-align: center">
+                <a href="{% url 'blue_mgnt:user_detail' user_row.email %}">Detail</a>
+            </td>
+                {{ user_row.gigs_stored }}
+                {% if not user_row.enabled or user_row.is_local_user and perms.blue_mgnt.can_manage_users %}
+            <td style="text-align:center">
+                    <span class="del_box">{{ user_row.delete_form.DELETE }}</span>
+                {% else %}
+            <td style="text-align:center">
+                    <span class="delete-fill ss-icon">&#x1F6AB;</span>
+                {% endif %}
+            </td>
+        </tr>
+            {% empty %}
+        <tr>
+            <td colspan="7" class="first-time-user">
+                <div>
+                {% if account_info.total_users %}
+                    <p>No users found.</p>
+                {% else %}
+                    <p>Begin setting up your account<br />by adding users here.</p>
+                    <div id="option-add-user" class="inline-medium">
+                        <button id="" class="button button-primary-basic">Manually Add Your First User</button>
+                    </div>
+                    <div id="option-upload-csv" class="inline-medium">
+                        <button id="" class="button button-primary-basic">Import Users via CSV</button>
+                    </div>
+                {% endif %}
+                </div>
+            </td>
+        </tr>
+            {% endfor %}
+	</tbody>
+</table>
+
+{% include "partials/pagination-widget.html" %}
+
+<div class="widget-splitactions">
+	<div class="rhs">
+        <input type="hidden" value="{{ search }}" name="search">
+		<button class="button button-primary-basic">Save Changes</button>
+	</div>
+	<div class="lhs">
+        <a href="{% url 'blue_mgnt:users' %}?show_disabled={{ show_disabled|yesno:"0,1" }}&search={{ search }}#user_table" class="button button-muted">
+            {{ show_disabled|yesno:"Hide,Show" }} Disabled Users
+        </a>
+        <a href="{% url 'blue_mgnt:users_csv_download' %}?{{ get_args }}" class="button button-muted">Download CSV</a>
+	</div>
+</div>
+</form>
+<div class="spacer"><!--ZXP--></div>
+
+{% endblock content %}

@@ -18,14 +18,14 @@
 
 @NAVTAB_BORDER_COLOR: #E0E0E0;
 
-@NAVTAB_BGCOLOR_USERS: #0D50A1;
-@NAVTAB_BGCOLOR_SHARES: #2089CA;
-@NAVTAB_BGCOLOR_MANAGE: #21B1E6;
-@NAVTAB_BGCOLOR_REPORTS: #5AC5F1;
+@NAVTAB_BGCOLOR_USERS: #ea7c23;
+@NAVTAB_BGCOLOR_SHARES: #e18b26;
+@NAVTAB_BGCOLOR_MANAGE: #f5a81c;
+@NAVTAB_BGCOLOR_REPORTS: #eeb91b;
 
 @INPUT_EDIT_COLOR: #767677;
 
-@LINK_COLOR: #268BC9;
+@LINK_COLOR: #e97d2d;
 
 @ZEBRA_STRIPE: #fafafa;
 
@@ -159,8 +159,6 @@ header {
     h1 {
         float: left;
         img {
-            height: 38px;
-            width: 48px;
             position: relative;
             top: -2px;
         }
@@ -347,6 +345,52 @@ h1.page-header {
                 background-color: #929292;
             }
         }
+        .dropdown {
+            i {
+                font-size: 10px;
+                color: #fff;
+                padding: 0 0 0 4px;
+                vertical-align: bottom;
+            }
+        }
+        .filter-menu {
+            visibility: hidden;
+            background-color: #fff;
+            position: absolute;
+            width: 500px;
+            text-align: center;
+            padding-left: 35px;
+            form {
+                width: 470px;
+                margin: 10px auto;
+                text-align: left;
+            }
+            a.button {
+                padding: 3px 18px;
+            }
+            button {
+                float: none;
+                margin: 20px 50px 0 0;
+            }
+            ul {
+                list-style-type: none;
+                columns: 3;
+                -webkit-columns: 3;
+                -moz-columns: 3;
+            }
+            label {
+                font-size: 12px;
+                vertical-align: middle;
+                &[for=id_columns_0]{
+                    display: none;
+                }
+            }
+            .options-filter-apply {
+                display: block;
+                width: 100%;
+                text-align: center;
+            }
+        }
     }
 }
 
@@ -396,7 +440,7 @@ h1.page-header {
         text-align: left;
         font-weight: bold;
         &:hover {
-            text-decoration: underline;
+            text-decoration: none;
         }
     }
     &>tbody>tr:hover>td {
@@ -437,6 +481,13 @@ h1.page-header {
     li > label {
         font-family: @FONTFAMILY_R;
     }
+
+    .ordering {
+        text-decoration: none;
+        i {
+            font-size: 10px;
+        }
+    }
 }
 
 .widget-manage-blocks {
@@ -446,6 +497,9 @@ h1.page-header {
     margin-bottom: 18px;
     background-color: #FFF;
     position: relative;
+    &.long {
+        width: 100%;
+    }
 
     .manage-icon {
         font-size: 60px;
@@ -700,7 +754,7 @@ button, .button {
     border-radius: 4px;
     white-space: nowrap;
     &.thin {
-        padding: 1px 18px;
+        padding: 1px 18px!important;
         font-family: @FONTFAMILY_R;
         font-size: 14px;
     }
@@ -709,10 +763,10 @@ button, .button {
 
 .button-primary-basic {
     color: #fff;
-    background-color: #22A2D9;
-    border: 1px solid #22A2D9;
+    background-color: #e97d2d;
+    border: 1px solid #e97d2d;
     &:hover {
-        background-color: darken(#22A2D9, 2%);
+        background-color: darken(#e97d2d, 2%);
     }
 }
 
@@ -961,10 +1015,9 @@ body.login,
 body.errors,
 body.password {
     .image-wrapper {
-        width: 120px;
+        width: 430px;
         margin: 2% auto;
         img {
-            width: 120px;
         }
 
     }
@@ -1407,6 +1460,11 @@ td.first-time-user {
     max-width: 261px;
     display: inline-block;
 }
+
+.inline-standard {
+    display:inline-block
+}
+
 .billing {
     .billing-nav {
         @ORDERNAV_WIDTH: 700px;

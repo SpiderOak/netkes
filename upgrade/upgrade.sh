@@ -7,8 +7,8 @@
 #
 
 set -x
-#set -e
-#set -o pipefail
+set -e
+set -o pipefail
 
 usage(){
     cat << __EOF__
@@ -61,6 +61,12 @@ echo "updated tarball"
 
 # Bring over configuration into the new stuff.
 cp /opt/openmanage.$CURRENT_DATE/etc/agent_config.json /opt/openmanage/etc
+
+. /etc/default/openmanage
+
+pushd $OPENMANAGE_DJANGO_ROOT/omva
+python manage.py syncdb --noinput
+popd
 
 echo "Updating database..."
 /opt/openmanage/upgrade/apply_sql.sh

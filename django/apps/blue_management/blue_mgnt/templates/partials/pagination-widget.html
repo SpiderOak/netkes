@@ -2,7 +2,7 @@
 {% if pagination.num_pages > 1 %}
 	<ul>
 		{% if pagination.paginator_page.has_previous %}
-			<li><a href="{% url pagination.url %}?page={{ pagination.paginator_page.previous_page_number }}">Previous</a></li>
+        <li><a href="{% url pagination.url %}?page={{ pagination.paginator_page.previous_page_number }}&{{ get_args }}">Previous</a></li>
 		{% endif %}
 
 		{% for page in pagination.page_range %}
@@ -10,7 +10,7 @@
 				{% if page == pagination.page %}
 					<li class="active">{{ page }}</li>
 				{% else %}
-					<li><a href="{% url pagination.url %}?page={{ page }}">{{ page }}</a></li>
+                <li><a href="{% url pagination.url %}?page={{ page }}&{{ get_args }}">{{ page }}</a></li>
 				{% endif %}
 			{% else %}
 				<li>...</li>
@@ -18,7 +18,7 @@
 		{% endfor %}
 
 		{% if pagination.paginator_page.has_next %}
-			<li><a href="{% url pagination.url %}?page={{ pagination.paginator_page.next_page_number }}">Next</a></li>
+        <li><a href="{% url pagination.url %}?page={{ pagination.paginator_page.next_page_number }}&{{ get_args }}">Next</a></li>
 		{% endif %}
 	</ul>
 {% endif %}

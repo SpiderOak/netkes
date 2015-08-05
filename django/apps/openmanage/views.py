@@ -17,7 +17,7 @@ from django.shortcuts import get_object_or_404
 
 import urllib
 
-from common import get_config, read_config_file, set_config, validate_config, NetKesConfigError
+from common import read_config_file, validate_config
 from account_mgr import authenticator
 from key_escrow import server
 from Pandora import serial
@@ -43,12 +43,8 @@ def setup_logging():
         logging.root.setLevel(logging.INFO)
 
 def setup_application():
-    config = get_config()
-    if config is not None:
-        return
     config = read_config_file()
     validate_config(config)
-    set_config(config)
 
 
 setup_logging()
@@ -163,7 +159,7 @@ def login_required(fun):
                 return HttpResponseServerError()
 
             challenge = valid_challenge(request, plaintext_auth['challenge'])
-            authenticated = authenticator(get_config(), 
+            authenticated = authenticator(read_config_file(), 
                                         decoded_user, 
                                         plaintext_auth['password'])
 

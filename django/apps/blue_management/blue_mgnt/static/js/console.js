@@ -35,6 +35,16 @@ $(function() {
             $(this).css('width', 'auto').attr('size', size_calc);
         });
     });
+    
+    // Toggle for column filter
+    $('#filter-columns').click(function(){
+        var $fm = $('.filter-menu');
+        if ($fm.attr('data-visibility') == 'false') {
+            $fm.css('visibility', 'visible').attr('data-visibility', 'true');
+        } else {
+            $fm.css('visibility', 'hidden').attr('data-visibility', 'false');
+        }
+    });
 
     // Workings for the modal wrapper and widgets
 
