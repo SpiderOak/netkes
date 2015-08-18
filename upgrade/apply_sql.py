@@ -3,8 +3,7 @@ from netkes import common
 from netkes.account_mgr import get_cursor
 
 def apply_sql():
-    common.set_config(common.read_config_file())
-    config = common.get_config()
+    config = common.read_config_file()
     config['db_user'] = 'postgres'
     sql_files = glob.glob('/opt/openmanage/sql/*.sql') 
     sql_files = [(x.split('/')[-1], open(x).readlines()) for x in sql_files]

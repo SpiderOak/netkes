@@ -27,6 +27,9 @@ def set_config(config):
     _CONFIG = config
 
 def get_config():
+    '''Only use this for one time scripts. The config can change 
+    so this will break if used for a long lived process.
+    '''
     global _CONFIG
     return _CONFIG
 

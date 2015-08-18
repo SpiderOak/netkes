@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 from netkes.netkes_agent import config_mgr
 from netkes.account_mgr.accounts_api import Api
 

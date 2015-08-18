@@ -7,7 +7,7 @@ from wsgi_util.router import router
 from wsgi_util.http import BadRequest, SuperSimple, NotFound, Forbidden, ServerError
 from wsgi_util.post_util import read_postdata, read_querydata
 
-from common import get_config, read_config_file, set_config, validate_config, NetKesConfigError
+from common import read_config_file, validate_config
 from account_mgr import authenticator
 from key_escrow import server
 from Pandora import serial
@@ -27,12 +27,8 @@ def setup_logging():
         logging.root.setLevel(logging.INFO)
 
 def setup_application():
-    config = get_config()
-    if config is not None:
-        return
     config = read_config_file()
     validate_config(config)
-    set_config(config)
 
 
 setup_logging()
@@ -93,7 +89,7 @@ def login_required(fun):
                         % (decoded_user, brand_identifier,))
                 return ServerError()(environ, start_response)
 
-        if not authenticator(get_config(), decoded_user, plaintext_password):
+        if not authenticator(read_config_file(), decoded_user, plaintext_password):
             log.info("Auth failed for %s" % (decoded_user,))
             return Forbidden()(environ, start_response)
 

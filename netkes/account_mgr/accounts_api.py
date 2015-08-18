@@ -186,48 +186,53 @@ class Api(object):
 
     ### Shares
 
-    def _create_query_string(self, limit, offset, 
-                             search=None, group_id=None):
+    def _create_query_string(self, **kw):
         get_params = dict()
-        if limit:
-            get_params['limit'] = limit
-        if offset:
-            get_params['offset'] = offset
-        if search:
-            get_params['search'] = search
-        if group_id:
-            get_params['group_id'] = group_id
+        for key, value in kw.items():
+            if value:
+                get_params[key] = value
         query_string = ''
         if get_params:
             query_string = '?%s' % urllib.urlencode(get_params)
         return query_string
 
     def list_shares_for_brand(self, limit=None, offset=None):
-        query_string = self._create_query_string(limit, offset)
+        query_string = self._create_query_string(limit=limit, offset=offset)
         return self.client.get_json('shares/%s' % query_string)
 
     ### Users
 
-    def list_users_paged(self, user_limit=1000):
+    def list_users_paged(self, user_limit=1000, search_by=None, order_by=None):
         all_users = []
         user_count = self.get_user_count()
         for page in range((user_count / user_limit) + 1):
             user_offset = user_limit * page
             if user_offset < user_count:
-                all_users = all_users + self.list_users(user_limit, user_offset)
+                users = self.list_users(user_limit, user_offset, 
+                                        search_by, order_by)
+                all_users = all_users + users
+                if len(users) < user_limit:
+                    break
         return all_users
 
-    def list_users(self, limit=None, offset=None):
+    def list_users(self, limit=None, offset=None, search_by=None, order_by=None):
         # If the query is not limited it may time out for large user lists
         # so we automatically page the user list.
         if limit is None and offset is None:
-            return self.list_users_paged()
+            return self.list_users_paged(search_by=search_by, order_by=order_by)
 
-        query_string = self._create_query_string(limit, offset)
+        query_string = self._create_query_string(limit=limit, 
+                                                 offset=offset,
+                                                 search_by=search_by,
+                                                 order_by=order_by
+                                                )
         return self.client.get_json('users/%s' % query_string)
 
     def search_users(self, name_or_email=None, limit=None, offset=None, group_id=None):
-        query_string = self._create_query_string(limit, offset, name_or_email, group_id)
+        query_string = self._create_query_string(limit=limit, 
+                                                 offset=offset, 
+                                                 search=name_or_email, 
+                                                 group_id=group_id)
         return self.client.get_json('users/%s' % query_string)
 
     def get_user_count(self):

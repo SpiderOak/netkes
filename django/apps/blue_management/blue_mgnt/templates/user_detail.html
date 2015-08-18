@@ -69,12 +69,10 @@
                         <a href="{% url 'blue_mgnt:manage' %}">Manage page</a>.
                     </span>
                 </td>
-                {% elif field.html_name == 'bonus_gigs' and not field.errors %}
-                <td id="hint">
-                    <span>Add extra space for this specific user.</span>
-                </td>
                 {% else %}
-                <td></td>
+                <td id="hint">
+                    <span>{{ field.help_text }}</span>
+                </td>
                 {% endif %}
             </tr>
             {% endfor %}
