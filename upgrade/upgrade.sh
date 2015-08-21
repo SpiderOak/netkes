@@ -60,7 +60,12 @@ ln -s /opt/openmanage-$VERSION /opt/openmanage
 echo "updated tarball"
 
 # Bring over configuration into the new stuff.
-cp /opt/openmanage.$CURRENT_DATE/etc/agent_config.json /opt/openmanage/etc
+if ! cmp -s /opt/openmanage.$CURRENT_DATE/etc/agent_config.json /opt/openmanage/etc/agent_config.json
+then
+    cp /opt/openmanage.$CURRENT_DATE/etc/agent_config.json /opt/openmanage/etc
+else 
+    echo "agent_config.json hasn't changed"
+fi
 
 . /etc/default/openmanage
 
