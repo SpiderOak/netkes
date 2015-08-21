@@ -69,6 +69,11 @@ fi
 
 . /etc/default/openmanage
 
+# Set django secret key
+random_string="$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c 64;echo;)"
+secret_key="export DJANGO_SECRET_KEY=\"$random_string\""
+echo $secret_key >> /opt/openmanage/etc/openmanage_defaults 
+
 pushd $OPENMANAGE_DJANGO_ROOT/omva
 python manage.py syncdb --noinput
 popd
@@ -84,11 +89,6 @@ apt-get -y remove python-crypto
 find /opt/openmanage/upgrade/resources/ -name '*.deb' | xargs dpkg -i
 
 cat /opt/openmanage/upgrade/requirements.txt | xargs pip install
-
-# Set django secret key
-random_string="$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c 64;echo;)"
-secret_key="export DJANGO_SECRET_KEY=\"$random_string\""
-echo $secret_key >> /opt/openmanage/etc/openmanage_defaults 
 
 # Restart services
 for SERVICE in openmanage admin_console; do
