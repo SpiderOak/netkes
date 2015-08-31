@@ -8,6 +8,7 @@
 <h1 class="page-header">
 	<i class="ss-icon">&#xED50;</i> Logs
     <div class="actions">
+        <a class="rhs button button-primary-basic" href="/logs/download/">Download Logs</a>
         <form action="{% url 'blue_mgnt:logs' %}" method="GET">
             <input name="show_disabled" type="hidden" value="{{ show_disabled }}">
             {% if search %}
@@ -37,8 +38,5 @@
 
 {% include "partials/pagination-widget.html" %}
 
-<div class="widget-actions">
-    <a class="rhs button button-primary-basic" href="/logs/download/">Download Logs</a>
-</div>
 </div>
 {% endblock content %}
