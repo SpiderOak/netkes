@@ -60,10 +60,22 @@ ln -s /opt/openmanage-$VERSION /opt/openmanage
 echo "updated tarball"
 
 # Bring over configuration into the new stuff.
-cp /opt/openmanage.$CURRENT_DATE/etc/agent_config.json /opt/openmanage/etc
+if ! cmp -s /opt/openmanage.$CURRENT_DATE/etc/agent_config.json /opt/openmanage/etc/agent_config.json
+then
+    echo "copying agent_config.json"
+    cp /opt/openmanage.$CURRENT_DATE/etc/agent_config.json /opt/openmanage/etc
+else 
+    echo "agent_config.json hasn't changed"
+fi
+
+echo "Setting django secret key"
+random_string="$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c 64;echo;)"
+secret_key="export DJANGO_SECRET_KEY=\"$random_string\""
+echo $secret_key >> /opt/openmanage/etc/openmanage_defaults 
 
 . /etc/default/openmanage
 
+echo "Syncing database"
 pushd $OPENMANAGE_DJANGO_ROOT/omva
 python manage.py syncdb --noinput
 popd
@@ -79,11 +91,6 @@ apt-get -y remove python-crypto
 find /opt/openmanage/upgrade/resources/ -name '*.deb' | xargs dpkg -i
 
 cat /opt/openmanage/upgrade/requirements.txt | xargs pip install
-
-# Set django secret key
-random_string="$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c 64;echo;)"
-secret_key="export DJANGO_SECRET_KEY=\"$random_string\""
-echo $secret_key >> /opt/openmanage/etc/openmanage_defaults 
 
 # Restart services
 for SERVICE in openmanage admin_console; do
