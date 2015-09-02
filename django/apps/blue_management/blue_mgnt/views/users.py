@@ -249,6 +249,15 @@ def get_group_name(groups, group_id):
         if group['group_id'] == group_id:
             return group['name']
 
+def get_plan_name(plans, plan_id):
+    for plan in plans:
+        if plan['plan_id'] == plan_id:
+            storage_gigs = plan['storage_bytes'] / SIZE_OF_GIGABYTE
+            if storage_gigs < 1000000001:
+                return '%s GB' % storage_gigs
+            else:
+                return 'Unlimited'
+
 def get_local_groups(config, groups):
     local_groups = []
     for c_group in config['groups']:
@@ -331,6 +340,7 @@ def get_user_rows(all_users, delete_user_formset, user_formset,
 def users(request, api, account_info, config, username, saved=False):
     show_disabled = int(request.GET.get('show_disabled', 1))
     groups = api.list_groups()
+    plans = api.list_plans()
     features = api.enterprise_features()
     search = request.GET.get('search', '')
     local_groups = get_local_groups(config, groups)
@@ -396,10 +406,15 @@ def users(request, api, account_info, config, username, saved=False):
     user_csv = UserCSVForm()
     new_user = NewUserForm()
 
+    # Use the name instead of the ID
+    for row in all_users:
+        row['plan_id'] = get_plan_name(plans, row['plan_id'])
+
     user_rows = get_user_rows(all_users, delete_user_formset,
                               user_formset, config,
                               user_columns, groups
                              )
+
     get_args = urllib.urlencode(dict(
         search=search,
         order_by=order_by,
