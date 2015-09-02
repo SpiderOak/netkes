@@ -122,7 +122,7 @@ def _calculate_changes_against_db(db_conn, config, users):
     delete from ldap_users lu1 
     using ldap_users lu2
     where lu1.email = lu2.email and lu1.group_id != lu2.group_id 
-        and lu1.group_id != %s
+        and lu2.group_id = %s
     '''
 
     for group in ordered_groups:
