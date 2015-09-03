@@ -559,10 +559,6 @@ def user_detail(request, api, account_info, config, username, email, saved=False
     user_form = UserForm(initial=data)
     password_form = PasswordForm()
     if request.method == 'POST':
-        if request.POST.get('form', '') == 'resend_email':
-            log_admin_action(request, 'resent activation email for %s ' % email)
-            api.send_activation_email(email)
-            return redirect('blue_mgnt:user_detail', email)
         if request.POST.get('form', '') == 'edit_user':
             user_form = UserForm(request.POST)
             if request.user.has_perm('blue_mgnt.can_manage_users') and user_form.is_valid():
