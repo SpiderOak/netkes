@@ -65,6 +65,8 @@ def parse_cmdline():
                             help="Only display actions to be taken- do not actually perform purging.")
     tool_group.add_option("-y", dest="auto_confirm", action="store_true", default=False,
                             help="Do not ask for confirmation before removing users.")
+    tool_group.add_option("--group-id", dest="group", default=0, type="int",
+                          help="Group ID of users to be purged. Defaults to all groups.", metavar="GROUP")
 
     parser.add_option_group(config_group)
     parser.add_option_group(tool_group)
@@ -93,8 +95,25 @@ def process_config():
 
     return config
 
+def filter_group(users, group):
+    '''
+    Performs filtering by group if a group id is passed.
+    '''
+    log = logging.getLogger('filter_group')
 
-def filter_users(only_empty, desired_age_days, users):
+    group_users = []
+
+    for user in users:
+        if user['group_id'] == group:
+            log.debug('User %s is in the specified group.', user['email'])
+            group_users.append(user)
+        else:
+            log.debug('User %s is not in the specified group, NOT INCLUDING in purge set.', user['email'])
+
+    return group_users
+
+
+def filter_users(only_empty, desired_age_days, users, group):
     '''
     Performs user filtering based on the arguments passed to the program.
     '''
@@ -102,6 +121,13 @@ def filter_users(only_empty, desired_age_days, users):
 
     users_to_purge = []
     now = datetime.datetime.now()
+
+    # Check if a group has been specified. If so, filter on group_id.
+    if group == 0:
+        log.debug('User group not set. Scanning all groups.')
+    else:
+        log.debug('Group selected. Scanning only group %d', group)
+        users = filter_group(users, group)
 
     for user in users:
         # First, check if the user has stored any data and therefore if we want it.
@@ -181,7 +207,7 @@ def main():
 
     candidate_to_purge_users = collect_users(api)
     users_to_purge = filter_users(config['only_empty'], config['older_than'],
-                                  candidate_to_purge_users)
+                                  candidate_to_purge_users, config['group'])
     run_purge(api, users_to_purge, config['dry_run'])
 
     return 0
