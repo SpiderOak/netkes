@@ -127,7 +127,7 @@ def settings(request, api, account_info, config, username, saved=False):
         support_email = forms.EmailField(initial=opts['support_email'])
         if features['ldap']:
             omva_url = forms.URLField(
-                label='OpenManage Virtual Appliance URL', 
+                label='Management VM External URL', 
                 initial=opts['omva_url'], 
             )
             timezone = forms.ChoiceField(
