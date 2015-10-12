@@ -299,6 +299,8 @@
   SMB.total_users = {{ account_info.total_users }};
   SMB.current_plan_quantity = {{ billing_info.current_plan.quantity|default:"null" }};
   SMB.current_plan_frequency = {% if billing_info.current_plan.type %}"{{ billing_info.current_plan.type }}"{% else %}null{% endif %};
+  SMB.monthly_cost = {{ billing_info.monthly_cost|default:5 }};
+  SMB.yearly_cost = {{ billing_info.yearly_cost|default:60 }};
   {% if billing_info.current_card.last4 %}
   SMB.last4_on_file = "{{ billing_info.current_card.last4|default:"xxxx" }}";
   {% else %}

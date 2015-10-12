@@ -62,10 +62,10 @@
             var per, per_str;
             var percent_off, cents_off;
             if (frequency === "monthly") {
-                per = 5;
+                per = SMB.monthly_cost;
                 per_str = "/month";
             } else {
-                per = 60;
+                per = SMB.yearly_cost;
                 per_str = "/year";
             }
             var cost = (per * quantity);
