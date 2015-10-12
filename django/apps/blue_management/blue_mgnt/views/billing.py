@@ -45,7 +45,7 @@ def _billing(request, api, account_info, config, username, tmpl):
     if current_plan and current_plan['status'] == 'pending':
         tmpl = 'billing_pending.html'
         cache.delete('billing_info')
-
+       
     return render_to_response(tmpl, ctx, RequestContext(request))
 
 
@@ -73,15 +73,6 @@ def check_coupon(request, api, account_info, config, username):
 
 @csrf_exempt
 @enterprise_required
-def info(request, api, account_info, config, username):
-    if request.session.get('username') and request.method == 'GET':
-        billing_api = get_billing_api(config)
-        return json_response(request, billing_api.billing_info())
-    raise PermissionDenied
-
-
-@csrf_exempt
-@enterprise_required
 def create_subscription(request, api, account_info, config, username):
     if request.session.get('username') and request.method == 'POST':
         check_form = CreateSubscriptionForm(request.POST)
@@ -92,7 +83,7 @@ def create_subscription(request, api, account_info, config, username):
                 check_form.cleaned_data['frequency'],
                 check_form.cleaned_data['stripe_token'],
             )
-            if resp['success']:
+            if resp['success']: 
                 cache.delete('billing_info')
             return json_response(request, {
                 'success': resp['success'],
