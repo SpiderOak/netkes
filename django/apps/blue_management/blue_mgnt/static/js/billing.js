@@ -58,26 +58,14 @@
 
     var COUPON_CACHE = {};
 
-    var monthly_cost = 5;
-    var yearly_cost = 60;
-    $.ajax("/billing/info", {
-        type: "GET",
-        // FIXME: "async: false" deprecated but simplest solution for now
-        async: false,
-        success: function(data, status, xhr) {
-                monthly_cost = "monthly_cost" in data ? data["monthly_cost"] : 5;
-                yearly_cost = "yearly_cost" in data ? data["yearly_cost"] : 60;
-            },
-    });
-
     var calculate_price = function(quantity, frequency, coupon) {
             var per, per_str;
             var percent_off, cents_off;
             if (frequency === "monthly") {
-                per = monthly_cost;
+                per = 5;
                 per_str = "/month";
             } else {
-                per = yearly_cost;
+                per = 60;
                 per_str = "/year";
             }
             var cost = (per * quantity);
@@ -90,7 +78,7 @@
                         cost = (cost - (coupon.data.cents_off / 100));
                 }
             }
-            return {
+            return { 
                 'int': (toCurrency(cost)),
                 'str': (toCurrency(cost)) + per_str
             };
@@ -114,7 +102,7 @@
             this.set("quantity", quantity);
             if (SMB.current_plan_quantity && SMB.current_plan_frequency) {
                 this.set("has_current_plan", true);
-                this.set("frequency", SMB.current_plan_frequency.replace(/^smb_/, ""));
+                this.set("frequency", SMB.current_plan_frequency.replace(/^smb_/, "")); 
                 // assume that if they have a plan they have a cc on file
                 this.set("has_cc", true);
                 this.set("payment_method", "existing");
@@ -784,7 +772,7 @@
 
         var historyState = new HistoryState();
         historyState.start(pager);
-
+    
         pager.switchTo("plan");
     };
 
