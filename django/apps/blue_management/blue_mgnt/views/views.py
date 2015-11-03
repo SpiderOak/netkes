@@ -274,6 +274,11 @@ def create_initial_group():
         config_mgr_.config['groups'].append(data)
         config_mgr_.apply_config()
 
+def set_api_version(api):
+    with open('/opt/openmanage/etc/OpenManage_version.txt') as f:
+        version = f.readlines()[0].split()[-1]
+        api.update_enterprise_settings(dict(api_version=version))
+
 def login_user(request):
     form = LoginForm()
     if request.method == 'POST':
@@ -293,6 +298,9 @@ def login_user(request):
                     initial_setup(username, password)
                     config = read_config_file()
                     api = get_api(config)
+
+                    set_api_version(api)
+
                     if api.backup():
                         log_admin_action(request, 'restoring from backup')
                         subprocess.call(['/opt/openmanage/bin/run_restore_omva.sh',])
