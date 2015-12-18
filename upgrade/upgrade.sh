@@ -72,7 +72,7 @@ if ! cmp -s /opt/openmanage.$CURRENT_DATE/etc/keys/server.key /opt/openmanage/et
 then
     echo "copying server.key and server.crt"
     cp /opt/openmanage.$CURRENT_DATE/etc/keys/server.key /opt/openmanage/etc/keys/server.key
-	cp /opt/openmanage.$CURRENT_DATE/etc/keys/server.crt /opt/openmanage/etc/keys/server.crt
+    cp /opt/openmanage.$CURRENT_DATE/etc/keys/server.crt /opt/openmanage/etc/keys/server.crt
 else 
     echo "server.key hasn't changed"
 fi
