@@ -68,6 +68,15 @@ else
     echo "agent_config.json hasn't changed"
 fi
 
+if ! cmp -s /opt/openmanage.$CURRENT_DATE/etc/keys/server.key /opt/openmanage/etc/keys/server.key
+then
+    echo "copying server.key and server.crt"
+    cp /opt/openmanage.$CURRENT_DATE/etc/keys/server.key /opt/openmanage/etc/keys/server.key
+	cp /opt/openmanage.$CURRENT_DATE/etc/keys/server.crt /opt/openmanage/etc/keys/server.crt
+else 
+    echo "server.key hasn't changed"
+fi
+
 echo "Setting django secret key"
 random_string="$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c 64;echo;)"
 secret_key="export DJANGO_SECRET_KEY=\"$random_string\""
