@@ -35,6 +35,7 @@ class AccountRunner(object):
         self._promo_code = config.get("promo_code", None)
         self._db_conn = db_conn
         self._api = account_mgr.get_api(config)
+        self._config = config
 
     def runall(self, changes_dict):
         """
@@ -78,7 +79,20 @@ class AccountRunner(object):
                 tmp_user['username'] = user['username']
 
             try:
-                result = self._api.create_user(tmp_user)
+                try:
+                    result = self._api.create_user(tmp_user)
+                except self._api.DuplicateEmail:
+                    if self._config.get('resolve_sync_conflicts'):
+                        self._api.edit_user(user['email'], dict(enabled=True))
+                        result = dict(user=self._api.get_user(user['email']))
+                        self._log.info(
+                            ("Resolved sync conflict using email. "
+                             "User %s's account has been enabled.") % user['email'])
+                    else:
+                        msg = ('Unable to create %s. '
+                               'A user with this email already exists') % tmp_user
+                        self._log.error(msg)
+                        continue
             except self._api.Error, e:
                 msg = 'Unable to create %s. %s' % (tmp_user, e)
                 self._log.error(msg)
@@ -163,4 +177,4 @@ class AccountRunner(object):
             created_users.append(user)
 
         return created_and_failed_users(created_users, users)
-    
+
