@@ -28,3 +28,4 @@ pip install --download=. pynacl==0.2.3
 
 sudo apt-get download libffi-dev
 sudo apt-get download bash
+sudo apt-get download anacron
