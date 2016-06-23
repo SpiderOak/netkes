@@ -2,19 +2,17 @@ import datetime
 import pytz
 import subprocess
 from IPy import IP
-from base64 import b64encode
-from hashlib import sha256
-import bcrypt
 
 from views import (
     enterprise_required, render_to_response,
     log_admin_action, hash_password
 )
 
+from django.utils.safestring import mark_safe
 from django import forms
 from django.forms.formsets import formset_factory
 from django.template import RequestContext
-from django.shortcuts import redirect, render_to_response
+from django.shortcuts import redirect
 from django.contrib.auth.decorators import permission_required
 from django.core.cache import cache
 
@@ -144,11 +142,19 @@ def settings(request, api, account_info, config, username, saved=False):
                     if var in ['send_activation_email', 'resolve_sync_conflicts']:
                         if var == 'resolve_sync_conflicts':
                             initial = False
+                            help_text = mark_safe(
+    'Only enable this feature if you have read the documentation '
+    '<a href="https://spideroak.com/articles/account-page-in-spideroak-enterprise#resolve-sync-conflicts">'
+    'here.</a>'
+                            )
                         else:
                             initial = True
+                            help_text = ''
                         self.fields[var] = forms.BooleanField(
                             initial=config.get(var, initial),
-                            required=False
+                            required=False,
+                            help_text=help_text,
+
                         )
                     else:
                         self.fields[var] = forms.CharField(

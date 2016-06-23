@@ -50,12 +50,12 @@
                     {% if field.errors %}
                     {% for error in field.errors %}
                     <span class="error-highlight">
-                        {{ field }}
+                        {{ field }} {{ field.help_text }}
                         <span class="error-tag">{{ error }}</span>
                     </span>
                     {% endfor %}
                     {% else %}
-                        {{ field }}
+                        {{ field }} {{ field.help_text }}
                     {% endif %}
                     </td>
                 </tr>
