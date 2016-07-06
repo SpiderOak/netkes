@@ -21,5 +21,6 @@ install:
   - pip install pycparser==2.10
   - pip install pynacl==0.2.3
   - pip install cerealizer
+  - pip install requests
 script:
   - python test_netkes_client.py
