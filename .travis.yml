@@ -20,5 +20,6 @@ install:
 #  - pip install six==1.6.1
   - pip install pycparser==2.10
   - pip install pynacl==0.2.3
+  - pip install cerealizer
 script:
   - python test_netkes_client.py
