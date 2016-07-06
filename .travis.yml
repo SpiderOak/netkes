@@ -2,7 +2,7 @@ language: python
 python:
   - "2.7"
 install:
-  - apt-get install libffi-dev
+  - sudo apt-get install libffi-dev
   - pip install pip==1.4.1
   - pip install Django==1.5.10
   - pip install pytz==2013.8
