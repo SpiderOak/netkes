@@ -9,7 +9,9 @@ install:
   - pip install py-bcrypt==0.4
   - pip install pycrypto==2.4.1
   - pip install cffi==0.8.2
-  - pip install six==1.6.1
+  - pip install mock --upgrade
+  - pip install six --upgrade
+#  - pip install six==1.6.1
   - pip install pycparser==2.10
   - pip install pynacl==0.2.3
 script:
