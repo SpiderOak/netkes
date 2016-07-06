@@ -8,7 +8,7 @@ addons:
 before_install:
   - wget https://bootstrap.pypa.io/ez_setup.py -O - | sudo python
 install:
-  - sudo apt-get install libffi-dev
+  - pip install setuptools --upgrade
   - pip install pip==1.4.1
   - pip install Django==1.5.10
   - pip install pytz==2013.8
