@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/SpiderOak/netkes.svg?branch=master)](https://travis-ci.org/SpiderOak/netkes)
+
 # The OpenManage Virtual Appliance
 
 The OpenManage Virtual Appliance (OMVA) provides automatically managed
