@@ -1,25 +1,23 @@
 import datetime
 import pytz
-import subprocess 
+import subprocess
 from IPy import IP
-from base64 import b64encode
-from hashlib import sha256
-import bcrypt
 
 from views import (
-    enterprise_required, render_to_response, 
+    enterprise_required, render_to_response,
     log_admin_action, hash_password
 )
 
+from django.utils.safestring import mark_safe
 from django import forms
 from django.forms.formsets import formset_factory
 from django.template import RequestContext
-from django.shortcuts import redirect, render_to_response
+from django.shortcuts import redirect
 from django.contrib.auth.decorators import permission_required
 from django.core.cache import cache
 
 from interval.forms import IntervalFormField
-from netkes.netkes_agent import config_mgr 
+from netkes.netkes_agent import config_mgr
 
 AGENT_CONFIG_VARS = [
     'api_root',
@@ -39,6 +37,7 @@ AGENT_CONFIG_VARS = [
     'listen_addr',
     'listen_port',
     'send_activation_email',
+    'resolve_sync_conflicts',
 ]
 
 def save_settings(request, api, options):
@@ -47,9 +46,9 @@ def save_settings(request, api, options):
     data.update(cleaned_data)
     if 'timezone' in data:
         del data['timezone']
-    if 'enable_local_users' in data: 
+    if 'enable_local_users' in data:
         del data['enable_local_users']
-    if 'share_link_ttl' in data: 
+    if 'share_link_ttl' in data:
         data['share_link_ttl'] = data['share_link_ttl'].days * 1440
     if 'autopurge_interval' in data:
         data['autopurge_interval'] = data['autopurge_interval'].days
@@ -96,39 +95,39 @@ def settings(request, api, account_info, config, username, saved=False):
 
     class OpenmanageOptsForm(forms.Form):
         #share_link_ttl = IntervalFormField(
-        #    'D', 
-        #    label='Share Link Time-to-Live', 
+        #    'D',
+        #    label='Share Link Time-to-Live',
         #    initial=datetime.timedelta(minutes=opts['share_link_ttl'])
         #)
         if features['ldap']:
             ad_domain = forms.CharField(
-                required=False, 
-                label='Restrict client installs to domain', 
+                required=False,
+                label='Restrict client installs to domain',
                 initial=opts['ad_domain']
             )
         autopurge_interval = IntervalFormField(
-            'D', 
-            label='Deleted Items Automatic Purge', 
+            'D',
+            label='Deleted Items Automatic Purge',
             initial=datetime.timedelta(days=opts['autopurge_interval']),
             required=False,
         )
         versionpurge_interval = IntervalFormField(
-            'D', 
-            label='Historical Version Automatic Purge', 
+            'D',
+            label='Historical Version Automatic Purge',
             initial=datetime.timedelta(days=opts['versionpurge_interval']),
             required=False,
         )
         purgehold_duration = IntervalFormField(
-            'D', 
-            label='Purgehold Duration', 
+            'D',
+            label='Purgehold Duration',
             initial=datetime.timedelta(seconds=opts['purgehold_duration']),
             required=False,
         )
         support_email = forms.EmailField(initial=opts['support_email'])
         if features['ldap']:
             omva_url = forms.URLField(
-                label='Management VM External URL', 
-                initial=opts['omva_url'], 
+                label='Management VM External URL',
+                initial=opts['omva_url'],
             )
             timezone = forms.ChoiceField(
                 choices=[(x, x) for x in pytz.common_timezones],
@@ -137,17 +136,29 @@ def settings(request, api, account_info, config, username, saved=False):
 
         def __init__(self, *args, **kwargs):
             super(OpenmanageOptsForm, self).__init__(*args, **kwargs)
-            
+
             if features['ldap']:
                 for var in AGENT_CONFIG_VARS:
-                    if var in ['send_activation_email']:
+                    if var in ['send_activation_email', 'resolve_sync_conflicts']:
+                        if var == 'resolve_sync_conflicts':
+                            initial = False
+                            help_text = mark_safe(
+    'Only enable this feature if you have read the documentation '
+    '<a href="https://spideroak.com/articles/account-page-in-spideroak-enterprise#resolve-sync-conflicts">'
+    'here.</a>'
+                            )
+                        else:
+                            initial = True
+                            help_text = ''
                         self.fields[var] = forms.BooleanField(
-                            initial=config.get(var, True), 
-                            required=False
+                            initial=config.get(var, initial),
+                            required=False,
+                            help_text=help_text,
+
                         )
                     else:
                         self.fields[var] = forms.CharField(
-                            initial=config.get(var, ''), 
+                            initial=config.get(var, ''),
                             required=False
                         )
 
@@ -162,11 +173,11 @@ def settings(request, api, account_info, config, username, saved=False):
             api.update_enterprise_settings(dict(signup_network_restriction=blocks))
             log_admin_action(request, 'update signup network restrictions: %s' % blocks)
 
-    IPBlockFormSet = formset_factory(IPBlockForm, 
+    IPBlockFormSet = formset_factory(IPBlockForm,
                                      can_delete=True,
                                      formset=BaseIPBlockFormSet)
 
-    ip_blocks = IPBlockFormSet(initial=[dict(ip_block=x) for x in opts['signup_network_restriction']], 
+    ip_blocks = IPBlockFormSet(initial=[dict(ip_block=x) for x in opts['signup_network_restriction']],
                                prefix='ip_blocks')
     error = False
     sync_output = ''
@@ -185,7 +196,7 @@ def settings(request, api, account_info, config, username, saved=False):
             return redirect('blue_mgnt:settings_saved')
         elif request.POST.get('form', '') == 'sync':
             log_admin_action(request, 'sync management vm')
-            p = subprocess.Popen('/opt/openmanage/bin/run_openmanage.sh', 
+            p = subprocess.Popen('/opt/openmanage/bin/run_openmanage.sh',
                                  stdout=subprocess.PIPE,
                                  stderr=subprocess.STDOUT
                                 )
@@ -195,7 +206,7 @@ def settings(request, api, account_info, config, username, saved=False):
                 return redirect('blue_mgnt:settings_saved')
         elif request.POST.get('form', '') == 'rebuild_db':
             log_admin_action(request, 'Rebuild DB')
-            p = subprocess.Popen('/opt/openmanage/bin/rebuild_db.sh', 
+            p = subprocess.Popen('/opt/openmanage/bin/rebuild_db.sh',
                                  stdout=subprocess.PIPE,
                                  stderr=subprocess.STDOUT
                                 )

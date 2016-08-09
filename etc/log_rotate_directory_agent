@@ -1,0 +1,7 @@
+/var/log/omva/directory_agent/directory_agent {
+  daily
+  rotate 7
+  compress
+  missingok
+  notifempty
+}
