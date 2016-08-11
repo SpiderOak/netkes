@@ -122,6 +122,48 @@ class Api(object):
                 raise self.BadParams()
             raise
 
+    # Preferences and policy
+
+    def get_device_preferences(self):
+        return self.client.get_json('devicepreferences')
+
+    def list_policies(self):
+        return self.client.get_json('devicepolicies/')
+
+    def create_policy(self, policy_info):
+        try:
+            return self.client.post_json('devicepolicies/', policy_info)
+        except urllib2.HTTPError, err:
+            if err.code == 400:
+                raise self.BadParams()
+            raise
+
+    def get_policy(self, policy_id):
+        try:
+            return self.client.get_json('devicepolicies/%d' % (policy_id,))
+        except urllib2.HTTPError, err:
+            if err.code == 404:
+                raise self.NotFound()
+            raise
+
+    def edit_policy(self, policy_id, policy_info):
+        try:
+            self.client.post_json('devicepolicies/%d' % (policy_id,), policy_info)
+        except urllib2.HTTPError, err:
+            if err.code == 404:
+                raise self.NotFound()
+            elif err.code == 400:
+                raise self.BadParams()
+            raise
+
+    def delete_policy(self, policy_id):
+        try:
+            self.client.delete('devicepolicies/%d' % (policy_id,))
+        except urllib2.HTTPError, err:
+            if err.code == 404:
+                raise self.NotFound()
+            raise
+
     # Groups
 
     def list_groups(self):
@@ -249,7 +291,6 @@ class Api(object):
                 if 'email' in data['conflicts']:
                     raise self.DuplicateEmail()
                 elif 'plan_id' in data['conflicts']:
-                    print 'data', data
                     raise self.BadPlan()
                 elif 'group_id' in data['conflicts']:
                     raise self.BadGroup()
