@@ -1,7 +1,6 @@
 import os
 import sys
 from netkes import common
-import logging
 
 PROJECT_DIR = os.path.abspath(os.path.dirname(__file__))
 
@@ -27,10 +26,10 @@ DATABASES = {
     }
 }
 
-DATABASE_ENGINE = 'postgresql_psycopg2'           # 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-DATABASE_NAME = 'openmanage'             # Or path to database file if using sqlite3.
-DATABASE_USER = 'admin_console'             # Not used with sqlite3.
-DATABASE_PASSWORD = 'iexyjtso'        # Not used with sqlite3.
+DATABASE_ENGINE = 'postgresql_psycopg2'
+DATABASE_NAME = 'openmanage'
+DATABASE_USER = 'admin_console'
+DATABASE_PASSWORD = 'iexyjtso'
 DATABASE_HOST = 'localhost'
 DATABASE_PORT = ''
 
@@ -94,7 +93,6 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.middleware.transaction.TransactionMiddleware',
     'pagination.middleware.PaginationMiddleware',
 )
 
@@ -156,18 +154,18 @@ LOGGING = {
         },
     },
     'handlers': {
-        'console':{
+        'console': {
             'level': 'INFO',
             'class': 'logging.StreamHandler',
             'formatter': 'simple'
         },
-        'files':{
+        'files': {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
             'formatter': 'simple',
             'filename': os.path.join(LOG_DIR, 'admin_console.log')
         },
-        'admin_actions_files':{
+        'admin_actions_files': {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
             'formatter': 'simple',
@@ -192,6 +190,6 @@ LOGGING = {
 }
 
 try:
-    from dev_settings import *
+    from dev_settings import *  # NOQA
 except Exception:
     pass
