@@ -1,5 +1,7 @@
+import csv
+
 from views import enterprise_required, log_admin_action
-from views import ReadOnlyWidget, get_base_url, SIZE_OF_GIGABYTE
+from views import SIZE_OF_GIGABYTE
 from views import get_config_group
 
 from django import forms
@@ -11,17 +13,18 @@ from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.models import Group, Permission
 from django.core.exceptions import ObjectDoesNotExist
 
-from netkes.account_mgr.user_source import local_source
 from netkes.netkes_agent import config_mgr
 from blue_mgnt import models
 
+
 def get_plan_choices(plans):
     sorted_plans = sorted(plans, key=lambda x: x['storage_bytes'])
-    return [(p['plan_id'], '%s GB' % (p['storage_bytes'] / SIZE_OF_GIGABYTE) \
-            if p['storage_bytes'] / SIZE_OF_GIGABYTE < 1000000001 else 'Unlimited') \
+    return [(p['plan_id'], '%s GB' % (p['storage_bytes'] / SIZE_OF_GIGABYTE)
+            if p['storage_bytes'] / SIZE_OF_GIGABYTE < 1000000001 else 'Unlimited')
             for p in sorted_plans]
 
-def get_group_form(request, config, plans, api, show_user_source=True, 
+
+def get_group_form(request, config, plans, api, show_user_source=True,
                    new_group=True, ldap_enabled=True):
     class GroupForm(forms.Form):
         name = forms.CharField(label="Group Name", required=True)
@@ -31,7 +34,7 @@ def get_group_form(request, config, plans, api, show_user_source=True,
         if ldap_enabled:
             ldap_dn = forms.CharField(required=False,
                                       widget=forms.Textarea(
-                                          attrs={'rows':'1', 'cols':'60'}))
+                                          attrs={'rows': '1', 'cols': '60'}))
             if show_user_source:
                 user_source = forms.ChoiceField([('ldap', 'ldap'), ('local', 'local')])
         priority = forms.IntegerField(initial=0, required=False)
@@ -60,7 +63,7 @@ def get_group_form(request, config, plans, api, show_user_source=True,
                     try:
                         api.edit_group(group_id, data)
                         log_admin_action(request,
-                                        'edit group %s with data: %s' % (group_id, data))
+                                         'edit group %s with data: %s' % (group_id, data))
                         config_mgr_ = config_mgr.ConfigManager(config_mgr.default_config())
                         for g in config_mgr_.config['groups']:
                             if g['group_id'] == group_id:
@@ -81,9 +84,8 @@ def get_group_form(request, config, plans, api, show_user_source=True,
                                'Plan Change" if you are sure you want to do this.')
                         self._errors['plan_id'] = self.error_class([msg])
                 return cleaned_data
-
-
     return GroupForm
+
 
 def add_config_items(group, config):
     g = get_config_group(config, group['group_id'])
@@ -92,6 +94,16 @@ def add_config_items(group, config):
         group['priority'] = g['priority']
         group['user_source'] = g['user_source']
         group['admin_group'] = g['admin_group']
+
+
+def process_row(row):
+    return dict(
+        name=row['name'],
+        plan_id=int(row['plan_id']),
+        check_domain=bool(row.get('check_domain', True)),
+        webapi_enable=bool(row.get('webapi_enable', True)),
+    )
+
 
 @enterprise_required
 @permission_required('blue_mgnt.can_view_groups', raise_exception=True)
@@ -105,7 +117,6 @@ def groups(request, api, account_info, config, username, saved=False):
     if not search:
         search = request.POST.get('search', '')
 
-
     class GroupCSVForm(forms.Form):
         csv_file = forms.FileField(label='Group CSV')
 
@@ -117,14 +128,12 @@ def groups(request, api, account_info, config, username, saved=False):
                 try:
                     try:
                         group_id = int(row['group_id'])
-                        group = api.get_group(group_id)
                         api.edit_group(group_id, process_row(row))
-                    except (KeyError, ValueError), a:
+                    except (KeyError, ValueError):
                         api.create_group(process_row(row))
-                except Exception, e:
+                except Exception:
                     raise forms.ValidationError('Invalid data in row %s' % x)
             return data
-
 
     class BaseGroupFormSet(forms.formsets.BaseFormSet):
         def clean(self):
@@ -143,7 +152,7 @@ def groups(request, api, account_info, config, username, saved=False):
                                 )
                     try:
                         log_admin_action(request,
-                                            'edit group %s with data: %s' % (group_id, data))
+                                         'edit group %s with data: %s' % (group_id, data))
                         api.edit_group(group_id, data)
                     except api.QuotaExceeded:
                         self.show_force = True
@@ -158,8 +167,7 @@ def groups(request, api, account_info, config, username, saved=False):
                     raise forms.ValidationError('Duplicate group name')
             config_mgr_.apply_config()
 
-
-    GroupForm = get_group_form(request, config, plans, api, 
+    GroupForm = get_group_form(request, config, plans, api,
                                ldap_enabled=features['ldap'])
     GroupFormSet = formset_factory(get_group_form(request, config, plans, api, False),
                                    extra=0, formset=BaseGroupFormSet)
@@ -191,23 +199,25 @@ def groups(request, api, account_info, config, username, saved=False):
         if request.POST.get('form', '') == 'new_group':
             new_group = GroupForm(request.POST)
             if new_group.is_valid():
-                data = dict(name=new_group.cleaned_data['name'],
-                            plan_id=new_group.cleaned_data['plan_id'],
-                            webapi_enable=new_group.cleaned_data['webapi_enable'],
-                            check_domain=new_group.cleaned_data.get('check_domain', False),
-                           )
+                data = dict(
+                    name=new_group.cleaned_data['name'],
+                    plan_id=new_group.cleaned_data['plan_id'],
+                    webapi_enable=new_group.cleaned_data['webapi_enable'],
+                    check_domain=new_group.cleaned_data.get('check_domain', False),
+                )
 
                 log_admin_action(request, 'create group with data: %s' % data)
                 group_id = api.create_group(data)
 
                 config_mgr_ = config_mgr.ConfigManager(config_mgr.default_config())
-                data = dict(group_id=group_id,
-                            type='dn',
-                            ldap_id=new_group.cleaned_data.get('ldap_dn', ''),
-                            priority=new_group.cleaned_data['priority'],
-                            user_source=new_group.cleaned_data.get('user_source', 'local'),
-                            admin_group=new_group.cleaned_data['admin_group'],
-                           )
+                data = dict(
+                    group_id=group_id,
+                    type='dn',
+                    ldap_id=new_group.cleaned_data.get('ldap_dn', ''),
+                    priority=new_group.cleaned_data['priority'],
+                    user_source=new_group.cleaned_data.get('user_source', 'local'),
+                    admin_group=new_group.cleaned_data['admin_group'],
+                )
                 config_mgr_.config['groups'].append(data)
                 config_mgr_.apply_config()
 
@@ -243,7 +253,8 @@ def groups(request, api, account_info, config, username, saved=False):
         search_back=search_back,
         show_force=getattr(groups, 'show_force', False),
     ),
-    RequestContext(request))
+        RequestContext(request))
+
 
 def get_or_create_admin_group(user_group_id):
     try:
@@ -270,6 +281,7 @@ def get_delete_group_form(group_id, config, groups_list):
         new_group_id = forms.ChoiceField(group_choices, label='Group to move users to')
 
     return DeleteGroupForm
+
 
 @enterprise_required
 @permission_required('blue_mgnt.can_manage_groups', raise_exception=True)
@@ -322,4 +334,4 @@ def group_detail(request, api, account_info, config, username, group_id, saved=F
         show_force=getattr(group_form, 'show_force', False),
         account_info=account_info,
     ),
-    RequestContext(request))
+        RequestContext(request))
