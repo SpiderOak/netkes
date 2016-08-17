@@ -24,11 +24,20 @@ def get_plan_choices(plans):
             for p in sorted_plans]
 
 
-def get_group_form(request, config, plans, api, show_user_source=True,
+def get_policy_choices(policies):
+    return [(None, '')] + [(p['id'], p['name']) for p in policies]
+
+
+def get_group_form(request, config, plans, policies, api, show_user_source=True,
                    new_group=True, ldap_enabled=True):
     class GroupForm(forms.Form):
         name = forms.CharField(label="Group Name", required=True)
         plan_id = forms.ChoiceField(get_plan_choices(plans), label='Plan')
+        device_policy = forms.ChoiceField(
+            get_policy_choices(policies),
+            label='Device Policy',
+            required=False,
+        )
         webapi_enable = forms.BooleanField(required=False, initial=True)
         check_domain = forms.BooleanField(required=False)
         if ldap_enabled:
@@ -53,11 +62,17 @@ def get_group_form(request, config, plans, api, show_user_source=True,
             def clean(self):
                 cleaned_data = super(GroupForm, self).clean()
                 if 'name' in cleaned_data:
-                    data = dict(name=cleaned_data['name'],
-                                plan_id=cleaned_data['plan_id'],
-                                webapi_enable=cleaned_data['webapi_enable'],
-                                check_domain=cleaned_data.get('check_domain', False),
-                                force=('force_change' in request.POST),)
+                    device_policy = None
+                    if cleaned_data['device_policy']:
+                        device_policy = cleaned_data['device_policy']
+                    data = dict(
+                        name=cleaned_data['name'],
+                        plan_id=cleaned_data['plan_id'],
+                        device_policy=device_policy,
+                        webapi_enable=cleaned_data['webapi_enable'],
+                        check_domain=cleaned_data.get('check_domain', False),
+                        force=('force_change' in request.POST),
+                    )
                     group_id = cleaned_data['group_id']
 
                     try:
@@ -110,6 +125,7 @@ def process_row(row):
 def groups(request, api, account_info, config, username, saved=False):
     features = api.enterprise_features()
     plans = api.list_plans()
+    policies = api.list_policies()
     groups_list = api.list_groups()
     search = request.GET.get('search', '')
     search_back = request.GET.get('search_back', '')
@@ -144,12 +160,14 @@ def groups(request, api, account_info, config, username, saved=False):
                 form = self.forms[x]
                 try:
                     group_id = form.cleaned_data['group_id']
-                    data = dict(name=form.cleaned_data['name'],
-                                plan_id=form.cleaned_data['plan_id'],
-                                webapi_enable=form.cleaned_data['webapi_enable'],
-                                check_domain=form.cleaned_data.get('check_domain', False),
-                                force=('force_plan_change' in self.data),
-                                )
+                    data = dict(
+                        name=form.cleaned_data['name'],
+                        plan_id=form.cleaned_data['plan_id'],
+                        device_policy=form.cleaned_data['device_policy'],
+                        webapi_enable=form.cleaned_data['webapi_enable'],
+                        check_domain=form.cleaned_data.get('check_domain', False),
+                        force=('force_plan_change' in self.data),
+                    )
                     try:
                         log_admin_action(request,
                                          'edit group %s with data: %s' % (group_id, data))
@@ -167,10 +185,11 @@ def groups(request, api, account_info, config, username, saved=False):
                     raise forms.ValidationError('Duplicate group name')
             config_mgr_.apply_config()
 
-    GroupForm = get_group_form(request, config, plans, api,
+    GroupForm = get_group_form(request, config, plans, policies, api,
                                ldap_enabled=features['ldap'])
-    GroupFormSet = formset_factory(get_group_form(request, config, plans, api, False),
-                                   extra=0, formset=BaseGroupFormSet)
+    GroupFormSet = formset_factory(
+        get_group_form(request, config, plans, policies, api, False),
+        extra=0, formset=BaseGroupFormSet)
 
     if search_back == '1':
         search = ''
@@ -199,9 +218,13 @@ def groups(request, api, account_info, config, username, saved=False):
         if request.POST.get('form', '') == 'new_group':
             new_group = GroupForm(request.POST)
             if new_group.is_valid():
+                device_policy = None
+                if new_group.cleaned_data['device_policy']:
+                    device_policy = new_group.cleaned_data['device_policy']
                 data = dict(
                     name=new_group.cleaned_data['name'],
                     plan_id=new_group.cleaned_data['plan_id'],
+                    device_policy=device_policy,
                     webapi_enable=new_group.cleaned_data['webapi_enable'],
                     check_domain=new_group.cleaned_data.get('check_domain', False),
                 )
@@ -288,6 +311,7 @@ def get_delete_group_form(group_id, config, groups_list):
 def group_detail(request, api, account_info, config, username, group_id, saved=False):
     group_id = int(group_id)
     plans = api.list_plans()
+    policies = api.list_policies()
     groups_list = api.list_groups()
     django_group, admin_group = get_or_create_admin_group(group_id)
     api_group = api.get_group(group_id)
@@ -298,7 +322,7 @@ def group_detail(request, api, account_info, config, username, group_id, saved=F
     if local_group:
         fields_not_to_show = ['ldap_dn', 'priority']
 
-    GroupForm = get_group_form(request, config, plans, api, False, False)
+    GroupForm = get_group_form(request, config, plans, policies, api, False, False)
     group_form = GroupForm(data=api_group)
     DeleteGroupForm = get_delete_group_form(group_id, config, groups_list)
     delete_group = DeleteGroupForm()
