@@ -11,6 +11,13 @@ manage:
 	cd ~/netkes/django/omva; \
 	. /etc/default/openmanage; python manage.py ${COMMAND}
 
+test: COMMAND = test blue_mgnt.tests.TestViewAuth
+test: manage
+	cd ~/netkes
+	python -m netkes/account_mgr/test/test_account_mgr 
+	python -m netkes/account_mgr/test/test_accounts_api
+	python -m netkes/account_mgr/test/test_ldap_reader
+
 psql:
 	sudo -u postgres psql openmanage
 

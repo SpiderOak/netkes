@@ -136,6 +136,8 @@ AUTHENTICATION_BACKENDS = (
     'blue_mgnt.views.views.NetkesBackend',
 )
 
+TEST_RUNNER = 'django.test.runner.DiscoverRunner'
+
 LOG_DIR = '/var/log/admin_console/'
 ADMIN_ACTIONS_LOG_FILENAME = os.getenv('ADMIN_ACTIONS_LOG_FILE', 'admin_actions.log')
 
