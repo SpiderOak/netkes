@@ -156,7 +156,7 @@ class NetkesBackend(ModelBackend):
                          Password incorrect or unable to contact
                          accounts api''' % username)
                 return None
-            
+
         local_pass = config.get('local_password', '')
         if initial_auth or bcrypt.hashpw(password, local_pass) == local_pass:
             try:
@@ -206,7 +206,7 @@ class NetkesBackend(ModelBackend):
             return user
         else:
             msg = '''Failed to authenticate "%s". Username or password incorrect.
-            ''' % username 
+            ''' % username
             log.info(msg)
 
     def authenticate(self, username=None, password=None):
@@ -309,7 +309,7 @@ def login_user(request):
 
                 config_mgr_ = config_mgr.ConfigManager(config_mgr.default_config())
                 api = get_api(config_mgr_.config)
-                subprocess.call(['/opt/openmanage/bin/first_setup.sh', 
+                subprocess.call(['/opt/openmanage/bin/first_setup.sh',
                                  api.info()['brand_identifier']])
 
                 request.session['username'] = username
@@ -364,7 +364,7 @@ def update_method_prefix(fun):
     val = b64encode(uuid4().bytes)
     cache.set(key, val)
     return val
-    
+
 def make_cache_key(fun, *args, **kwargs):
     spec = tuple(args) + tuple(v for k, v in sorted(kwargs.iteritems()))
     key = ["c", fun.__name__, get_method_prefix(fun)]
@@ -376,7 +376,7 @@ def make_cache_key(fun, *args, **kwargs):
         else:
             key.append(b64encode(repr(i)))
     return "/".join(key)
-        
+
 def get_api(config):
     api = Api.create(
         django_settings.ACCOUNT_API_URL,
@@ -396,6 +396,7 @@ def get_api(config):
         'list_devices',
         'list_shares',
         'list_users',
+        'list_policies',
     ]
     FUNCTIONS_TO_INVALIDATE_CACHE = {
         'update_enterprise_settings': [api.enterprise_settings],
@@ -406,7 +407,7 @@ def get_api(config):
         'edit_user': [api.list_users],
         'delete_user': [api.list_users, api.get_user_count],
     }
-    
+
     def cache_api(fun):
         def dec(*args, **kwargs):
             name = fun.__name__
@@ -426,8 +427,8 @@ def get_api(config):
 
     for attr in dir(api):
         fun_ = getattr(api, attr)
-        if (callable(fun_) and 
-            (attr in FUNCTIONS_TO_CACHE or 
+        if (callable(fun_) and
+            (attr in FUNCTIONS_TO_CACHE or
              attr in FUNCTIONS_TO_INVALIDATE_CACHE)):
             setattr(api, attr, cache_api(fun_))
     return api
@@ -453,7 +454,7 @@ def get_billing_info(config):
 def enterprise_required(fun):
     def new_fun(request, *args, **kwargs):
         if not request.session.get('username', False):
-            return redirect(reverse('blue_mgnt:login') + 
+            return redirect(reverse('blue_mgnt:login') +
                             '?next=%s' % urllib.quote(request.path))
 
         config = read_config_file()
@@ -475,7 +476,7 @@ def enterprise_required(fun):
         account_info['total_auth_codes'] = models.AdminSetupTokensUse.objects.count()
         account_info['api_user'] = config['api_user']
         account_info['info'] = api.info()
-        
+
         with open('/opt/openmanage/etc/OpenManage_version.txt') as f:
             account_info['version'] = f.readlines()[0]
         return fun(request, api, account_info, config,
@@ -483,7 +484,7 @@ def enterprise_required(fun):
     return new_fun
 
 @enterprise_required
-def clear_cache(request, api, account_info, config, username): 
+def clear_cache(request, api, account_info, config, username):
     cache.clear()
     return HttpResponse('Cache cleared')
 
@@ -585,14 +586,14 @@ def shares(request, api, account_info, config, username, saved=False):
     user_limit = 10
     user_offset = user_limit * (page - 1)
     users = api.list_shares_for_brand(user_limit, user_offset)
-    # The api gives us shares per user and we only have count of the 
-    # total number of shares. We don't have the total number of users 
+    # The api gives us shares per user and we only have count of the
+    # total number of shares. We don't have the total number of users
     # who have shares. So we'll just guess for now.
     fake_count = page * user_limit
     if len(users) == user_limit:
         fake_count += user_limit
     pagination = Pagination('blue_mgnt:shares',
-                            fake_count, 
+                            fake_count,
                             page,
                             user_limit,
                            )
@@ -684,7 +685,7 @@ def reports(request, api, account_info, config, username, saved=False):
                "Users whose deleted data will not be purged from the system.",
                "?search_by=purgehold_active=1&columns=name,email,bytes_stored,group_id,purgehold_active"),
     ]
-    
+
     return render_to_response('reports.html', dict(
         reports=reports,
         username=username,
@@ -724,7 +725,7 @@ def fingerprint(request, api, account_info, config, username):
     fingerprint = enumerate(key_to_english(h.digest()).split(' '))
     fingerprint = ' '.join([word for x, word in fingerprint \
                             if x % 2 == 0])
-    
+
     return render_to_response('fingerprint.html', dict(
         user=request.user,
         username=username,
