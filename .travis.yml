@@ -24,3 +24,4 @@ install:
   - pip install requests
 script:
   - python test_netkes_client.py
+  - make test_netkes
