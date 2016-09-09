@@ -1,4 +1,3 @@
-import ast
 import logging
 from collections import namedtuple
 
@@ -30,7 +29,6 @@ def _build_preference(pref, parent=None):
         pref['name'],
         pref['description'],
         pref['type'],
-        # Convert the value to a list or back to None
         pref['choices'],
         parent,
         pref['conditional_parent_value'],
@@ -69,18 +67,18 @@ def _build_choices(choices):
         yield (choice, choice)
 
 
-def _field_type(field_type, choices=None):
+def _field_type(field_type, required=True, choices=None):
     """ Get the correct Django forms field based on the provided value """
 
     # FIXME: 'string[]' needs a custom comma separated field
     if field_type == 'string' or field_type == 'string[]':
         if choices:
-            return forms.ChoiceField(choices=_build_choices(choices))
-
-        return forms.CharField()
+            return forms.ChoiceField(
+                choices=_build_choices(choices), required=required)
+        return forms.CharField(required=required)
 
     if field_type == 'integer':
-        return forms.IntegerField()
+        return forms.IntegerField(required=required)
 
     if field_type == 'boolean':
         return forms.BooleanField(required=False)
@@ -95,28 +93,73 @@ class PolicyForm(forms.Form):
     def __init__(self, *args, **kwargs):
         self.api = kwargs.pop('api')
         self._preferences = _get_preferences(self.api)
-        policy = kwargs.pop('policy')
+
+        self._preferences_dict = {}
+        for p in self._preferences:
+            self._preferences_dict[p.name] = p
+
+        self._policy = kwargs.pop('policy')
 
         if 'initial' not in kwargs:
             kwargs['initial'] = {}
-        kwargs['initial'].update({'id': policy['id'], 'name': policy['name']})
+
+        kwargs['initial'].update(
+            {'id': self._policy['id'], 'name': self._policy['name']}
+        )
 
         super(PolicyForm, self).__init__(*args, **kwargs)
 
-        policy_dict = policy['policy']
-        policy_keys = policy_dict.keys()
-
         for pref in self._preferences:
-            new_field = _field_type(pref.field_type, pref.choices)
+            # Only make fields required if the parent is not None
+            new_field = _field_type(
+                pref.field_type, False, pref.choices)
+
             # Only add the new field to fields if it exists
             if new_field:
                 self.fields[pref.name] = new_field
 
-        for k in policy_keys:
-            if k in self.fields:
-                self.fields[k].initial = policy_dict[k]
+        for key, value in self._policy['policy'].iteritems():
+            if key in self.fields:
+                self.fields[key].initial = value
             else:
-                LOG.error('Unable to set value for {}'.format(k))
+                LOG.error('Unable to set value for {}'.format(key))
+
+    def _validate_child(self, preference):
+        """ Make sure the parent value allows the child field to be set """
+
+        parent_value = self.cleaned_data.get(preference.parent)
+
+        if isinstance(preference, list):
+            valid = parent_value in preference.conditional_parent_value
+        else:
+            valid = parent_value == preference.conditional_parent_value
+
+        if not valid:
+            return False
+
+        # If this has a parent, make sure the parent is also valid
+        if valid and self._preferences_dict[preference.parent].parent is not None:
+            return self._validate_child(self._preferences_dict[preference.parent])
+
+        return True
+
+    def _validate_preference(self, preference):
+        """ Run additional validation on each preference if needed """
+
+        if not preference.conditional_parent_value:
+            return True
+
+        return self._validate_child(preference)
+
+    def clean(self):
+        """ Clean the data based on preference requirements """
+        super(PolicyForm, self).clean()
+
+        for preference in self._preferences:
+            if not self._validate_preference(preference):
+                del self.cleaned_data[preference.name]
+
+        return self.cleaned_data
 
     def save(self):
         """ Save the updated policy """
@@ -125,21 +168,11 @@ class PolicyForm(forms.Form):
 
         policy_info = {
             'name': self.cleaned_data.pop('name'),
-            'policy': {},
+            'policy': self.cleaned_data,
         }
 
-        for k, v in self.cleaned_data.iteritems():
-            # Make sure lists are being submitted as lists
-            if isinstance(v, (str, unicode)) and v.startswith('[') and v.endswith(']'):
-                try:
-                    v = ast.literal_eval(v)
-                except ValueError:
-                    pass
-
-            policy_info['policy'][k] = v
-
-        #if policy_id:
-            #self.api.edit_policy(policy_id, policy_info)
+        if policy_id:
+            self.api.edit_policy(policy_id, policy_info)
 
 
 @enterprise_required
