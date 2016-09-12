@@ -6,16 +6,26 @@
 
 {% block breadcrumb %}<a href="{% url 'blue_mgnt:manage' %}">Back to Manage</a>{% endblock breadcrumb %}
 {% block navtab %}{% include "partials/navtab-widget.html" with active="manage" %}{% endblock navtab %}
+
 {% block content %}
 <h1 class="page-header">
-    <i class="ss-icon">&#xEE00;</i> Policies
+    Policies
 </h1>
 
 <div class="spacer"><!--ZKP--></div>
 
+
 <form method='POST' action='.'>
-    {{ form.as_p }}
-    <input type='submit' value='Save' />
+    <table id="share" class="widget-table widget-table-details">
+
+        {{ form.as_table }}
+
+        <tr>
+            <th></th>
+            <td><input type='submit' class='button' value='Save' /></td>
+        </tr>
+    </table>
 </form>
+
 
 {% endblock content %}
