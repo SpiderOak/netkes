@@ -86,6 +86,14 @@ def _field_type(field_type, required=True, choices=None):
     LOG.error("Unable to get field type. {} is an invalid option".format(field_type))  # NOQA
 
 
+def _attrs_from_preference(preference):
+    """ Get widget attributes based on the provided preference """
+    if preference.parent and preference.conditional_parent_value:
+        return {'data-parent': preference.parent,
+                'data-conditional-parent-value': preference.conditional_parent_value}  # NOQA
+    return {}
+
+
 class PolicyForm(forms.Form):
     id = forms.IntegerField(required=False, widget=forms.HiddenInput)
     name = forms.CharField()
@@ -110,13 +118,18 @@ class PolicyForm(forms.Form):
         super(PolicyForm, self).__init__(*args, **kwargs)
 
         for pref in self._preferences:
-            # Only make fields required if the parent is not None
+            # Currently mark all fields as being unrequired
             new_field = _field_type(
                 pref.field_type, False, pref.choices)
 
             # Only add the new field to fields if it exists
             if new_field:
                 self.fields[pref.name] = new_field
+
+                # Add attrs to the field (e.g data-parent)
+                self.fields[pref.name].widget.attrs.update(
+                    _attrs_from_preference(pref)
+                )
 
         for key, value in self._policy['policy'].iteritems():
             if key in self.fields:
