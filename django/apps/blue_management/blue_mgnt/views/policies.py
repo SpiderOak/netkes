@@ -1,9 +1,11 @@
+import django
 import logging
 from collections import namedtuple
 
 from django import forms
 from django.http import Http404
 from django.core.cache import cache
+from django.core import validators
 from django.shortcuts import render_to_response
 from django.views.decorators.csrf import csrf_exempt
 
@@ -21,6 +23,33 @@ Preference = namedtuple('Preference', [
     'parent',
     'conditional_parent_value']
 )
+
+class ListField(forms.Field):
+    """ Accepts comma separated strings and returns them as a list """
+
+    def __init__(self, *args, **kwargs):
+        super(ListField, self).__init__(*args, **kwargs)
+
+        if not hasattr(self, 'empty_values'):
+            # Set empty_values if it doesn't exist. This attribute was added
+            # to fields after the current version in use (1.5.10)
+            self.empty_values = validators.EMPTY_VALUES
+
+    def prepare_value(self, value):
+        """ Convert the list to a comma separate string for use in the form """
+        if value in self.empty_values:
+            return ''
+        if isinstance(value, list):
+            return ", ".join(value)
+        return value.lstrip("[").rstrip("]")
+
+    def to_python(self, value):
+        """ Return the value as a list or an empty list """
+        if isinstance(value, list):
+            return value
+        if isinstance(value, (str, unicode)):
+            return [i.strip() for i in value.split(",") if i]
+        return []
 
 
 def _build_preference(pref, parent=None):
@@ -70,8 +99,10 @@ def _build_choices(choices):
 def _field_type(field_type, required=True, choices=None):
     """ Get the correct Django forms field based on the provided value """
 
-    # FIXME: 'string[]' needs a custom comma separated field
-    if field_type == 'string' or field_type == 'string[]':
+    if field_type == 'string[]':
+        return ListField(required=required)
+
+    if field_type == 'string':
         if choices:
             return forms.ChoiceField(
                 choices=_build_choices(choices), required=required)
@@ -178,7 +209,6 @@ class PolicyForm(forms.Form):
         """ Save the updated policy """
 
         policy_id = self.cleaned_data.pop('id')
-
         policy_info = {
             'name': self.cleaned_data.pop('name'),
             'policy': self.cleaned_data,
