@@ -1,4 +1,3 @@
-import django
 import logging
 from collections import namedtuple
 
@@ -6,7 +5,7 @@ from django import forms
 from django.http import Http404
 from django.core.cache import cache
 from django.core import validators
-from django.shortcuts import render_to_response
+from django.shortcuts import render_to_response, redirect
 from django.views.decorators.csrf import csrf_exempt
 
 from views import enterprise_required
@@ -23,6 +22,7 @@ Preference = namedtuple('Preference', [
     'parent',
     'conditional_parent_value']
 )
+
 
 class ListField(forms.Field):
     """ Accepts comma separated strings and returns them as a list """
@@ -182,8 +182,8 @@ class PolicyForm(forms.Form):
             return False
 
         # If this has a parent, make sure the parent is also valid
-        if valid and self._preferences_dict[preference.parent].parent is not None:
-            return self._validate_child(self._preferences_dict[preference.parent])
+        if valid and self._preferences_dict[preference.parent].parent is not None:  # NOQA
+            return self._validate_child(self._preferences_dict[preference.parent])  # NOQA
 
         return True
 
@@ -224,15 +224,37 @@ class PolicyForm(forms.Form):
             self.api.edit_policy(policy_id, policy_info)
 
 
+def _build_parent_dict(policies):
+    """ Return a dictionary full of policies names mapped to IDs,
+    e.g. {1: 'My policy', 2: 'My other policy'}
+    """
+    parent_dict = {}
+    for p in policies:
+        parent_dict[p['id']] = p['name']
+    return parent_dict
+
+
+def _assign_parents(policies):
+    """ Set the parent name for each policy """
+    parents = _build_parent_dict(policies)
+
+    for policy in policies:
+        if policy['inherits_from']:
+            policy['parent'] = parents[policy['inherits_from']]
+    return policies
+
+
 @enterprise_required
 def policy_list(request, api, account_info, config, username):
-    return render_to_response(
-        'policy_list.html', {'policies': api.list_policies()})
+    """ Get the list of policies and assign their parent names to each policy
+    """
+    policies = _assign_parents(api.list_policies())
+    return render_to_response('policy_list.html', {'policies': policies})
 
 
 @csrf_exempt
 @enterprise_required
-def policy_detail(request, api, account_info, config, username, policy_id):
+def policy_detail(request, api, account_info, config, username, policy_id, create=False):  # NOQA
     """ Get a policy from the provided policy ID """
 
     # Get the policy or raise a 404
@@ -241,48 +263,24 @@ def policy_detail(request, api, account_info, config, username, policy_id):
     except api.NotFound:
         raise Http404
 
-    if request.method == 'POST':
+    # Don't allow inherting from a policy that also inherits from a parent
+    if create and policy.get('inherits_from'):
+        missing_form_error = "Sorry, but you are unable to inherit from this policy"  # NOQA
+        return render_to_response(
+            'policy_detail.html',
+            {'form': None, 'missing_form_error': missing_form_error}
+        )
 
+    if request.method == 'POST':
         form = PolicyForm(
             request.POST,
             api=api,
             policy=policy,
         )
         if form.is_valid():
-            form.save()
+            form.save(create=create)
+            return redirect('blue_mgnt:policy_list')
     else:
-
-        form = PolicyForm(
-            api=api,
-            policy=policy,
-        )
-
-    return render_to_response(
-        'policy_detail.html', {'form': form})
-
-
-@csrf_exempt
-@enterprise_required
-def policy_create(request, api, account_info, config, username, policy_id=None):
-    """ Create a new policy based off of the policy ID provided in the from
-    URL parameter """
-
-    try:
-        policy = api.get_policy(int(policy_id))
-    except api.NotFound:
-        raise Http404
-
-    if request.method == 'POST':
-
-        form = PolicyForm(
-            request.POST,
-            api=api,
-            policy=policy,
-        )
-        if form.is_valid():
-            form.save(create=True)
-    else:
-
         form = PolicyForm(
             api=api,
             policy=policy,

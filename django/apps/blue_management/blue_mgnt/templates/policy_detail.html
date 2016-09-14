@@ -14,7 +14,7 @@
 
 <div class="spacer"><!--ZKP--></div>
 
-
+{% if form %}
 <form method='POST' action='.'>
     <table id="share" class="widget-table widget-table-details">
 
@@ -26,6 +26,9 @@
         </tr>
     </table>
 </form>
+{% else %}
+    <p>{{ missing_form_error }}</p>
+{% endif %}
 
 
 {% endblock content %}
