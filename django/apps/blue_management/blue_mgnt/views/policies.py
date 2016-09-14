@@ -205,8 +205,9 @@ class PolicyForm(forms.Form):
 
         return self.cleaned_data
 
-    def save(self):
-        """ Save the updated policy """
+    def save(self, create=False):
+        """ Save the existing policy or create a new policy if create is True
+        """
 
         policy_id = self.cleaned_data.pop('id')
         policy_info = {
@@ -214,7 +215,12 @@ class PolicyForm(forms.Form):
             'policy': self.cleaned_data,
         }
 
-        if policy_id:
+        if create:
+            if policy_id:
+                policy_info['inherits_from'] = policy_id
+            self.api.create_policy(policy_info)
+
+        elif policy_id:
             self.api.edit_policy(policy_id, policy_info)
 
 
@@ -255,7 +261,32 @@ def policy_detail(request, api, account_info, config, username, policy_id):
         'policy_detail.html', {'form': form})
 
 
+@csrf_exempt
 @enterprise_required
-def policy_create(request, api, account_info, config, username):
+def policy_create(request, api, account_info, config, username, policy_id=None):
+    """ Create a new policy based off of the policy ID provided in the from
+    URL parameter """
+
+    try:
+        policy = api.get_policy(int(policy_id))
+    except api.NotFound:
+        raise Http404
+
+    if request.method == 'POST':
+
+        form = PolicyForm(
+            request.POST,
+            api=api,
+            policy=policy,
+        )
+        if form.is_valid():
+            form.save(create=True)
+    else:
+
+        form = PolicyForm(
+            api=api,
+            policy=policy,
+        )
+
     return render_to_response(
-        'policy_create.html', {'current_policies': api.list_policies()})
+        'policy_detail.html', {'form': form})

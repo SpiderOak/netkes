@@ -53,5 +53,5 @@ urlpatterns = patterns('',
      {}, 'billing_create_subscription'),
     (r'^policies/$', policies.policy_list, {}, 'policy_list'),
     (r'^policies/(?P<policy_id>\d+)/$', policies.policy_detail, {}, 'policy_detail'),
-    (r'^policies/create/$', policies.policy_create, {}, 'policy_create'),
+    (r'^policies/create/(?P<policy_id>\d+)/$', policies.policy_create, {}, 'policy_create'),
 )
