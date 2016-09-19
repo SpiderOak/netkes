@@ -1,3 +1,4 @@
+import re
 import logging
 from collections import namedtuple
 
@@ -22,6 +23,14 @@ Preference = namedtuple('Preference', [
     'parent',
     'conditional_parent_value']
 )
+
+ROOT_INHERIT_CHOICES = (
+    ('--set--', 'Set'),
+    ('--unset--', "Don't Set")
+)
+
+INHERIT_CHOICES = (('--inherit--', 'Inherit'), ) + ROOT_INHERIT_CHOICES
+
 
 
 class ListField(forms.Field):
@@ -156,6 +165,10 @@ class PolicyForm(forms.Form):
             # Only add the new field to fields if it exists
             if new_field:
                 self.fields[pref.name] = new_field
+                inherit_choices = INHERIT_CHOICES if self._policy['inherits_from'] else ROOT_INHERIT_CHOICES
+
+                if not pref.parent:
+                    self.fields["_".join([pref.name, 'inheritance'])] = forms.ChoiceField(choices=inherit_choices)
 
                 # Add attrs to the field (e.g data-parent)
                 self.fields[pref.name].widget.attrs.update(
@@ -164,7 +177,10 @@ class PolicyForm(forms.Form):
 
         for key, value in self._policy['policy'].iteritems():
             if key in self.fields:
-                self.fields[key].initial = value
+                if value in ('--inherit--', '--unset--'):
+                    self.fields["_".join([key, 'inheritance'])].initial = value
+                else:
+                    self.fields[key].initial = value
             else:
                 LOG.error('Unable to set value for {}'.format(key))
 
@@ -172,6 +188,11 @@ class PolicyForm(forms.Form):
         """ Make sure the parent value allows the child field to be set """
 
         parent_value = self.cleaned_data.get(preference.parent)
+
+        # If the parent value is in INHERIT_CHOICES, the child value should be
+        # removed
+        if parent_value in INHERIT_CHOICES:
+            return False
 
         if isinstance(preference, list):
             valid = parent_value in preference.conditional_parent_value
@@ -197,7 +218,17 @@ class PolicyForm(forms.Form):
 
     def clean(self):
         """ Clean the data based on preference requirements """
+
+        # Remove INHERIT_CHOICE values during clean so validation works
+        for k, v in self.data.iteritems():
+            if not k.endswith('_inheritance') and v in INHERIT_CHOICES:
+                self.data[k] = None
+
+        # Clean and validate the data
         super(PolicyForm, self).clean()
+
+        # Remove inheritance fields and apply their values where needed
+        self._sanitize_inheritance()
 
         for preference in self._preferences:
             if not self._validate_preference(preference):
@@ -205,11 +236,29 @@ class PolicyForm(forms.Form):
 
         return self.cleaned_data
 
+    def _sanitize_inheritance(self):
+        """ Change the values of fields when inheritance is set to --unset--
+        or --inherit-- and remove all fields from cleaned_data that end in
+        _inheritance """
+
+        suffix = '_inheritance'
+        remove_patt = re.compile(suffix + '$')
+        inheritance_values = ('--inherit--', '--unset--')
+
+        # Set inheritance values (Note: Can't use iterkeys because we are
+        # modifying the dictionary)
+        for k in self.cleaned_data.keys():
+            if k.endswith(suffix):
+                val = self.cleaned_data.pop(k)
+                if val in inheritance_values:
+                    self.cleaned_data[remove_patt.sub('', k)] = val
+
     def save(self, create=False):
         """ Save the existing policy or create a new policy if create is True
         """
 
         policy_id = self.cleaned_data.pop('id')
+
         policy_info = {
             'name': self.cleaned_data.pop('name'),
             'policy': self.cleaned_data,
