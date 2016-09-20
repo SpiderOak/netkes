@@ -6,31 +6,24 @@ import urllib
 import urllib2
 from base64 import b64encode
 import urlparse
-import ldap
 import logging
 import math
 import hotshot
-import os
 import time
 import bcrypt
 from uuid import uuid4
 from hashlib import sha256
-from base64 import b64encode
 from collections import namedtuple
 
 from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import redirect, render_to_response
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ObjectDoesNotExist
-from django.template.context import Context
-from django.template import RequestContext, TemplateDoesNotExist
+from django.template import RequestContext
 from django import forms
-from django.forms.models import modelformset_factory
-from django.forms.formsets import formset_factory
-from django.forms import ModelForm
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login
-from django.core.paginator import Paginator, InvalidPage, EmptyPage
+from django.core.paginator import Paginator, InvalidPage
 from django.conf import settings as django_settings
 from django.contrib.auth.models import Group, Permission
 from django.contrib.auth.backends import ModelBackend
@@ -40,16 +33,11 @@ from django.forms.forms import NON_FIELD_ERRORS
 from django.core.servers.basehttp import FileWrapper
 from django.core.cache import cache
 
-from interval.forms import IntervalFormField
-from mako.lookup import TemplateLookup
-from mako import exceptions
-
 from blue_mgnt import models
 from netkes.account_mgr.accounts_api import Api
 from netkes.account_mgr.billing_api import BillingApi
 from netkes.netkes_agent import config_mgr
 from netkes.common import read_config_file
-from netkes.account_mgr.user_source import ldap_source, local_source
 from netkes import account_mgr
 from key_escrow import server
 from Pandora import serial
@@ -100,10 +88,12 @@ def profile(log_file):
         return _inner
     return _outer
 
+
 def get_config_group(config, group_id):
     for group in config['groups']:
         if group['group_id'] == group_id:
             return group
+
 
 def get_base_url(url=None):
     if not url:
@@ -116,12 +106,6 @@ class LoginForm(forms.Form):
     username = forms.CharField(max_length=45)
     password = forms.CharField(widget=forms.PasswordInput)
 
-    def clean(self):
-        cleaned_data = super(LoginForm, self).clean()
-
-        username = cleaned_data.get('username')
-        password = cleaned_data.get('password')
-
 
 def log_admin_action(request, message):
     if request.user.is_superuser:
@@ -129,6 +113,7 @@ def log_admin_action(request, message):
     else:
         group_name = request.user.groups.all()[0].name
     LOG.info('%s (%s): %s' % (request.user.username, group_name, message))
+
 
 class NetkesBackend(ModelBackend):
     def authenticate_superuser(self, username, password):
@@ -228,10 +213,6 @@ class NetkesBackend(ModelBackend):
 LdapBackend = NetkesBackend
 
 
-class LoginForm(forms.Form):
-    username = forms.CharField(max_length=90)
-    password = forms.CharField(widget=forms.PasswordInput)
-
 def hash_password(new_password):
     hash_ = sha256(new_password).digest()
     salt = '$2a$14$' + b64encode(hash_[:16]).rstrip('=').replace('+', '.')
@@ -239,6 +220,7 @@ def hash_password(new_password):
     api_pass = new_pass[len(salt):]
 
     return new_pass, api_pass
+
 
 def initial_setup(username, password):
     new_pass, api_pass = hash_password(password)
@@ -248,6 +230,7 @@ def initial_setup(username, password):
     config_mgr_.config['api_password'] = api_pass
     config_mgr_.config['local_password'] = new_pass
     config_mgr_.apply_config()
+
 
 def create_initial_group():
     config_mgr_ = config_mgr.ConfigManager(config_mgr.default_config())
@@ -264,20 +247,23 @@ def create_initial_group():
             'check_domain': False,
         }
         group_id = api.create_group(data)
-        data = dict(group_id=group_id,
-                    type='dn',
-                    ldap_id='',
-                    priority=0,
-                    user_source='local',
-                    admin_group=False,
-                   )
+        data = dict(
+            group_id=group_id,
+            type='dn',
+            ldap_id='',
+            priority=0,
+            user_source='local',
+            admin_group=False,
+        )
         config_mgr_.config['groups'].append(data)
         config_mgr_.apply_config()
+
 
 def set_api_version(api):
     with open('/opt/openmanage/etc/OpenManage_version.txt') as f:
         version = f.readlines()[0].split()[-1]
         api.update_enterprise_settings(dict(api_version=version))
+
 
 def login_user(request):
     form = LoginForm()
@@ -290,8 +276,7 @@ def login_user(request):
                                 password=password)
             if user and user.is_active:
                 login(request, user)
-                remote_addr = request.META['REMOTE_ADDR']
-                log_admin_action(request, 'logged in')# from ip: %s' % remote_addr)
+                log_admin_action(request, 'logged in')
                 config = read_config_file()
 
                 if not config['api_password']:
@@ -303,7 +288,7 @@ def login_user(request):
 
                     if api.backup():
                         log_admin_action(request, 'restoring from backup')
-                        subprocess.call(['/opt/openmanage/bin/run_restore_omva.sh',])
+                        subprocess.call(['/opt/openmanage/bin/run_restore_omva.sh', ])
                     elif not config['groups']:
                         create_initial_group()
 
@@ -316,20 +301,22 @@ def login_user(request):
 
                 return redirect(urllib.unquote(request.GET.get('next', '/')))
             else:
-                errors = form._errors.setdefault(NON_FIELD_ERRORS , ErrorList())
+                errors = form._errors.setdefault(NON_FIELD_ERRORS, ErrorList())
                 errors.append('Invalid username or password')
 
     return render_to_response('login.html', dict(
         form=form,
         request_login=True,
     ),
-    RequestContext(request))
+        RequestContext(request))
+
 
 def logout(request):
     if 'username' in request.session:
         del request.session['username']
 
     return redirect('blue_mgnt:login')
+
 
 def validate(request):
     '''
@@ -350,7 +337,9 @@ def validate(request):
         if user is not None:
             login(request, user)
             return redirect('blue_mgnt:index')
-    return HttpResponseForbidden("Enterprise management link is expired or invalid.", mimetype="text/plain")
+    return HttpResponseForbidden("Enterprise management link is expired or invalid.",
+                                 mimetype="text/plain")
+
 
 def get_method_prefix(fun):
     key = "p/{0}".format(fun.__name__)
@@ -359,11 +348,13 @@ def get_method_prefix(fun):
         return update_method_prefix(fun)
     return val
 
+
 def update_method_prefix(fun):
     key = "p/{0}".format(fun.__name__)
     val = b64encode(uuid4().bytes)
     cache.set(key, val)
     return val
+
 
 def make_cache_key(fun, *args, **kwargs):
     spec = tuple(args) + tuple(v for k, v in sorted(kwargs.iteritems()))
@@ -376,6 +367,7 @@ def make_cache_key(fun, *args, **kwargs):
         else:
             key.append(b64encode(repr(i)))
     return "/".join(key)
+
 
 def get_api(config):
     api = Api.create(
@@ -433,6 +425,7 @@ def get_api(config):
             setattr(api, attr, cache_api(fun_))
     return api
 
+
 def get_billing_api(config):
     billing_api = BillingApi.create(
         django_settings.BILLING_API_URL,
@@ -483,10 +476,12 @@ def enterprise_required(fun):
                    request.session['username'], *args, **kwargs)
     return new_fun
 
+
 @enterprise_required
 def clear_cache(request, api, account_info, config, username):
     cache.clear()
     return HttpResponse('Cache cleared')
+
 
 @enterprise_required
 def download_logs(request, api, account_info, config, username):
@@ -501,13 +496,15 @@ def download_logs(request, api, account_info, config, username):
     response['Content-Disposition'] = 'attachment; filename=%s' % filename
     return response
 
+
 @enterprise_required
 def users_csv(request, api, account_info, config, username):
     return render_to_response('csv.html', dict(
         features=api.enterprise_features(),
         account_info=account_info,
     ),
-    RequestContext(request))
+        RequestContext(request))
+
 
 @enterprise_required
 def users_csv_download(request, api, account_info, config, username):
@@ -559,22 +556,17 @@ def users_csv_download(request, api, account_info, config, username):
 
     return response
 
+
 class ReadOnlyWidget(forms.Widget):
     def render(self, name, value, attrs):
-        final_attrs = self.build_attrs(attrs, name=name)
+        self.build_attrs(attrs, name=name)
         if hasattr(self, 'initial'):
             value = self.initial
-        return "%s" % (value if value != None else '')
+        return "%s" % (value if value is not None else '')
 
     def _has_changed(self, initial, data):
         return False
 
-def process_row(row):
-    return dict(name=row['name'],
-                plan_id=int(row['plan_id']),
-                check_domain=bool(row.get('check_domain', True)),
-                webapi_enable=bool(row.get('webapi_enable', True)),
-               )
 
 @enterprise_required
 @permission_required('blue_mgnt.can_manage_shares', raise_exception=True)
@@ -592,11 +584,13 @@ def shares(request, api, account_info, config, username, saved=False):
     fake_count = page * user_limit
     if len(users) == user_limit:
         fake_count += user_limit
-    pagination = Pagination('blue_mgnt:shares',
-                            fake_count,
-                            page,
-                            user_limit,
-                           )
+
+    pagination = Pagination(
+        'blue_mgnt:shares',
+        fake_count,
+        page,
+        user_limit,
+    )
 
     if request.method == 'POST':
         if request.POST.get('form', '') == 'edit_share':
@@ -604,7 +598,7 @@ def shares(request, api, account_info, config, username, saved=False):
             room_key = request.POST['room_key']
             enable = request.POST['enabled'] == 'False'
             msg = 'edit share %s for user %s. Action %s share' % \
-                    (room_key, email, 'enable' if enable else 'disable')
+                (room_key, email, 'enable' if enable else 'disable')
             log_admin_action(request, msg)
             api.edit_share(email, room_key, enable)
             return redirect('blue_mgnt:shares_saved')
@@ -627,7 +621,8 @@ def shares(request, api, account_info, config, username, saved=False):
         account_info=account_info,
         saved=saved,
     ),
-    RequestContext(request))
+        RequestContext(request))
+
 
 @enterprise_required
 @permission_required('blue_mgnt.can_manage_shares', raise_exception=True)
@@ -640,7 +635,7 @@ def share_detail(request, api, account_info, config, username, email,
         if request.POST.get('form', '') == 'edit_share':
             enable = request.POST['enabled'] == 'False'
             msg = 'edit share %s for user %s. Action %s share' % \
-                    (room_key, email, 'enable' if enable else 'disable')
+                (room_key, email, 'enable' if enable else 'disable')
             log_admin_action(request, msg)
             api.edit_share(email, room_key, enable)
             return redirect('blue_mgnt:share_detail', email, room_key)
@@ -652,14 +647,17 @@ def share_detail(request, api, account_info, config, username, email,
         api_user=api_user,
         account_info=account_info,
     ),
-    RequestContext(request))
+        RequestContext(request))
 
 Report = namedtuple('Report', ['title', 'description', 'query'])
+
 
 @enterprise_required
 def reports(request, api, account_info, config, username, saved=False):
     total_users = float(account_info['total_users'] or 1)
-    average_stored = (account_info['space_used'] or  0) / total_users
+
+    average_stored = (account_info['space_used'] or 0) / total_users
+
     average_stored = round(average_stored / SIZE_OF_GIGABYTE, 2)
     average_num_devices = round((account_info['device_count'] or 0) / total_users, 2)
 
@@ -677,13 +675,13 @@ def reports(request, api, account_info, config, username, saved=False):
                "?order_by=-bytes_stored"),
         Report("Most bonus GB",
                "The users with the most bonus space.",
-               "?order_by=-bonus_bytes&columns=name%2Cemail%2Cgroup_id%2Cbytes_stored%2Cbonus_bytes"),
+               "?order_by=-bonus_bytes&columns=name%2Cemail%2Cgroup_id%2Cbytes_stored%2Cbonus_bytes"),  # NOQA
         Report("Disabled users with the most stored",
                "",
-               "?order_by=-bytes_stored&search_by=enabled=0&columns=name%2Cemail%2Cgroup_id%2Cbytes_stored%2Cenabled"),
+               "?order_by=-bytes_stored&search_by=enabled=0&columns=name%2Cemail%2Cgroup_id%2Cbytes_stored%2Cenabled"),  # NOQA
         Report("Purgehold active",
                "Users whose deleted data will not be purged from the system.",
-               "?search_by=purgehold_active=1&columns=name,email,bytes_stored,group_id,purgehold_active"),
+               "?search_by=purgehold_active=1&columns=name,email,bytes_stored,group_id,purgehold_active"),  # NOQA
     ]
 
     return render_to_response('reports.html', dict(
@@ -695,13 +693,14 @@ def reports(request, api, account_info, config, username, saved=False):
         device_count=account_info['device_count'],
         share_count=account_info['share_count'],
     ),
-    RequestContext(request))
+        RequestContext(request))
+
 
 @enterprise_required
 def manage(request, api, account_info, config, username):
     features = api.enterprise_features()
     billing_info = None
-    if features['ldap'] == False:
+    if not features['ldap']:
         billing_info = get_billing_info(config)
     return render_to_response('manage.html', dict(
         user=request.user,
@@ -709,7 +708,8 @@ def manage(request, api, account_info, config, username):
         account_info=account_info,
         billing_info=billing_info,
     ),
-    RequestContext(request))
+        RequestContext(request))
+
 
 @enterprise_required
 def fingerprint(request, api, account_info, config, username):
@@ -723,7 +723,7 @@ def fingerprint(request, api, account_info, config, username):
         s = '{0}{1}'.format(key_id, key.publickey().exportKey('DER'))
         h.update(s)
     fingerprint = enumerate(key_to_english(h.digest()).split(' '))
-    fingerprint = ' '.join([word for x, word in fingerprint \
+    fingerprint = ' '.join([word for x, word in fingerprint
                             if x % 2 == 0])
 
     return render_to_response('fingerprint.html', dict(
@@ -732,7 +732,7 @@ def fingerprint(request, api, account_info, config, username):
         account_info=account_info,
         fingerprint=fingerprint,
     ),
-    RequestContext(request))
+        RequestContext(request))
 
 
 class Pagination(object):
@@ -749,7 +749,7 @@ class Pagination(object):
         last_page = self.paginator.num_pages
         try:
             self.paginator_page = self.paginator.page(self.page)
-        except InvalidPage as e:
+        except InvalidPage:
             self.paginator_page = self.paginator.page(last_page)
             self.page = last_page
 
@@ -764,7 +764,9 @@ class Pagination(object):
                 if self.page + 6 > last_page:
                     self.page_range = [1, None] + self.page_range[-8:]
                 else:
-                    self.page_range = [1, None] + self.page_range[self.page-3:self.page+3] + [None, last_page]
+                    self.page_range = ([1, None] +
+                                       self.page_range[self.page-3:self.page+3] +
+                                       [None, last_page])
             else:
                 self.page_range = self.paginator.page_range[:8] + [None, last_page]
 
@@ -776,7 +778,7 @@ class Pagination(object):
 # Benny's da_paginator
 def pageit(sub, api, page, extra):
     if not extra:
-        extra=()
+        extra = ()
 
     funcmap = {
         'users': lambda: api.get_user_count(),
@@ -796,8 +798,8 @@ def pageit(sub, api, page, extra):
     elif page < 1:
         page = 1
 
-    ref='%d:%d' %(page, page+6)
-    req='blue_mgnt:%s' % sub
+    ref = '%d:%d' % (page, page+6)
+    req = 'blue_mgnt:%s' % sub
 
     return dict(
         item_count=range(item_count),

@@ -5,6 +5,14 @@ addons:
   apt:
     packages:
       - libffi-dev
+      - python-psycopg2 
+      - python-crypto 
+      - python-ldap 
+      - python-cerealizer
+      - python-dev 
+      - libldap2-dev 
+      - libsasl2-dev 
+      - libssl-dev
 before_install:
   - wget https://bootstrap.pypa.io/ez_setup.py -O - | sudo python
 install:
@@ -22,5 +30,8 @@ install:
   - pip install pynacl==0.2.3
   - pip install cerealizer
   - pip install requests
+  - pip install psycopg2
+  - pip install python-ldap
 script:
   - python test_netkes_client.py
+  - make test_netkes

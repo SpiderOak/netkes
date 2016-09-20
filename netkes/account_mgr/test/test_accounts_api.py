@@ -34,7 +34,7 @@ class TestAccountsApi(unittest.TestCase):
         )
         self.client.get_json.assert_called_once_with('ping')
 
-    ### Plans
+    # Plans
 
     def test_list_plans(self):
         self.assertIs(
@@ -43,7 +43,7 @@ class TestAccountsApi(unittest.TestCase):
         )
         self.client.get_json.assert_called_once_with('plans')
 
-    ### Quota
+    # Quota
 
     def test_quota(self):
         self.assertIs(
@@ -52,7 +52,7 @@ class TestAccountsApi(unittest.TestCase):
         )
         self.client.get_json.assert_called_once_with('partner/quota')
 
-    ### Features
+    # Features
 
     def test_enterprise_features(self):
         self.assertIs(
@@ -61,7 +61,7 @@ class TestAccountsApi(unittest.TestCase):
         )
         self.client.get_json.assert_called_once_with('partner/features')
 
-    ### Settings
+    # Settings
 
     def test_enterprise_settings(self):
         self.assertIs(
@@ -83,7 +83,7 @@ class TestAccountsApi(unittest.TestCase):
         with self.assertRaises(self.api.BadParams):
             self.api.update_enterprise_settings(sentinel.settings)
 
-    ### Groups
+    # Groups
 
     def test_list_groups(self):
         self.assertIs(
@@ -171,7 +171,8 @@ class TestAccountsApi(unittest.TestCase):
             self.api.edit_group(42, sentinel.info)
 
     def test_edit_group_quota_exceeded(self):
-        self.client.post_json.side_effect = FakeHttpError(402)
+        data = json.dumps({'conflicts': 'avatars_over_quota'})
+        self.client.post_json.side_effect = FakeHttpError(409, data)
         with self.assertRaises(self.api.QuotaExceeded):
             self.api.edit_group(42, sentinel.info)
 
@@ -184,14 +185,14 @@ class TestAccountsApi(unittest.TestCase):
         with self.assertRaises(self.api.NotFound):
             self.api.delete_group(42)
 
-    ### Users
+    # Users
 
     def test_list_users(self):
         self.assertIs(
-            self.api.list_users(),
+            self.api.list_users(limit=1),
             self.client.get_json.return_value
         )
-        self.client.get_json.assert_called_once_with('users/')
+        self.client.get_json.assert_called_once_with('users/?limit=1')
 
     def test_create_user(self):
         self.api.create_user(sentinel.info)
@@ -325,18 +326,17 @@ class TestAccountsApi(unittest.TestCase):
 
     def test_send_activation_email(self):
         self.api.send_activation_email('username')
-        self.client.post.assert_called_once_with(
-            'users/username?action=sendactivationemail',
-            ''
+        self.client.post_json.assert_called_once_with(
+            'users/username?action=sendactivationemail', {}
         )
 
     def test_send_activation_email_not_found(self):
-        self.client.post.side_effect = FakeHttpError(404)
+        self.client.post_json.side_effect = FakeHttpError(404)
         with self.assertRaises(self.api.NotFound):
             self.api.send_activation_email('username')
 
     def test_send_activation_email_not_sent(self):
-        self.client.post.side_effect = FakeHttpError(409)
+        self.client.post_json.side_effect = FakeHttpError(409)
         with self.assertRaises(self.api.EmailNotSent):
             self.api.send_activation_email('username')
 
