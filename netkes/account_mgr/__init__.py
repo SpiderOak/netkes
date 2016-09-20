@@ -6,7 +6,6 @@ Init and common functions for the OpenManage user management system.
 (c) 2011 SpiderOak, Inc.
 '''
 
-import os
 import logging
 import psycopg2
 from accounts_api import Api
@@ -30,6 +29,7 @@ SELECT_LOCAL_USER = '''
 select * from passwords where email=%s;
 '''
 
+
 @contextmanager
 def get_cursor(config, use_password=True):
     try:
@@ -49,10 +49,12 @@ def get_cursor(config, use_password=True):
     else:
         conn.commit()
 
+
 def get_api(config):
-    return Api.create(config['api_root'], 
-                      config['api_user'], 
+    return Api.create(config['api_root'],
+                      config['api_user'],
                       config['api_password'],)
+
 
 def admin_token_auth(config, user, username, password):
     log = logging.getLogger("admin_token_auth")
@@ -80,10 +82,11 @@ def admin_token_auth(config, user, username, password):
         return False
 
     with get_cursor(config) as cur:
-        cur.execute(INSERT_ADMIN_AUTH_TOKEN_AVATAR_USE, user_token) 
+        cur.execute(INSERT_ADMIN_AUTH_TOKEN_AVATAR_USE, user_token)
 
     log.info('admin auth code login successful')
     return True
+
 
 def authenticator(config, username, password, use_admin_tokens=True):
     """Authenticates users against OpenManage.

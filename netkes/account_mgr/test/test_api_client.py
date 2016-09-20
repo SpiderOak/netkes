@@ -27,8 +27,7 @@ class TestApiClient(unittest.TestCase):
             self.client.base + '/',
             None,
             {'authorization': (
-                'Basic PFNlbnRpbmVsT2JqZWN0ICJhcGlfdXNlcm5hbWUiPjo8'
-                'U2VudGluZWxPYmplY3QgImFwaV9wYXNzd29yZCI+'
+                'Basic c2VudGluZWwuYXBpX3VzZXJuYW1lOnNlbnRpbmVsLmFwaV9wYXNzd29yZA=='
             )}
         )
 

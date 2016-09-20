@@ -14,6 +14,8 @@ _DEFAULT_HANDLERS = [
     urllib2.HTTPErrorProcessor,
     urllib2.HTTPHandler,
 ]
+
+
 def _make_opener(url):
     opener = urllib2.OpenerDirector()
     for handler_class in _DEFAULT_HANDLERS:
