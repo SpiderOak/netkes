@@ -54,4 +54,6 @@ urlpatterns = patterns('',
     (r'^policies/$', policies.policy_list, {}, 'policy_list'),
     (r'^policies/(?P<policy_id>\d+)/$', policies.policy_detail, {}, 'policy_detail'),
     (r'^policies/create/(?P<policy_id>\d+)/$', policies.policy_detail, {'create': True}, 'policy_create'),
+    (r'^policies/(?P<policy_id>\d+)/delete/$', policies.policy_delete, {'delete': True}, 'policy_delete'),
+    (r'^policies/(?P<policy_id>\d+)/delete/confirm/$', policies.policy_delete, {'delete': False}, 'policy_delete_confirm'),
 )
