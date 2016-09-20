@@ -59,6 +59,10 @@ class Api(object):
         pass
     class EmailNotSent(Error):  # NOQA
         pass
+    class BadPolicy(Error):  # NOQA
+        pass
+    class PolicyInUse(Error):  # NOQA
+        pass
 
     @classmethod
     def create(cls, base, username, password):
@@ -136,6 +140,10 @@ class Api(object):
         except urllib2.HTTPError, err:
             if err.code == 400:
                 raise self.BadParams()
+            elif err.code == 409:
+                data = json.loads(err.read())
+                if 'inherits_from' in data['conflicts']:
+                    raise self.BadPolicy()
             raise
 
     def get_policy(self, policy_id):
@@ -154,6 +162,10 @@ class Api(object):
                 raise self.NotFound()
             elif err.code == 400:
                 raise self.BadParams()
+            elif err.code == 409:
+                data = json.loads(err.read())
+                if 'inherits_from' in data['conflicts']:
+                    raise self.BadPolicy()
             raise
 
     def delete_policy(self, policy_id):
@@ -162,6 +174,10 @@ class Api(object):
         except urllib2.HTTPError, err:
             if err.code == 404:
                 raise self.NotFound()
+            elif err.code == 409:
+                data = json.loads(err.read())
+                if 'policy_id' in data['conflicts']:
+                    raise self.PolicyInUse()
             raise
 
     # Groups
