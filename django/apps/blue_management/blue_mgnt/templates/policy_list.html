@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% load filter_todate %}
+{% load so_filters %}
+
+{% block title %}Policies - Management Console{{ block.super }}{% endblock %}
+
+{% block breadcrumb %}<a href="{% url 'blue_mgnt:manage' %}">Back to Manage</a>{% endblock breadcrumb %}
+{% block navtab %}{% include "partials/navtab-widget.html" with active="manage" %}{% endblock navtab %}
+{% block content %}
+<h1 class="page-header">
+    <i class="ss-icon">&#xEE00;</i> Policies
+</h1>
+
+<div class="spacer"><!--ZKP--></div>
+
+{% if policies %}
+    <ul>
+    {% for policy in policies %}
+        <li>
+            <a href="/policies/{{ policy.id }}/">{{ policy.name }}</a>
+            {% if policy.parent %} Inherits from <a href="{% url 'blue_mgnt:policy_detail' policy_id=policy.inherits_from %}">{{ policy.parent }}
+            {% else %} <a href="{% url 'blue_mgnt:policy_create' policy_id=policy.id %}" class="button">Copy to new policy</a>{% endif %}
+        </li>
+    {% endfor %}
+{% endif %}
+
+{% endblock content %}

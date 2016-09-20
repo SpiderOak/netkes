@@ -388,6 +388,7 @@ def get_api(config):
         'list_devices',
         'list_shares',
         'list_users',
+        'list_policies',
     ]
     FUNCTIONS_TO_INVALIDATE_CACHE = {
         'update_enterprise_settings': [api.enterprise_settings],
@@ -583,6 +584,7 @@ def shares(request, api, account_info, config, username, saved=False):
     fake_count = page * user_limit
     if len(users) == user_limit:
         fake_count += user_limit
+
     pagination = Pagination(
         'blue_mgnt:shares',
         fake_count,

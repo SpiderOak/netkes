@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% load filter_todate %}
+{% load so_filters %}
+
+{% block title %}Policies - Management Console{{ block.super }}{% endblock %}
+
+{% block breadcrumb %}<a href="{% url 'blue_mgnt:manage' %}">Back to Manage</a>{% endblock breadcrumb %}
+{% block navtab %}{% include "partials/navtab-widget.html" with active="manage" %}{% endblock navtab %}
+
+{% block content %}
+<h1 class="page-header">
+    Policies
+</h1>
+
+<div class="spacer"><!--ZKP--></div>
+
+{% if form %}
+<form method='POST' action='.'>
+    <table id="share" class="widget-table widget-table-details">
+
+        {{ form.as_table }}
+
+        <tr>
+            <th></th>
+            <td><input type='submit' class='button' value='Save' /></td>
+        </tr>
+    </table>
+</form>
+{% else %}
+    <p>{{ missing_form_error }}</p>
+{% endif %}
+
+
+{% endblock content %}

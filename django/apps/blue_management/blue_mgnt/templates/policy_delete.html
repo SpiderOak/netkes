@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load filter_todate %}
+{% load so_filters %}
+
+{% block title %}Policies - Management Console{{ block.super }}{% endblock %}
+
+{% block breadcrumb %}<a href="{% url 'blue_mgnt:manage' %}">Back to Manage</a>{% endblock breadcrumb %}
+{% block navtab %}{% include "partials/navtab-widget.html" with active="manage" %}{% endblock navtab %}
+
+{% block content %}
+<h1 class="page-header">
+    Delete {{ policy.name }}
+</h1>
+
+<div class="spacer"><!--ZKP--></div>
+
+{% if can_delete %}
+    {% if deleted %}
+        <p>{{ policy.name }} has been deleted.</p>
+    {% else %}
+        <div class='widget'>
+            <p>Are you sure you want to delete {{ policy.name }}?
+            <form method='POST' action='{% url 'blue_mgnt:policy_delete' policy_id=policy.id %}'>
+                <button class='button' type="submit" value="cancel" name='delete-button'>No, do not delete the policy</button>
+                <button class='button' type="submit" value="delete" name='delete-button'>Yes, delete the policy</button>
+            </form>
+        </div>
+    {% endif %}
+{% else %}
+<p>Sorry, you cannot delete root policies.</p>
+{% endif %}
+
+{% endblock content %}
