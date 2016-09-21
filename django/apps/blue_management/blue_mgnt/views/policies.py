@@ -32,7 +32,6 @@ ROOT_INHERIT_CHOICES = (
 INHERIT_CHOICES = (('--inherit--', 'Inherit'), ) + ROOT_INHERIT_CHOICES
 
 
-
 class ListField(forms.Field):
     """ Accepts comma separated strings and returns them as a list """
 
@@ -146,7 +145,11 @@ class PolicyForm(forms.Form):
         for p in self._preferences:
             self._preferences_dict[p.name] = p
 
-        self._policy = kwargs.pop('policy')
+        self._policy = kwargs.pop('policy', None)
+        if not self._policy:
+            self._policy = {'id': None, 'name': '', 'inherits_from': None, 'policy': {}}
+
+        self._inherit = kwargs.pop('inherit', None) or self._policy['inherits_from']
 
         if 'initial' not in kwargs:
             kwargs['initial'] = {}
@@ -157,6 +160,32 @@ class PolicyForm(forms.Form):
 
         super(PolicyForm, self).__init__(*args, **kwargs)
 
+        self._add_inherit_from_field()
+        self._add_fields_from_preferences()
+        self._set_initial_values_from_policy()
+
+    def _parent_choices(self):
+        """ Get a list of parent choices used for inheritance """
+        policies = self.api.list_policies()
+        choices = [('', '----------')]
+        choices.extend(
+            [(p['id'], p['name']) for p in policies if not p['inherits_from']])
+        return choices
+
+    def _add_inherit_from_field(self):
+        """ Create a TypedChoiceField that coerces to integer and uses
+        api.list_policies to provide inheritance choices """
+
+        self.fields['inherit_from'] = forms.TypedChoiceField(
+            required=False,
+            choices=self._parent_choices(),
+            empty_value=None,
+            coerce=int)
+
+        self.fields['inherit_from'].initial = self._inherit
+
+    def _add_fields_from_preferences(self):
+        """ Add fields of the correct type based on preferences """
         for pref in self._preferences:
             # Currently mark all fields as being unrequired
             new_field = _field_type(
@@ -165,15 +194,26 @@ class PolicyForm(forms.Form):
             # Only add the new field to fields if it exists
             if new_field:
                 self.fields[pref.name] = new_field
-                inherit_choices = INHERIT_CHOICES if self._policy['inherits_from'] else ROOT_INHERIT_CHOICES
+
+                # Set inherit choices
+                if self._policy.get('inherits_from'):
+                    inherit_choices = INHERIT_CHOICES
+                else:
+                    inherit_choices = ROOT_INHERIT_CHOICES
 
                 if not pref.parent:
-                    self.fields["_".join([pref.name, 'inheritance'])] = forms.ChoiceField(choices=inherit_choices)
+                    inherit_field_name = "_".join([pref.name, 'inheritance'])
+                    inherit_field = forms.ChoiceField(choices=inherit_choices)
+                    self.fields[inherit_field_name] = inherit_field
 
                 # Add attrs to the field (e.g data-parent)
                 self.fields[pref.name].widget.attrs.update(
                     _attrs_from_preference(pref)
                 )
+
+    def _set_initial_values_from_policy(self):
+        """ Set the initial value for the current form fields based on the
+        provided policy """
 
         for key, value in self._policy['policy'].iteritems():
             if key in self.fields:
@@ -261,6 +301,7 @@ class PolicyForm(forms.Form):
 
         policy_info = {
             'name': self.cleaned_data.pop('name'),
+            'inherits_from': self.cleaned_data.pop('inherit_from', None),
             'policy': self.cleaned_data,
         }
 
@@ -293,6 +334,14 @@ def _assign_parents(policies):
     return policies
 
 
+def _policy_from_id_or_404(api, policy_id):
+    """ Get the policy or raise a 404 """
+    try:
+        return api.get_policy(int(policy_id))
+    except api.NotFound:
+        raise Http404
+
+
 @enterprise_required
 def policy_list(request, api, account_info, config, username):
     """ Get the list of policies and assign their parent names to each policy
@@ -303,22 +352,44 @@ def policy_list(request, api, account_info, config, username):
 
 @csrf_exempt
 @enterprise_required
-def policy_detail(request, api, account_info, config, username, policy_id, create=False):  # NOQA
+def policy_create(request, api, account_info, config, username):  # NOQA
+    """ Get a policy from the provided policy ID """
+
+    inherit = request.GET.get('inherit')
+
+    if inherit:
+        policy = _policy_from_id_or_404(api, inherit)
+    else:
+        policy = None
+
+    if request.method == 'POST':
+        form = PolicyForm(
+            request.POST,
+            api=api,
+            policy=policy,
+            inherit=inherit,
+        )
+        if form.is_valid():
+            form.save(create=True)
+            return redirect('blue_mgnt:policy_list')
+    else:
+        form = PolicyForm(
+            api=api,
+            policy=policy,
+            inherit=inherit,
+        )
+
+    return render_to_response(
+        'policy_detail.html', {'form': form})
+
+
+@csrf_exempt
+@enterprise_required
+def policy_detail(request, api, account_info, config, username, policy_id):  # NOQA
     """ Get a policy from the provided policy ID """
 
     # Get the policy or raise a 404
-    try:
-        policy = api.get_policy(int(policy_id))
-    except api.NotFound:
-        raise Http404
-
-    # Don't allow inherting from a policy that also inherits from a parent
-    if create and policy.get('inherits_from'):
-        missing_form_error = "Sorry, but you are unable to inherit from this policy"  # NOQA
-        return render_to_response(
-            'policy_detail.html',
-            {'form': None, 'missing_form_error': missing_form_error}
-        )
+    policy = _policy_from_id_or_404(api, policy_id)
 
     if request.method == 'POST':
         form = PolicyForm(
@@ -327,7 +398,7 @@ def policy_detail(request, api, account_info, config, username, policy_id, creat
             policy=policy,
         )
         if form.is_valid():
-            form.save(create=create)
+            form.save()
             return redirect('blue_mgnt:policy_list')
     else:
         form = PolicyForm(
@@ -376,4 +447,3 @@ def policy_delete(request, api, account_info, config, username, policy_id, delet
         'policy_delete.html',
         {'policy': policy, 'can_delete': True, 'deleted': delete_success}
     )
-
