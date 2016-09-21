@@ -388,7 +388,6 @@ def get_api(config):
         'list_devices',
         'list_shares',
         'list_users',
-        'list_policies',
     ]
     FUNCTIONS_TO_INVALIDATE_CACHE = {
         'update_enterprise_settings': [api.enterprise_settings],

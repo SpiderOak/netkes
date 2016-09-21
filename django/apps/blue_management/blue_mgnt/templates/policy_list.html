@@ -19,7 +19,7 @@
         <li>
             <a href="/policies/{{ policy.id }}/">{{ policy.name }}</a>
             {% if policy.parent %} Inherits from <a href="{% url 'blue_mgnt:policy_detail' policy_id=policy.inherits_from %}">{{ policy.parent }}
-            {% else %} <a href="{% url 'blue_mgnt:policy_create' policy_id=policy.id %}" class="button">Copy to new policy</a>{% endif %}
+            {% else %} <a href="{% url 'blue_mgnt:policy_create' %}?inherit={{ policy.id }}" class="button">Copy to new policy</a>{% endif %}
         </li>
     {% endfor %}
 {% endif %}
