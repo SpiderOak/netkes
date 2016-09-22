@@ -336,7 +336,10 @@ def policy_detail(request, api, account_info, config, username, policy_id, creat
         )
 
     return render_to_response(
-        'policy_detail.html', {'form': form})
+        'policy_detail.html', {
+            'form': form,
+            'policy': policy,
+        })
 
 
 @csrf_exempt
@@ -353,13 +356,7 @@ def policy_delete(request, api, account_info, config, username, policy_id, delet
         raise Http404
 
     delete_success = False
-
-    # Don't allow deletion of root policies
-    if not policy['inherits_from']:
-        return render_to_response(
-            'policy_delete.html',
-            {'policy': policy, 'can_delete': False, 'deleted': delete_success},
-        )
+    in_use = False
 
     # If the delete keyword argument is True, confirmation has been provided
     if request.method == 'POST' and delete:
@@ -368,12 +365,14 @@ def policy_delete(request, api, account_info, config, username, policy_id, delet
         if delete_button_val == 'cancel':
             return redirect('blue_mgnt:policy_list')
         elif delete_button_val == 'delete':
-            api.delete_policy(policy_id)
-            delete_success = True
-            return redirect('blue_mgnt:policy_list')
+            try:
+                api.delete_policy(policy_id)
+                delete_success = True
+                return redirect('blue_mgnt:policy_list')
+            except api.PolicyInUse:
+                in_use = True
 
     return render_to_response(
         'policy_delete.html',
-        {'policy': policy, 'can_delete': True, 'deleted': delete_success}
+        {'policy': policy, 'in_use': in_use, 'deleted': delete_success}
     )
-

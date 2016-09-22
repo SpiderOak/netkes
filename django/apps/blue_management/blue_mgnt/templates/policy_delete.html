@@ -9,25 +9,32 @@
 
 {% block content %}
 <h1 class="page-header">
-    Delete {{ policy.name }}
+  Delete {{ policy.name }}
 </h1>
 
 <div class="spacer"><!--ZKP--></div>
 
-{% if can_delete %}
-    {% if deleted %}
-        <p>{{ policy.name }} has been deleted.</p>
-    {% else %}
-        <div class='widget'>
-            <p>Are you sure you want to delete {{ policy.name }}?
-            <form method='POST' action='{% url 'blue_mgnt:policy_delete' policy_id=policy.id %}'>
-                <button class='button' type="submit" value="cancel" name='delete-button'>No, do not delete the policy</button>
-                <button class='button' type="submit" value="delete" name='delete-button'>Yes, delete the policy</button>
-            </form>
-        </div>
-    {% endif %}
+{% if in_use %}
+<p>
+Unable to delete policy. Either this policy is being used by a group or another
+policy inherits from this policy.
+</p>
 {% else %}
-<p>Sorry, you cannot delete root policies.</p>
+  {% if deleted %}
+  <p>{{ policy.name }} has been deleted.</p>
+  {% else %}
+  <div class='widget'>
+    <p>Are you sure you want to delete {{ policy.name }}?
+    <form method='POST' action='{% url 'blue_mgnt:policy_delete' policy_id=policy.id %}'>
+      <button class='button' type="submit" value="cancel" name='delete-button'>
+        No, do not delete the policy
+      </button>
+      <button class='button' type="submit" value="delete" name='delete-button'>
+        Yes, delete the policy
+      </button>
+    </form>
+  </div>
+  {% endif %}
 {% endif %}
 
 {% endblock content %}
