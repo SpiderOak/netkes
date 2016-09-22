@@ -1,6 +1,7 @@
 import re
 import logging
 from collections import namedtuple
+import inflection
 
 from django import forms
 from django.http import Http404
@@ -104,25 +105,29 @@ def _build_choices(choices):
         yield (choice, choice)
 
 
-def _field_type(field_type, required=True, choices=None):
+def _field_type(preference, required=True, choices=None):
     """ Get the correct Django forms field based on the provided value """
 
-    if field_type == 'string[]':
-        return ListField(required=required)
+    label = inflection.humanize(inflection.underscore(preference.name))
+    if preference.field_type == 'string[]':
+        return ListField(required=required, label=label)
 
-    if field_type == 'string':
+    if preference.field_type == 'string':
         if choices:
             return forms.ChoiceField(
-                choices=_build_choices(choices), required=required)
+                choices=_build_choices(choices),
+                required=required,
+                label=label
+            )
         return forms.CharField(required=required)
 
-    if field_type == 'integer':
-        return forms.IntegerField(required=required)
+    if preference.field_type == 'integer':
+        return forms.IntegerField(required=required, label=label)
 
-    if field_type == 'boolean':
-        return forms.BooleanField(required=False)
+    if preference.field_type == 'boolean':
+        return forms.BooleanField(required=False, label=label)
 
-    LOG.error("Unable to get field type. {} is an invalid option".format(field_type))  # NOQA
+    LOG.error("Unable to get field type. {} is an invalid option".format(preference.field_type))  # NOQA
 
 
 def _attrs_from_preference(preference):
@@ -193,7 +198,7 @@ class PolicyForm(forms.Form):
         for pref in self._preferences:
             # Currently mark all fields as being unrequired
             new_field = _field_type(
-                pref.field_type, False, pref.choices)
+                pref, False, pref.choices)
 
             # Only add the new field to fields if it exists
             if new_field:

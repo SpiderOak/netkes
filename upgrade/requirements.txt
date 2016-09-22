@@ -7,3 +7,4 @@
 /opt/openmanage/upgrade/resources/pycrypto-2.4.1.tar.gz
 /opt/openmanage/upgrade/resources/py-bcrypt-0.4.tar.gz
 /opt/openmanage/upgrade/resources/PyNaCl-0.2.3.tar.gz
+/opt/openmanage/upgrade/resources/inflection-0.3.1.tar.gz

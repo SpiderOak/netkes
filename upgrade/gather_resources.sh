@@ -21,6 +21,7 @@ pip install --download=. cffi==0.8.2
 pip install --download=. six==1.6.1
 pip install --download=. pycparser==2.10
 pip install --download=. pynacl==0.2.3
+pip install --download=. inflection==0.3.1
 
 sudo apt-get download libffi-dev
 sudo apt-get download bash
