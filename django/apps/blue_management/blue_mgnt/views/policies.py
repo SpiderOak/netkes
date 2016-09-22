@@ -201,10 +201,9 @@ class PolicyForm(forms.Form):
                 else:
                     inherit_choices = ROOT_INHERIT_CHOICES
 
-                if not pref.parent:
-                    inherit_field_name = "_".join([pref.name, 'inheritance'])
-                    inherit_field = forms.ChoiceField(choices=inherit_choices)
-                    self.fields[inherit_field_name] = inherit_field
+                inherit_field_name = "_".join([pref.name, 'inheritance'])
+                inherit_field = forms.ChoiceField(choices=inherit_choices)
+                self.fields[inherit_field_name] = inherit_field
 
                 # Add attrs to the field (e.g data-parent)
                 self.fields[pref.name].widget.attrs.update(
