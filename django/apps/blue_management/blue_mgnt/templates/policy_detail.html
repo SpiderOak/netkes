@@ -19,7 +19,7 @@
   <table id="share" class="widget-table widget-table-details">
     {{ form.as_table }}
     <tr>
-      <td><a href="{% url 'blue_mgnt:policy_delete' policy.id %}">Delete Policy</a></td>
+      <td>{% if policy.id %}<a href="{% url 'blue_mgnt:policy_delete' policy.id %}">Delete Policy</a>{% endif %}</td>
       <td><input type='submit' class='button' value='Save' /></td>
     </tr>
   </table>

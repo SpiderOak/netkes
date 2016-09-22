@@ -164,6 +164,10 @@ class PolicyForm(forms.Form):
         self._add_fields_from_preferences()
         self._set_initial_values_from_policy()
 
+        # Set all inheritance fields to --inherit-- if we are copying a policy
+        if self._inherit and not self._policy.get('inherits_from'):
+            self._set_all_inheritance_fields()
+
     def _parent_choices(self):
         """ Get a list of parent choices used for inheritance """
         policies = self.api.list_policies()
@@ -196,7 +200,7 @@ class PolicyForm(forms.Form):
                 self.fields[pref.name] = new_field
 
                 # Set inherit choices
-                if self._policy.get('inherits_from'):
+                if self._inherit or self.data.get('inherit_from'):
                     inherit_choices = INHERIT_CHOICES
                 else:
                     inherit_choices = ROOT_INHERIT_CHOICES
@@ -210,6 +214,12 @@ class PolicyForm(forms.Form):
                     _attrs_from_preference(pref)
                 )
 
+    def _set_all_inheritance_fields(self, inheritance='--inherit--'):
+        """ A method for quickly setting all inheritance fields """
+        for key in self.fields.iterkeys():
+            if key.endswith("_inheritance"):
+                self.fields[key].initial = inheritance
+
     def _set_initial_values_from_policy(self):
         """ Set the initial value for the current form fields based on the
         provided policy """
@@ -219,6 +229,7 @@ class PolicyForm(forms.Form):
                 if value in ('--inherit--', '--unset--'):
                     self.fields["_".join([key, 'inheritance'])].initial = value
                 else:
+                    self.fields["_".join([key, 'inheritance'])].initial = '--set--'  # NOQA
                     self.fields[key].initial = value
             else:
                 LOG.error('Unable to set value for {}'.format(key))
@@ -305,8 +316,6 @@ class PolicyForm(forms.Form):
         }
 
         if create:
-            if policy_id:
-                policy_info['inherits_from'] = policy_id
             self.api.create_policy(policy_info)
 
         elif policy_id:
