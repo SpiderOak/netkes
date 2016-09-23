@@ -10,18 +10,32 @@
 <h1 class="page-header">
     <i class="ss-icon">&#xEE00;</i> Policies
 </h1>
-
-<div class="spacer"><!--ZKP--></div>
-
-{% if policies %}
-    <ul>
+<table class="widget-table">
+  <thead>
+    <th>Name</th>
+    <th>Inherits From</th>
+    <th>Duplicate</th>
+  </thead>
+  <tbody>
     {% for policy in policies %}
-        <li>
-            <a href="/policies/{{ policy.id }}/">{{ policy.name }}</a>
-            {% if policy.parent %} Inherits from <a href="{% url 'blue_mgnt:policy_detail' policy_id=policy.inherits_from %}">{{ policy.parent }}
-            {% else %} <a href="{% url 'blue_mgnt:policy_create' %}?inherit={{ policy.id }}" class="button">Copy to new policy</a>{% endif %}
-        </li>
+    <tr>
+      <td><a href="/policies/{{ policy.id }}/">{{ policy.name }}</a></td>
+      <td>
+        {% if policy.parent %}
+        <a href="{% url 'blue_mgnt:policy_detail' policy_id=policy.inherits_from %}">
+          {{ policy.parent }}
+        </a>
+        {% endif %}
+      </td>
+      <td>
+        {% if not policy.parent %}
+        <a href="{% url 'blue_mgnt:policy_create' %}?inherit={{ policy.id }}">
+          Copy to new policy
+        </a>
+        {% endif %}
+      </td>
+    </tr>
     {% endfor %}
-{% endif %}
-
+  </tbody>
+</table>
 {% endblock content %}
