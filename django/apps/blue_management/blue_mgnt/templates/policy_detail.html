@@ -4,7 +4,7 @@
 
 {% block title %}Policies - Management Console{{ block.super }}{% endblock %}
 
-{% block breadcrumb %}<a href="{% url 'blue_mgnt:manage' %}">Back to Manage</a>{% endblock breadcrumb %}
+{% block breadcrumb %}<a href="{% url 'blue_mgnt:policy_list' %}">Back to Policies</a>{% endblock breadcrumb %}
 {% block navtab %}{% include "partials/navtab-widget.html" with active="manage" %}{% endblock navtab %}
 
 {% block content %}
