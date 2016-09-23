@@ -69,7 +69,8 @@
         {% endif %}
         <a href="{% url 'blue_mgnt:users' %}?page={{ pagination.paginator_page.number }}&order_by={{ column.order_by }}&search_by={{ search_by|urlencode }}&columns={{ columns }}">
           {{ column.header }}
-      </a></th>
+        </a>
+      </th>
       {% endfor %}
       <th>User Detail</th>
       <th>
@@ -78,64 +79,66 @@
       </th>
     </thead>
     <tbody>
-    {% for user_row in user_rows %}
-    <tr>
-      {% for hidden in user_row.delete_form.hidden_fields %}
-      {{ hidden }}
-      {% endfor %}
-      <td>
-        <i class="ss-icon edit-status">
-          {% if user_row.is_local_user %}
-          &#x270E;
-          {% else %}
-          &#xE071;
-          {% endif %}
-        </i>
-      </td>
-      {% for value, type in user_row.selected_columns %}
-      {% if type == 'bytes' %}
-      <td style="text-align: center">{{ value|sofilesizeformat }}</td>
-      {% elif type == 'email' %}
-      <td><a href="mailto:{{ value }}">
-          {{ value }}
-      </a></td>
-      {% elif type == 'group' %}
-      {% if user_row.is_local_user %}
-      {% for hidden in user_row.form.hidden_fields %}
-      {{ hidden }}
-      {% endfor %}
-      {% for field in user_row.form.visible_fields %}
-      <td>
-        {% if field.errors %}
-        {% for error in field.errors %}
-        <span class="error-highlight">
-          {{ field }}
-          <span class="error-tag">{{ error }}</span>
-        </span>
+      {% for user_row in user_rows %}
+      <tr>
+        {% for hidden in user_row.delete_form.hidden_fields %}
+        {{ hidden }}
         {% endfor %}
-        {% else %}
-        {{ field }}
-        {% endif %}
-      </td>
-      {% endfor %}
-      {% else %}
-      <td>{{ value }}</td>
-      {% endif %}
-      {% else %}
-      <td>{{ value }}</td>
-      {% endif %}
-      {% endfor %}
-      <td style="text-align: center">
-        <a href="{% url 'blue_mgnt:user_detail' user_row.email %}">Detail</a>
-      </td>
-      {{ user_row.gigs_stored }}
-      {% if not user_row.enabled or user_row.is_local_user and perms.blue_mgnt.can_manage_users %}
-      <td style="text-align:center">
-        <span class="del_box">{{ user_row.delete_form.DELETE }}</span>
+        <td>
+          <i class="ss-icon edit-status">
+            {% if user_row.is_local_user %}
+            &#x270E;
+            {% else %}
+            &#xE071;
+            {% endif %}
+          </i>
+        </td>
+        {% for value, type in user_row.selected_columns %}
+          {% if type == 'bytes' %}
+          <td style="text-align: center">{{ value|sofilesizeformat }}</td>
+          {% elif type == 'email' %}
+          <td>
+            <a href="mailto:{{ value }}">
+              {{ value }}
+            </a>
+          </td>
+          {% elif type == 'group' %}
+            {% if user_row.is_local_user %}
+              {% for hidden in user_row.form.hidden_fields %}
+              {{ hidden }}
+              {% endfor %}
+              {% for field in user_row.form.visible_fields %}
+              <td>
+                {% if field.errors %}
+                  {% for error in field.errors %}
+                  <span class="error-highlight">
+                    {{ field }}
+                    <span class="error-tag">{{ error }}</span>
+                  </span>
+                  {% endfor %}
+                {% else %}
+                {{ field }}
+                {% endif %}
+              </td>
+              {% endfor %}
+            {% else %}
+            <td>{{ value }}</td>
+            {% endif %}
+          {% else %}
+          <td>{{ value }}</td>
+          {% endif %}
+        {% endfor %}
+        <td style="text-align: center">
+          <a href="{% url 'blue_mgnt:user_detail' user_row.email %}">Detail</a>
+        </td>
+        {{ user_row.gigs_stored }}
+        {% if not user_row.enabled or user_row.is_local_user and perms.blue_mgnt.can_manage_users %}
+        <td style="text-align:center">
+          <span class="del_box">{{ user_row.delete_form.DELETE }}</span>
         {% else %}
         <td style="text-align:center">
           <span class="delete-fill ss-icon">&#x1F6AB;</span>
-          {% endif %}
+        {% endif %}
         </td>
       </tr>
       {% empty %}
@@ -157,24 +160,23 @@
         </td>
       </tr>
       {% endfor %}
-      </tbody>
-    </table>
+    </tbody>
+  </table>
 
-    {% include "partials/pagination-widget.html" %}
+  {% include "partials/pagination-widget.html" %}
 
-    <div class="widget-splitactions">
-      <div class="rhs">
-        <input type="hidden" value="{{ search }}" name="search">
-        <button class="button button-primary-basic">Save Changes</button>
-      </div>
-      <div class="lhs">
-        <a href="{% url 'blue_mgnt:users' %}?show_disabled={{ show_disabled|yesno:"0,1" }}&search={{ search }}#user_table" class="button button-muted">
-          {{ show_disabled|yesno:"Hide,Show" }} Disabled Users
-        </a>
-        <a href="{% url 'blue_mgnt:users_csv_download' %}?{{ get_args }}" class="button button-muted">Download CSV</a>
-      </div>
+  <div class="widget-splitactions">
+    <div class="rhs">
+      <input type="hidden" value="{{ search }}" name="search">
+      <button class="button button-primary-basic">Save Changes</button>
     </div>
-  </form>
-  <div class="spacer"><!--ZXP--></div>
-
-  {% endblock content %}
+    <div class="lhs">
+      <a href="{% url 'blue_mgnt:users' %}?show_disabled={{ show_disabled|yesno:"0,1" }}&search={{ search }}#user_table" class="button button-muted">
+        {{ show_disabled|yesno:"Hide,Show" }} Disabled Users
+      </a>
+      <a href="{% url 'blue_mgnt:users_csv_download' %}?{{ get_args }}" class="button button-muted">Download CSV</a>
+    </div>
+  </div>
+</form>
+<div class="spacer"><!--ZXP--></div>
+{% endblock content %}
