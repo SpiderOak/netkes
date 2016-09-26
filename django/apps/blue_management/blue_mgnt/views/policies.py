@@ -1,6 +1,6 @@
 import re
 import logging
-from collections import namedtuple
+from collections import namedtuple, OrderedDict
 import inflection
 
 from django import forms
@@ -152,9 +152,14 @@ class PolicyForm(forms.Form):
 
         self._policy = kwargs.pop('policy', None)
         if not self._policy:
-            self._policy = {'id': None, 'name': '', 'inherits_from': None, 'policy': {}}
+            self._policy = {
+                'id': None,
+                'name': '',
+                'inherits_from': None,
+                'policy': {},
+            }
 
-        self._inherit = kwargs.pop('inherit', None) or self._policy['inherits_from']
+        self._inherit = kwargs.pop('inherit', None) or self._policy['inherits_from']  # NOQA
 
         if 'initial' not in kwargs:
             kwargs['initial'] = {}
@@ -172,6 +177,8 @@ class PolicyForm(forms.Form):
         # Set all inheritance fields to --inherit-- if we are copying a policy
         if self._inherit and not self._policy.get('inherits_from'):
             self._set_all_inheritance_fields()
+
+        self._sort_fields()
 
     def _parent_choices(self):
         """ Get a list of parent choices used for inheritance """
@@ -239,6 +246,83 @@ class PolicyForm(forms.Form):
             else:
                 LOG.error('Unable to set value for {}'.format(key))
 
+    def _sort_fields(self):
+        """ Make sure fields are in their expected order
+        Current order should be:
+        - id
+        - name
+        - inherit_from
+
+        Followed by the generated fields, in alphabetical order. They should
+        look as follows:
+
+        - parent
+        - parent_inheritance
+        - child
+        - child_inheritance
+
+        NOTE: It is easier to render it with the inheritance field after
+        the value field than to render it before the value field so that we
+        can ensure the field label comes first.
+
+        Children should be after their parents, regardless of alphabetical
+        order.
+
+        """
+
+        # Store the fields as parent: [child, child, child]
+        ordered_fields = OrderedDict(
+            {'id': [], 'name': [], 'inherit_from': []}
+        )
+
+        for key in self.fields:
+            # Add the _inheritance field order later. Skip them for now
+            if key.endswith('_inheritance'):
+                continue
+
+            # Get the actual field object instead of just using the field name
+            field = self.fields.get(key)
+            if 'data-parent' in field.widget.attrs:
+                parent_key = field.widget.attrs['data-parent']
+                if parent_key not in ordered_fields:
+                    ordered_fields[parent_key] = []
+                if key not in ordered_fields[parent_key]:
+                    ordered_fields[parent_key].append(key)
+            elif key not in ordered_fields:
+                ordered_fields[key] = []
+
+        fields = ['id', 'name', 'inherit_from']
+        for key in ordered_fields.iterkeys():
+
+            if key in fields:
+                continue
+
+            # Add the key back in, then the inheritance key
+            if key not in fields:
+                fields.append(key)
+
+            # Add the inheritance fields back in. Do this before appending the
+            # previous key to have inheritance fields show before the field
+            # being referenced
+            inherit_field = "_".join([key, 'inheritance'])
+            if inherit_field not in fields:
+                fields.append(inherit_field)
+
+            # Add the child fields after the parents to guarantee they are in
+            # the correct order, instead of hoping children will always come
+            # after their parent alphabetically
+            if ordered_fields[key]:
+                for child in ordered_fields[key]:
+                    if child not in fields:
+                        fields.append(child)
+
+                    inherit_child = "_".join([child, 'inheritance'])
+                    if inherit_child not in fields:
+                        fields.append(inherit_child)
+
+        # Set the keyOrder based on the list of ordered keys
+        self.fields.keyOrder = fields
+
     def _validate_child(self, preference):
         """ Make sure the parent value allows the child field to be set """
 
@@ -287,7 +371,10 @@ class PolicyForm(forms.Form):
 
         for preference in self._preferences:
             if not self._validate_preference(preference):
-                del self.cleaned_data[preference.name]
+                try:
+                    del self.cleaned_data[preference.name]
+                except KeyError:
+                    pass
 
         return self.cleaned_data
 
