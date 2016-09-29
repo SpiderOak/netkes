@@ -178,6 +178,10 @@ class PolicyForm(forms.Form):
         if self._inherit and not self._policy.get('inherits_from'):
             self._set_all_inheritance_fields()
 
+        # Set all inheritance fields to --unset-- if this is a brand new policy
+        if not any([self._policy['id'], self._inherit, self._policy.get('inherits_from')]):  # NOQA
+            self._set_all_inheritance_fields(inheritance='--unset--')
+
         self._sort_fields()
 
     def _parent_choices(self):
@@ -219,6 +223,7 @@ class PolicyForm(forms.Form):
 
                 inherit_field_name = "_".join([pref.name, 'inheritance'])
                 inherit_field = forms.ChoiceField(choices=inherit_choices)
+                inherit_field.widget.attrs['class'] = 'policy-inherit-select'
                 self.fields[inherit_field_name] = inherit_field
 
                 # Add attrs to the field (e.g data-parent)
@@ -234,17 +239,42 @@ class PolicyForm(forms.Form):
 
     def _set_initial_values_from_policy(self):
         """ Set the initial value for the current form fields based on the
-        provided policy """
+        provided policy and inheritance setting.
+        """
 
-        for key, value in self._policy['policy'].iteritems():
-            if key in self.fields:
-                if value in ('--inherit--', '--unset--'):
-                    self.fields["_".join([key, 'inheritance'])].initial = value
-                else:
-                    self.fields["_".join([key, 'inheritance'])].initial = '--set--'  # NOQA
-                    self.fields[key].initial = value
+        exclude = ['name', 'id', 'inherit_from']
+
+        for field in self.fields:
+
+            # The fields in exclude won't have inheritance fields
+            if field in exclude or field.endswith('inheritance'):
+                continue
+
+            inheritance_field = '{}_inheritance'.format(field)
+            value = self._policy['policy'].get(field)
+
+            # If the value is inherit or unset, clear the field value and set
+            # the inheritance field value
+            if value in ('--inherit--', '--unset--'):
+                self.fields[field].initial = None
+                self.fields[inheritance_field].initial = value
+
+            # If there is a value, but it's not in the inheritance fields,
+            # set the value and set inheritance to --set--
+            elif value and value not in ('--inherit--', '--unset--'):
+                self.fields[field].initial = value
+                self.fields[inheritance_field].initial = '--set--'
+
+            # If there is no value, but this is an inherited policy, set the
+            # inheritance field to --inherit--
+            elif self._inherit or self._policy.get('inherits_from'):
+                self.fields[field].initial = None
+                self.fields[inheritance_field].initial = '--inherit--'
+
+            # Otherwise, if there is no value, set this to unset
             else:
-                LOG.error('Unable to set value for {}'.format(key))
+                self.fields[field].initial = None
+                self.fields[inheritance_field].initial = '--unset--'
 
     def _sort_fields(self):
         """ Make sure fields are in their expected order
@@ -393,6 +423,7 @@ class PolicyForm(forms.Form):
             if k.endswith(suffix):
                 val = self.cleaned_data.pop(k)
                 if val in inheritance_values:
+                    # Set the value to --inherit-- or --unset--
                     self.cleaned_data[remove_patt.sub('', k)] = val
 
     def save(self, create=False):
