@@ -161,6 +161,11 @@ class PolicyForm(forms.Form):
 
         self._inherit = kwargs.pop('inherit', None) or self._policy['inherits_from']  # NOQA
 
+        if self._inherit:
+            self._parent_policy = _policy_from_id_or_404(self.api, self._inherit)  # NOQA
+        else:
+            self._parent_policy = None
+
         if 'initial' not in kwargs:
             kwargs['initial'] = {}
 
@@ -253,22 +258,27 @@ class PolicyForm(forms.Form):
             inheritance_field = '{}_inheritance'.format(field)
             value = self._policy['policy'].get(field)
 
-            # If the value is inherit or unset, clear the field value and set
-            # the inheritance field value
-            if value in ('--inherit--', '--unset--'):
-                self.fields[field].initial = None
-                self.fields[inheritance_field].initial = value
+            if self._parent_policy:
+                parent_value = self._parent_policy['policy'].get(field)
+                if parent_value == '--unset--':
+                    parent_value = None
+            else:
+                parent_value = None
 
             # If there is a value, but it's not in the inheritance fields,
             # set the value and set inheritance to --set--
-            elif value and value not in ('--inherit--', '--unset--'):
+            if value is not None and value not in ('--inherit--', '--unset--'):
                 self.fields[field].initial = value
                 self.fields[inheritance_field].initial = '--set--'
 
-            # If there is no value, but this is an inherited policy, set the
-            # inheritance field to --inherit--
-            elif self._inherit or self._policy.get('inherits_from'):
+            # If the value isunset, clear the field value and set the
+            # inheritance field value
+            elif value == '--unset--':
                 self.fields[field].initial = None
+                self.fields[inheritance_field].initial = value
+
+            elif (self._inherit and value == '--inherit--') and parent_value:
+                self.fields[field].initial = parent_value
                 self.fields[inheritance_field].initial = '--inherit--'
 
             # Otherwise, if there is no value, set this to unset
