@@ -89,7 +89,6 @@ def _parse_preferences(preferences, parent=None):
 def _get_preferences(api):
     """ Get preferences from cache or set them if they are not there """
 
-    cache.delete('PREFERENCES')
     prefs = cache.get('PREFERENCES')
     if not prefs:
         # Convert results to a list so they can be cached
@@ -286,6 +285,29 @@ class PolicyForm(forms.Form):
                 self.fields[field].initial = None
                 self.fields[inheritance_field].initial = '--unset--'
 
+    def _create_ordered_fields(self):
+        # Store the fields as parent: [child, child, child]
+        ordered_fields = OrderedDict(
+            {'id': [], 'name': [], 'inherit_from': []}
+        )
+
+        for key in self.fields:
+            # Add the _inheritance field order later. Skip them for now
+            if key.endswith('_inheritance'):
+                continue
+
+            # Get the actual field object instead of just using the field name
+            field = self.fields.get(key)
+            if 'data-parent' in field.widget.attrs:
+                parent_key = field.widget.attrs['data-parent']
+                if parent_key not in ordered_fields:
+                    ordered_fields[parent_key] = []
+                if key not in ordered_fields[parent_key]:
+                    ordered_fields[parent_key].append(key)
+            elif key not in ordered_fields:
+                ordered_fields[key] = []
+        return ordered_fields
+
     def _sort_fields(self):
         """ Make sure fields are in their expected order
         Current order should be:
@@ -309,32 +331,12 @@ class PolicyForm(forms.Form):
         order.
 
         """
-
-        # Store the fields as parent: [child, child, child]
-        ordered_fields = OrderedDict(
-            {'id': [], 'name': [], 'inherit_from': []}
-        )
-
-        for key in self.fields:
-            # Add the _inheritance field order later. Skip them for now
-            if key.endswith('_inheritance'):
-                continue
-
-            # Get the actual field object instead of just using the field name
-            field = self.fields.get(key)
-            if 'data-parent' in field.widget.attrs:
-                parent_key = field.widget.attrs['data-parent']
-                if parent_key not in ordered_fields:
-                    ordered_fields[parent_key] = []
-                if key not in ordered_fields[parent_key]:
-                    ordered_fields[parent_key].append(key)
-            elif key not in ordered_fields:
-                ordered_fields[key] = []
+        ordered_fields = self._create_ordered_fields()
 
         fields = ['id', 'name', 'inherit_from']
-        for key in ordered_fields.iterkeys():
+        for key, children in ordered_fields.iteritems():
 
-            if key in fields:
+            if key in ('id', 'name', 'inherit_from'):
                 continue
 
             # Add the key back in, then the inheritance key
@@ -351,14 +353,22 @@ class PolicyForm(forms.Form):
             # Add the child fields after the parents to guarantee they are in
             # the correct order, instead of hoping children will always come
             # after their parent alphabetically
-            if ordered_fields[key]:
-                for child in ordered_fields[key]:
-                    if child not in fields:
+            for child in children:
+                inherit_child = "_".join([child, 'inheritance'])
+
+                try:
+                    parent_index = fields.index(inherit_field)
+                except ValueError:
+                    parent_index = -1
+
+                if child not in fields:
+                    if parent_index >= 0:
+                        fields.insert(parent_index + 1, child)
+                    else:
                         fields.append(child)
 
-                    inherit_child = "_".join([child, 'inheritance'])
-                    if inherit_child not in fields:
-                        fields.append(inherit_child)
+                if inherit_child not in fields:
+                    fields.insert(fields.index(child) + 1, inherit_child)
 
         # Set the keyOrder based on the list of ordered keys
         self.fields.keyOrder = fields
@@ -373,7 +383,7 @@ class PolicyForm(forms.Form):
         if parent_value in INHERIT_CHOICES:
             return False
 
-        if isinstance(preference, list):
+        if isinstance(preference.conditional_parent_value, list):
             valid = parent_value in preference.conditional_parent_value
         else:
             valid = parent_value == preference.conditional_parent_value
@@ -390,7 +400,7 @@ class PolicyForm(forms.Form):
     def _validate_preference(self, preference):
         """ Run additional validation on each preference if needed """
 
-        if not preference.conditional_parent_value:
+        if preference.conditional_parent_value is None:
             return True
 
         return self._validate_child(preference)
