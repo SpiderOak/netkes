@@ -9,7 +9,11 @@
 {% block content %}
 <h1 class="page-header">
     <i class="ss-icon">&#xEE00;</i> Policies
+    <div class="actions">
+        <a href="{% url 'blue_mgnt:policy_create' %}" class='button button-primary-basic'>Add Policy</a>
+    </div>
 </h1>
+
 <table class="widget-table">
   <thead>
     <th>Name</th>

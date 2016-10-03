@@ -89,7 +89,6 @@ def _parse_preferences(preferences, parent=None):
 def _get_preferences(api):
     """ Get preferences from cache or set them if they are not there """
 
-    cache.delete('PREFERENCES')
     prefs = cache.get('PREFERENCES')
     if not prefs:
         # Convert results to a list so they can be cached
@@ -161,6 +160,11 @@ class PolicyForm(forms.Form):
 
         self._inherit = kwargs.pop('inherit', None) or self._policy['inherits_from']  # NOQA
 
+        if self._inherit:
+            self._parent_policy = _policy_from_id_or_404(self.api, self._inherit)  # NOQA
+        else:
+            self._parent_policy = None
+
         if 'initial' not in kwargs:
             kwargs['initial'] = {}
 
@@ -177,6 +181,10 @@ class PolicyForm(forms.Form):
         # Set all inheritance fields to --inherit-- if we are copying a policy
         if self._inherit and not self._policy.get('inherits_from'):
             self._set_all_inheritance_fields()
+
+        # Set all inheritance fields to --unset-- if this is a brand new policy
+        if not any([self._policy['id'], self._inherit, self._policy.get('inherits_from')]):  # NOQA
+            self._set_all_inheritance_fields(inheritance='--unset--')
 
         self._sort_fields()
 
@@ -219,6 +227,7 @@ class PolicyForm(forms.Form):
 
                 inherit_field_name = "_".join([pref.name, 'inheritance'])
                 inherit_field = forms.ChoiceField(choices=inherit_choices)
+                inherit_field.widget.attrs['class'] = 'policy-inherit-select'
                 self.fields[inherit_field_name] = inherit_field
 
                 # Add attrs to the field (e.g data-parent)
@@ -234,17 +243,70 @@ class PolicyForm(forms.Form):
 
     def _set_initial_values_from_policy(self):
         """ Set the initial value for the current form fields based on the
-        provided policy """
+        provided policy and inheritance setting.
+        """
 
-        for key, value in self._policy['policy'].iteritems():
-            if key in self.fields:
-                if value in ('--inherit--', '--unset--'):
-                    self.fields["_".join([key, 'inheritance'])].initial = value
-                else:
-                    self.fields["_".join([key, 'inheritance'])].initial = '--set--'  # NOQA
-                    self.fields[key].initial = value
+        exclude = ['name', 'id', 'inherit_from']
+
+        for field in self.fields:
+
+            # The fields in exclude won't have inheritance fields
+            if field in exclude or field.endswith('inheritance'):
+                continue
+
+            inheritance_field = '{}_inheritance'.format(field)
+            value = self._policy['policy'].get(field)
+
+            if self._parent_policy:
+                parent_value = self._parent_policy['policy'].get(field)
+                if parent_value == '--unset--':
+                    parent_value = None
             else:
-                LOG.error('Unable to set value for {}'.format(key))
+                parent_value = None
+
+            # If there is a value, but it's not in the inheritance fields,
+            # set the value and set inheritance to --set--
+            if value is not None and value not in ('--inherit--', '--unset--'):
+                self.fields[field].initial = value
+                self.fields[inheritance_field].initial = '--set--'
+
+            # If the value isunset, clear the field value and set the
+            # inheritance field value
+            elif value == '--unset--':
+                self.fields[field].initial = None
+                self.fields[inheritance_field].initial = value
+
+            elif (self._inherit and value == '--inherit--') and parent_value:
+                self.fields[field].initial = parent_value
+                self.fields[inheritance_field].initial = '--inherit--'
+
+            # Otherwise, if there is no value, set this to unset
+            else:
+                self.fields[field].initial = None
+                self.fields[inheritance_field].initial = '--unset--'
+
+    def _create_ordered_fields(self):
+        # Store the fields as parent: [child, child, child]
+        ordered_fields = OrderedDict(
+            {'id': [], 'name': [], 'inherit_from': []}
+        )
+
+        for key in self.fields:
+            # Add the _inheritance field order later. Skip them for now
+            if key.endswith('_inheritance'):
+                continue
+
+            # Get the actual field object instead of just using the field name
+            field = self.fields.get(key)
+            if 'data-parent' in field.widget.attrs:
+                parent_key = field.widget.attrs['data-parent']
+                if parent_key not in ordered_fields:
+                    ordered_fields[parent_key] = []
+                if key not in ordered_fields[parent_key]:
+                    ordered_fields[parent_key].append(key)
+            elif key not in ordered_fields:
+                ordered_fields[key] = []
+        return ordered_fields
 
     def _sort_fields(self):
         """ Make sure fields are in their expected order
@@ -269,32 +331,12 @@ class PolicyForm(forms.Form):
         order.
 
         """
-
-        # Store the fields as parent: [child, child, child]
-        ordered_fields = OrderedDict(
-            {'id': [], 'name': [], 'inherit_from': []}
-        )
-
-        for key in self.fields:
-            # Add the _inheritance field order later. Skip them for now
-            if key.endswith('_inheritance'):
-                continue
-
-            # Get the actual field object instead of just using the field name
-            field = self.fields.get(key)
-            if 'data-parent' in field.widget.attrs:
-                parent_key = field.widget.attrs['data-parent']
-                if parent_key not in ordered_fields:
-                    ordered_fields[parent_key] = []
-                if key not in ordered_fields[parent_key]:
-                    ordered_fields[parent_key].append(key)
-            elif key not in ordered_fields:
-                ordered_fields[key] = []
+        ordered_fields = self._create_ordered_fields()
 
         fields = ['id', 'name', 'inherit_from']
-        for key in ordered_fields.iterkeys():
+        for key, children in ordered_fields.iteritems():
 
-            if key in fields:
+            if key in ('id', 'name', 'inherit_from'):
                 continue
 
             # Add the key back in, then the inheritance key
@@ -311,14 +353,22 @@ class PolicyForm(forms.Form):
             # Add the child fields after the parents to guarantee they are in
             # the correct order, instead of hoping children will always come
             # after their parent alphabetically
-            if ordered_fields[key]:
-                for child in ordered_fields[key]:
-                    if child not in fields:
+            for child in children:
+                inherit_child = "_".join([child, 'inheritance'])
+
+                try:
+                    parent_index = fields.index(inherit_field)
+                except ValueError:
+                    parent_index = -1
+
+                if child not in fields:
+                    if parent_index >= 0:
+                        fields.insert(parent_index + 1, child)
+                    else:
                         fields.append(child)
 
-                    inherit_child = "_".join([child, 'inheritance'])
-                    if inherit_child not in fields:
-                        fields.append(inherit_child)
+                if inherit_child not in fields:
+                    fields.insert(fields.index(child) + 1, inherit_child)
 
         # Set the keyOrder based on the list of ordered keys
         self.fields.keyOrder = fields
@@ -333,7 +383,7 @@ class PolicyForm(forms.Form):
         if parent_value in INHERIT_CHOICES:
             return False
 
-        if isinstance(preference, list):
+        if isinstance(preference.conditional_parent_value, list):
             valid = parent_value in preference.conditional_parent_value
         else:
             valid = parent_value == preference.conditional_parent_value
@@ -350,7 +400,7 @@ class PolicyForm(forms.Form):
     def _validate_preference(self, preference):
         """ Run additional validation on each preference if needed """
 
-        if not preference.conditional_parent_value:
+        if preference.conditional_parent_value is None:
             return True
 
         return self._validate_child(preference)
@@ -393,6 +443,7 @@ class PolicyForm(forms.Form):
             if k.endswith(suffix):
                 val = self.cleaned_data.pop(k)
                 if val in inheritance_values:
+                    # Set the value to --inherit-- or --unset--
                     self.cleaned_data[remove_patt.sub('', k)] = val
 
     def save(self, create=False):
