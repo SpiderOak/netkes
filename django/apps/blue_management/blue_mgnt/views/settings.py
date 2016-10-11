@@ -124,6 +124,7 @@ def settings(request, api, account_info, config, username, saved=False):
             required=False,
         )
         support_email = forms.EmailField(initial=opts['support_email'])
+        admin_email = forms.EmailField(initial=opts['admin_email'])
         if features['ldap']:
             omva_url = forms.URLField(
                 label='Management VM External URL',
