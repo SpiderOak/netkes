@@ -573,22 +573,23 @@ def shares(request, api, account_info, config, username, saved=False):
     features = api.enterprise_features()
     opts = api.enterprise_settings()
     page = int(request.GET.get('page', 1))
+    limit_users = 10
+    fetch_rows_offset = limit_users * (page - 1)
 
-    user_limit = 10
-    user_offset = user_limit * (page - 1)
-    users = api.list_shares_for_brand(user_limit, user_offset)
-    # The api gives us shares per user and we only have count of the
-    # total number of shares. We don't have the total number of users
-    # who have shares. So we'll just guess for now.
-    fake_count = page * user_limit
-    if len(users) == user_limit:
-        fake_count += user_limit
+    # Actually returns list of dicts with user info and a nested shares key.
+    # Shares key contians a list of share info dicts 
+    users = api.list_shares_for_brand(limit_users, fetch_rows_offset)
+
+    count = page * limit_users
+    if len(users) >= limit_users:
+        # Force a number at 10
+        count = count + 1
 
     pagination = Pagination(
         'blue_mgnt:shares',
-        fake_count,
-        page,
-        user_limit,
+        count=count,
+        page=page,
+        per_page=limit_users,
     )
 
     if request.method == 'POST':
@@ -733,7 +734,7 @@ def fingerprint(request, api, account_info, config, username):
     ),
         RequestContext(request))
 
-
+# NOTE: This could use some cleaning up
 class Pagination(object):
     def __init__(self, url, count, page=1, per_page=25):
         self.page = 1
@@ -775,6 +776,7 @@ class Pagination(object):
 
 
 # Benny's da_paginator
+# TODO: Kill this with fire
 def pageit(sub, api, page, extra):
     if not extra:
         extra = ()
