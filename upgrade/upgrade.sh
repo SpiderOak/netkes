@@ -77,7 +77,10 @@ echo $secret_key >> /opt/openmanage/etc/openmanage_defaults
 
 echo "Syncing database"
 pushd $OPENMANAGE_DJANGO_ROOT/omva
-python manage.py syncdb --noinput
+python manage.py migrate --fake openmanage 0001_initial --noinput
+python manage.py migrate --fake blue_mgnt 0001_initial --noinput
+python manage.py migrate --fake-initial --noinput
+python manage.py migrate --noinput
 popd
 
 echo "Updating database..."
