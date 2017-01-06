@@ -8,7 +8,10 @@
             {% if forloop.counter < 3 %}
                 {# Put Name and Inherit from on their own lines #}
                     <th>{{ field.label_tag }}</th>
-                    <td colspan='2'>{{ field }}</td>
+                    <td colspan='2' {% if field.errors %}class='error'{% endif %}>
+                        {% if field.errors %}{{ field.errors }}<br />{% endif %}
+                        {{ field }}
+                    </td>
                 </tr>
                 <tr>
             {% else %}
@@ -16,8 +19,10 @@
                     <td>{{ field }}</td>
                 {% else %}
                     <th>{{ field.label_tag }}</th>
-                    <td>{% if field.errors %}{{ field.errors }}<br />{% endif %}
-                    {{ field }}</td>
+                    <td {% if field.errors %}class='error'{% endif %}>
+                        {% if field.errors %}{{ field.errors }}<br />{% endif %}
+                        {{ field }}
+                    </td>
                 {% endif %}
 
                 {% if forloop.last %}
