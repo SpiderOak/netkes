@@ -76,6 +76,7 @@ echo $secret_key >> /opt/openmanage/etc/openmanage_defaults
 . /etc/default/openmanage
 
 apt-get -y remove python-crypto
+apt-get -y autoremove
 
 find /opt/openmanage/upgrade/resources/ -name '*.deb' | xargs dpkg -i
 
