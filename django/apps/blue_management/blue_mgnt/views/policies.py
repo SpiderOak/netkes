@@ -131,9 +131,19 @@ def _field_type(preference, required=True, choices=None):
 
 def _attrs_from_preference(preference):
     """ Get widget attributes based on the provided preference """
+
     if preference.parent and preference.conditional_parent_value:
+        cpv = preference.conditional_parent_value
+
+        # Change bool to string
+        if isinstance(cpv, bool):
+            if cpv:
+                cpv = 'True'
+            else:
+                cpv = 'False'
+
         return {'data-parent': preference.parent,
-                'data-conditional-parent-value': preference.conditional_parent_value}  # NOQA
+                'data-conditional-parent-value': cpv}
     return {}
 
 
