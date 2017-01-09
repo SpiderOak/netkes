@@ -338,7 +338,7 @@ def validate(request):
             login(request, user)
             return redirect('blue_mgnt:index')
     return HttpResponseForbidden("Enterprise management link is expired or invalid.",
-                                 mimetype="text/plain")
+                                 content_type="text/plain")
 
 
 def get_method_prefix(fun):
@@ -491,7 +491,7 @@ def download_logs(request, api, account_info, config, username):
     subprocess.call(['/opt/openmanage/bin/gather_logs.sh', date])
 
     response = HttpResponse(FileWrapper(open(path)),
-                            mimetype='application/bzip2')
+                            content_type='application/bzip2')
     response['Content-Disposition'] = 'attachment; filename=%s' % filename
     return response
 
@@ -513,7 +513,7 @@ def users_csv_download(request, api, account_info, config, username):
     search_by = request.GET.get('search_by')
     users = api.list_users(order_by=order_by, search_by=search_by,)
 
-    response = HttpResponse(mimetype='text/csv')
+    response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename=users.csv'
 
     writer = csv.writer(response)
@@ -577,7 +577,7 @@ def shares(request, api, account_info, config, username, saved=False):
     fetch_rows_offset = limit_users * (page - 1)
 
     # Actually returns list of dicts with user info and a nested shares key.
-    # Shares key contians a list of share info dicts 
+    # Shares key contians a list of share info dicts
     users = api.list_shares_for_brand(limit_users, fetch_rows_offset)
 
     count = page * limit_users
