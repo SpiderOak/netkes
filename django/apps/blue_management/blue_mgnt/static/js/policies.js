@@ -8,18 +8,20 @@
         $("[data-parent='{}']".replace("{}", parent_name)).each(function () {
             console.log(parent.value);
             console.log($(this).data('conditional-parent-value'));
+            var parentVisible = $(parent).is(":visible");
 
-            if ($(this).data("conditional-parent-value") === parent.value) {
-                $(this).show();
-            } else if ($(this).data("conditional-parent-value").indexOf(parent.value) > -1) {
+            if ($(this).data("conditional-parent-value") === parent.value && parentVisible) {
+                $(this).parent().parent().show();
+            } else if ($(this).data("conditional-parent-value").indexOf(parent.value) > -1 && parentVisible) {
                 // Check if parent value is in a list of accepted values
                 $(this).parent().parent().show();
-            } else if ($(this).data("conditional-parent-value") === "True" && $(parent).is(":checked")) {
+            } else if ($(this).data("conditional-parent-value") === "True" && $(parent).is(":checked") && parentVisible) {
                 // if conditional value is true and the checkbox is checked, show this child
                 $(this).parent().parent().show(); // this should show the table row
             } else {
                 $(this).parent().parent().hide(); // this should hide the table row
             }
+            $(this).change();
         });
     }
 
