@@ -127,9 +127,11 @@ INSTALLED_APPS = (
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
-        'LOCATION': '/opt/openmanage/django_cache',
+        'LOCATION': '/opt/openmanage/django_cache2',
     }
 }
+
+SESSION_SERIALIZER = 'django.contrib.sessions.serializers.PickleSerializer'
 
 
 AUTHENTICATION_BACKENDS = (
