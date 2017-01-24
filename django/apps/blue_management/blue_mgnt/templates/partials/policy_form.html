@@ -5,7 +5,7 @@
     {% endfor %}
     <table class='widget-table widget-table-details' id='policy-table'>
         {% for field in form.visible_fields %}
-            {% if forloop.counter < 3 %}
+            {% if forloop.counter < 2 %}
                 {# Put Name and Inherit from on their own lines #}
                     <th>{{ field.label_tag }}</th>
                     <td colspan='2' {% if field.errors %}class='error'{% endif %}>
@@ -27,7 +27,7 @@
 
                 {% if forloop.last %}
                     </tr>
-                {% elif forloop.counter|divisibleby:2 %}
+                {% elif forloop.counter0|divisibleby:2 %}
                     </tr><tr>
                 {% endif %}
             {% endif %}

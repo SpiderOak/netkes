@@ -210,13 +210,8 @@ class PolicyForm(forms.Form):
         """ Create a TypedChoiceField that coerces to integer and uses
         api.list_policies to provide inheritance choices """
 
-        self.fields['inherit_from'] = forms.TypedChoiceField(
-            required=False,
-            choices=self._parent_choices(),
-            empty_value=None,
-            coerce=int)
-
-        self.fields['inherit_from'].initial = self._inherit
+        self.fields['inherit_from'] = forms.IntegerField(
+            required=False, widget=forms.HiddenInput, initial=self._inherit)
 
     def _add_fields_from_preferences(self):
         """ Add fields of the correct type based on preferences """
