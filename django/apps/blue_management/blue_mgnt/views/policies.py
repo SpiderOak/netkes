@@ -107,7 +107,9 @@ def _build_choices(choices):
 def _field_type(preference, required=True, choices=None):
     """ Get the correct Django forms field based on the provided value """
 
-    label = inflection.humanize(inflection.underscore(preference.name))
+    label = preference.description
+    if not label:
+        label = inflection.humanize(inflection.underscore(preference.name))
     if preference.field_type == 'string[]':
         return ListField(required=required, label=label)
 
