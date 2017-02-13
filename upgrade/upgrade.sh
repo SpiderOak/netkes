@@ -75,9 +75,19 @@ echo $secret_key >> /opt/openmanage/etc/openmanage_defaults
 
 . /etc/default/openmanage
 
+apt-get -y remove python-crypto
+apt-get -y autoremove
+
+find /opt/openmanage/upgrade/resources/ -name '*.deb' | xargs dpkg -i
+
+cat /opt/openmanage/upgrade/requirements.txt | xargs pip install
+
 echo "Syncing database"
 pushd $OPENMANAGE_DJANGO_ROOT/omva
-python manage.py syncdb --noinput
+python manage.py migrate --fake openmanage 0001_initial --noinput
+python manage.py migrate --fake blue_mgnt 0001_initial --noinput
+python manage.py migrate --fake-initial --noinput
+python manage.py migrate --noinput
 popd
 
 echo "Updating database..."
@@ -85,12 +95,6 @@ echo "Updating database..."
 
 echo "Running additional update scripts..."
 sudo bash -c "PYTHONPATH=/opt/openmanage python /opt/openmanage/upgrade/apply_scripts.py"
-
-apt-get -y remove python-crypto
-
-find /opt/openmanage/upgrade/resources/ -name '*.deb' | xargs dpkg -i
-
-cat /opt/openmanage/upgrade/requirements.txt | xargs pip install
 
 # Restart services
 for SERVICE in openmanage admin_console; do

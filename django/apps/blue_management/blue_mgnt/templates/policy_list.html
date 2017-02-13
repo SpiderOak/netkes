@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load filter_todate %}
+{% load so_filters %}
+
+{% block title %}Policies - Management Console{{ block.super }}{% endblock %}
+
+{% block breadcrumb %}<a href="{% url 'blue_mgnt:manage' %}">Back to Manage</a>{% endblock breadcrumb %}
+{% block navtab %}{% include "partials/navtab-widget.html" with active="manage" %}{% endblock navtab %}
+{% block content %}
+<h1 class="page-header">
+    <i class="ss-icon">&#xEE00;</i> Policies
+    <div class="actions">
+        <a href="{% url 'blue_mgnt:policy_create' %}" class='button button-primary-basic'>Add Policy</a>
+    </div>
+</h1>
+
+<table class="widget-table">
+  <thead>
+    <th>Name</th>
+    <th>Inherits From</th>
+    <th>Duplicate</th>
+  </thead>
+  <tbody>
+    {% for policy in policies %}
+    <tr>
+      <td><a href="/policies/{{ policy.id }}/">{{ policy.name }}</a></td>
+      <td>
+        {% if policy.parent %}
+        <a href="{% url 'blue_mgnt:policy_detail' policy_id=policy.inherits_from %}">
+          {{ policy.parent }}
+        </a>
+        {% endif %}
+      </td>
+      <td>
+        {% if not policy.parent %}
+        <a href="{% url 'blue_mgnt:policy_create' %}?inherit={{ policy.id }}">
+          Copy to new policy
+        </a>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock content %}

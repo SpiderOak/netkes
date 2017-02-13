@@ -1,0 +1,44 @@
+{% if form %}
+<form method='POST' action='.'>
+    {% for field in form.hidden_fields %}
+        {{ field }}
+    {% endfor %}
+    <table class='widget-table widget-table-details' id='policy-table'>
+        {% for field in form.visible_fields %}
+            {% if forloop.counter < 2 %}
+                {# Put Name and Inherit from on their own lines #}
+                    <th>{{ field.label_tag }}</th>
+                    <td colspan='2' {% if field.errors %}class='error'{% endif %}>
+                        {% if field.errors %}{{ field.errors }}<br />{% endif %}
+                        {{ field }}
+                    </td>
+                </tr>
+                <tr>
+            {% else %}
+                {% if '_inheritance' in field.name %}
+                    <td>{{ field }}</td>
+                {% else %}
+                    <th>{{ field.label_tag }}</th>
+                    <td {% if field.errors %}class='error'{% endif %}>
+                        {% if field.errors %}{{ field.errors }}<br />{% endif %}
+                        {{ field }}
+                    </td>
+                {% endif %}
+
+                {% if forloop.last %}
+                    </tr>
+                {% elif forloop.counter0|divisibleby:2 %}
+                    </tr><tr>
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+        <tr>
+          <td>{% if policy.id %}<a href="{% url 'blue_mgnt:policy_delete' policy.id %}">Delete Policy</a>{% endif %}</td>
+          <td><input type='submit' class='button' value='Save' /></td>
+        </tr>
+  </table>
+</form>
+
+{% else %}
+<p>{{ missing_form_error }}</p>
+{% endif %}

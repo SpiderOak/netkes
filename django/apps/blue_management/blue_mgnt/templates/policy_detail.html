@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% load filter_todate %}
+{% load so_filters %}
+
+{% block title %}Policies - Management Console{{ block.super }}{% endblock %}
+
+{% block breadcrumb %}<a href="{% url 'blue_mgnt:policy_list' %}">Back to Policies</a>{% endblock breadcrumb %}
+{% block navtab %}{% include "partials/navtab-widget.html" with active="manage" %}{% endblock navtab %}
+
+{% block content %}
+<h1 class="page-header">
+  Policies
+</h1>
+
+<div class="spacer"><!--ZKP--></div>
+
+{% include 'partials/policy_form.html' %}
+
+{% endblock content %}
+
+{% block js_main %}
+<script src="/static/blue_mgnt/js/policies.js" type="text/javascript"></script>
+{% endblock %}

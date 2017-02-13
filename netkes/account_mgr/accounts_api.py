@@ -3,7 +3,6 @@ import urllib
 import urllib2
 import types
 import logging
-import time
 
 from api_client import ApiClient
 
@@ -23,8 +22,8 @@ class LogErrorMeta(type):
 
     @classmethod
     def log_exceptions(cls, func):
-        '''Log the name and arguments of any function that raises an Error. 
-        Then raise the exception. 
+        '''Log the name and arguments of any function that raises an Error.
+        Then raise the exception.
         '''
         def wrapper(*args, **kwargs):
             try:
@@ -35,30 +34,34 @@ class LogErrorMeta(type):
                 raise
         wrapper.__name__ = func.__name__
         return wrapper
-        
+
 
 class Api(object):
     __metaclass__ = LogErrorMeta
 
     class BadParams(Error):
         pass
-    class PaymentRequired(Error):
+    class PaymentRequired(Error):  # NOQA
         pass
-    class NotFound(Error):
+    class NotFound(Error):  # NOQA
         pass
-    class DuplicateGroupName(Error):
+    class DuplicateGroupName(Error):  # NOQA
         pass
-    class DuplicateUsername(Error):
+    class DuplicateUsername(Error):  # NOQA
         pass
-    class DuplicateEmail(Error):
+    class DuplicateEmail(Error):  # NOQA
         pass
-    class BadPlan(Error):
+    class BadPlan(Error):  # NOQA
         pass
-    class BadGroup(Error):
+    class BadGroup(Error):  # NOQA
         pass
-    class QuotaExceeded(Error):
+    class QuotaExceeded(Error):  # NOQA
         pass
-    class EmailNotSent(Error):
+    class EmailNotSent(Error):  # NOQA
+        pass
+    class BadPolicy(Error):  # NOQA
+        pass
+    class PolicyInUse(Error):  # NOQA
         pass
 
     @classmethod
@@ -74,35 +77,35 @@ class Api(object):
     def ping(self):
         return self.client.get_json('ping')
 
-    ### Plans
+    # Plans
 
     def list_plans(self):
         return self.client.get_json('plans')
 
-    ### Quota
+    # Quota
 
     def quota(self):
         return self.client.get_json('partner/quota')
 
-    ### Info
+    # Info
 
     def info(self):
         return self.client.get_json('partner/info')
 
-    ### Features
+    # Features
 
     def enterprise_features(self):
         return self.client.get_json('partner/features')
 
-    ### Backup
+    # Backup
 
     def backup(self):
         return self.client.get_json('partner/backup')
-    
+
     def update_backup(self, backup):
         return self.client.post_json('partner/backup', backup)
 
-    ### Settings
+    # Settings
 
     def enterprise_settings(self):
         return self.client.get_json('partner/settings')
@@ -123,7 +126,61 @@ class Api(object):
                 raise self.BadParams()
             raise
 
-    ### Groups
+    # Preferences and policy
+
+    def get_device_preferences(self):
+        return self.client.get_json('devicepreferences')
+
+    def list_policies(self):
+        return self.client.get_json('devicepolicies/')
+
+    def create_policy(self, policy_info):
+        try:
+            return self.client.post_json('devicepolicies/', policy_info)
+        except urllib2.HTTPError, err:
+            if err.code == 400:
+                raise self.BadParams()
+            elif err.code == 409:
+                data = json.loads(err.read())
+                if 'inherits_from' in data['conflicts']:
+                    raise self.BadPolicy()
+            raise
+
+    def get_policy(self, policy_id):
+        try:
+            return self.client.get_json('devicepolicies/%d' % (policy_id,))
+        except urllib2.HTTPError, err:
+            if err.code == 404:
+                raise self.NotFound()
+            raise
+
+    def edit_policy(self, policy_id, policy_info):
+        try:
+            self.client.post_json('devicepolicies/%d' % (policy_id,), policy_info)
+        except urllib2.HTTPError, err:
+            if err.code == 404:
+                raise self.NotFound()
+            elif err.code == 400:
+                raise self.BadParams()
+            elif err.code == 409:
+                data = json.loads(err.read())
+                if 'inherits_from' in data['conflicts']:
+                    raise self.BadPolicy()
+            raise
+
+    def delete_policy(self, policy_id):
+        try:
+            self.client.delete('devicepolicies/%d' % (policy_id,))
+        except urllib2.HTTPError, err:
+            if err.code == 404:
+                raise self.NotFound()
+            elif err.code == 409:
+                data = json.loads(err.read())
+                if 'policy_id' in data['conflicts']:
+                    raise self.PolicyInUse()
+            raise
+
+    # Groups
 
     def list_groups(self):
         return self.client.get_json('groups/')
@@ -184,7 +241,7 @@ class Api(object):
                 raise self.NotFound()
             raise
 
-    ### Shares
+    # Shares
 
     def _create_query_string(self, **kw):
         get_params = dict()
@@ -200,7 +257,7 @@ class Api(object):
         query_string = self._create_query_string(limit=limit, offset=offset)
         return self.client.get_json('shares/%s' % query_string)
 
-    ### Users
+    # Users
 
     def list_users_paged(self, user_limit=1000, search_by=None, order_by=None):
         all_users = []
@@ -208,7 +265,7 @@ class Api(object):
         for page in range((user_count / user_limit) + 1):
             user_offset = user_limit * page
             if user_offset < user_count:
-                users = self.list_users(user_limit, user_offset, 
+                users = self.list_users(user_limit, user_offset,
                                         search_by, order_by)
                 all_users = all_users + users
                 if len(users) < user_limit:
@@ -221,17 +278,14 @@ class Api(object):
         if limit is None and offset is None:
             return self.list_users_paged(search_by=search_by, order_by=order_by)
 
-        query_string = self._create_query_string(limit=limit, 
-                                                 offset=offset,
-                                                 search_by=search_by,
-                                                 order_by=order_by
-                                                )
+        query_string = self._create_query_string(
+            limit=limit, offset=offset, search_by=search_by, order_by=order_by)
         return self.client.get_json('users/%s' % query_string)
 
     def search_users(self, name_or_email=None, limit=None, offset=None, group_id=None):
-        query_string = self._create_query_string(limit=limit, 
-                                                 offset=offset, 
-                                                 search=name_or_email, 
+        query_string = self._create_query_string(limit=limit,
+                                                 offset=offset,
+                                                 search=name_or_email,
                                                  group_id=group_id)
         return self.client.get_json('users/%s' % query_string)
 
@@ -253,7 +307,6 @@ class Api(object):
                 if 'email' in data['conflicts']:
                     raise self.DuplicateEmail()
                 elif 'plan_id' in data['conflicts']:
-                    print 'data', data
                     raise self.BadPlan()
                 elif 'group_id' in data['conflicts']:
                     raise self.BadGroup()
@@ -277,20 +330,17 @@ class Api(object):
                 raise self.NotFound()
             raise
 
-    def list_client_revisions(self, min_revision=0, max_revision=-1, 
+    def list_client_revisions(self, min_revision=0, max_revision=-1,
                               max_days_since_login=-1):
         '''
         min_revision: 0 is the lowest possible revision
-        max_revision: revisions will always be positive so use -1 to indicate 
+        max_revision: revisions will always be positive so use -1 to indicate
             no maximum.
-        max_days_since_login: Only return results for devices that have logged 
+        max_days_since_login: Only return results for devices that have logged
             in within a certain number of days. -1 indicates that results should
             be returned for all devices.
         '''
-        data = (min_revision,
-                max_revision,
-                max_days_since_login,
-               ) 
+        data = (min_revision, max_revision, max_days_since_login,)
         url = 'clientrevisions/?min_revision=%s&max_revision=%s&max_days_since_login=%s'
         return self.client.get_json(url % data)
 
@@ -361,4 +411,3 @@ class Api(object):
             elif err.code == 409:
                 raise self.EmailNotSent()
             raise
-
