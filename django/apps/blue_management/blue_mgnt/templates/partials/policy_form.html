@@ -4,6 +4,14 @@
         {{ field }}
     {% endfor %}
     <table class='widget-table widget-table-details' id='policy-table'>
+	<tr>
+		<td colspan="3">
+			<i>
+				<b>Managed</b>: any user set policy will be superseded by the policy set here<br/>
+				<b>User controlled</b>: the user defines this particular item
+			</i>
+		</td>
+	</tr>
         {% for field in form.visible_fields %}
             {% if forloop.counter < 2 %}
                 {# Put Name and Inherit from on their own lines #}
@@ -34,7 +42,7 @@
         {% endfor %}
         <tr>
           <td>{% if policy.id %}<a href="{% url 'blue_mgnt:policy_delete' policy.id %}">Delete Policy</a>{% endif %}</td>
-          <td><input type='submit' class='button' value='Save' /></td>
+          <td colspan="2"><input type='submit' class='button' value='Save' /></td>
         </tr>
   </table>
 </form>
