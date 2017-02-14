@@ -1,9 +1,22 @@
 {% if form %}
 <form method='POST' action='.'>
-    {% for field in form.hidden_fields %}
-        {{ field }}
+  {% for field in form.hidden_fields %}
+  {{ field }}
+  {% endfor %}
+  <table class='widget-table widget-table-details' id='policy-table'>
+    {% for field in form.visible_fields %}
+      {% if forloop.first %}
+      {# Put Name on it's own line #}
+      <tr>
+        <th>{{ field.label_tag }}</th>
+        <td colspan='2' {% if field.errors %}class='error'{% endif %}>
+          {% if field.errors %}{{ field.errors }}<br />{% endif %}
+          {{ field }}
+        </td>
+      </tr>
+      {% endif %}
     {% endfor %}
-    <table class='widget-table widget-table-details' id='policy-table'>
+<table class='widget-table widget-table-details' id='policy-table'>
 	<tr>
 		<td colspan="3">
 			<i>
@@ -12,38 +25,65 @@
 			</i>
 		</td>
 	</tr>
+    {% for category in device_preferences %}
+    <tr><td colspan="3"><strong>{{ category.category }}</strong></td></tr>
+      {% for cat_field in category.fields %}
         {% for field in form.visible_fields %}
-            {% if forloop.counter < 2 %}
-                {# Put Name and Inherit from on their own lines #}
-                    <th>{{ field.label_tag }}</th>
-                    <td colspan='2' {% if field.errors %}class='error'{% endif %}>
-                        {% if field.errors %}{{ field.errors }}<br />{% endif %}
-                        {{ field }}
-                    </td>
-                </tr>
-                <tr>
-            {% else %}
-                {% if '_inheritance' in field.name %}
-                    <td>{{ field }}</td>
-                {% else %}
-                    <th>{{ field.label_tag }}</th>
-                    <td {% if field.errors %}class='error'{% endif %}>
-                        {% if field.errors %}{{ field.errors }}<br />{% endif %}
-                        {{ field }}
-                    </td>
-                {% endif %}
-
-                {% if forloop.last %}
-                    </tr>
-                {% elif forloop.counter0|divisibleby:2 %}
-                    </tr><tr>
-                {% endif %}
+          {% if not forloop.first %}
+          {% if field.name == cat_field.name or field.name|slice:":-12" == cat_field.name %}
+            {% comment %}
+            <tr><td colspan="3"><strong>{{ cat_field.fields }}</strong></td></tr>
+            {% endcomment %}
+            {% if forloop.counter|divisibleby:2 %}
+            <tr>
             {% endif %}
+              {% if '_inheritance' in field.name %}
+              <td>{{ field }}</td>
+              {% else %}
+              <th>{{ field.label_tag }}</th>
+              <td {% if field.errors %}class='error'{% endif %}>
+                {% if field.errors %}{{ field.errors }}<br />{% endif %}
+                {{ field }}
+              </td>
+              {% endif %}
+            {% if forloop.last %}
+            </tr>
+            {% elif forloop.counter0|divisibleby:2 %}
+            </tr>
+            {% endif %}
+          {% endif %}
+          {% endif %}
         {% endfor %}
+      {% endfor %}
+    {% endfor %}
+    {% for field in form.visible_fields %}
+      {% if not forloop.first %}
+        {% if forloop.counter|divisibleby:2 %}
         <tr>
           <td>{% if policy.id %}<a href="{% url 'blue_mgnt:policy_delete' policy.id %}">Delete Policy</a>{% endif %}</td>
           <td colspan="2"><input type='submit' class='button' value='Save' /></td>
+          {% endif %}
+          {% if '_inheritance' in field.name %}
+          <td>{{ field }}</td>
+          {% else %}
+          <th>{{ field.label_tag }}</th>
+          <td {% if field.errors %}class='error'{% endif %}>
+            {% if field.errors %}{{ field.errors }}<br />{% endif %}
+            {{ field }}
+          </td>
+          {% endif %}
+
+          {% if forloop.last %}
         </tr>
+        {% elif forloop.counter0|divisibleby:2 %}
+        </tr>
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+    <tr>
+      <td colspan="2">{% if policy.id %}<a href="{% url 'blue_mgnt:policy_delete' policy.id %}">Delete Policy</a>{% endif %}</td>
+      <td><input type='submit' class='button button-primary-basic' value='Save' /></td>
+    </tr>
   </table>
 </form>
 

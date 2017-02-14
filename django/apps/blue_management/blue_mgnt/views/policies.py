@@ -107,9 +107,16 @@ def _build_choices(choices):
 def _field_type(preference, required=True, choices=None):
     """ Get the correct Django forms field based on the provided value """
 
+    platforms = ['mac', 'linux', 'windowsxp', 'windowsnewerthanxp']
     label = preference.description
-    if not label:
+    if not label or any(preference.name.startswith(platform) for platform in platforms):
         label = inflection.humanize(inflection.underscore(preference.name))
+
+    if 'Windowsxp' in label:
+        label = label.replace('Windowsxp', 'Windows XP')
+    if 'Windowsnewerthanxp' in label:
+        label = label.replace('Windowsnewerthanxp', 'Windows Vista+')
+
     if preference.field_type == 'string[]':
         return ListField(required=required, label=label)
 
@@ -120,7 +127,7 @@ def _field_type(preference, required=True, choices=None):
                 required=required,
                 label=label
             )
-        return forms.CharField(required=required)
+        return forms.CharField(required=required, label=label)
 
     if preference.field_type == 'integer':
         return forms.IntegerField(required=required, label=label)
@@ -568,6 +575,7 @@ def policy_detail(request, api, account_info, config, username, policy_id):  # N
         'policy_detail.html', {
             'form': form,
             'policy': policy,
+            'device_preferences': api.get_device_preferences(),
         })
 
 
