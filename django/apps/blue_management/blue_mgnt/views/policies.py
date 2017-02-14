@@ -26,8 +26,8 @@ Preference = namedtuple('Preference', [
 )
 
 ROOT_INHERIT_CHOICES = (
-    ('--set--', 'Set'),
-    ('--unset--', "Don't Set")
+    ('--set--', 'Managed'),
+    ('--unset--', "User controlled")
 )
 
 INHERIT_CHOICES = (('--inherit--', 'Inherit'), ) + ROOT_INHERIT_CHOICES

@@ -5,3 +5,7 @@
     overflow:hidden; 
     text-overflow:ellipsis;
 }
+
+#policy-table th {
+	text-align: right;
+}
