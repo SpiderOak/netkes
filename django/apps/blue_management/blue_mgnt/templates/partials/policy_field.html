@@ -6,7 +6,7 @@
       {% if '_inheritance' in field.name %}
       <td>{{ field }}</td>
       {% else %}
-      <th>{{ prepend }}{{ field.label_tag }}</th>
+      <th>{{ field.label_tag }}</th>
       <td {% if field.errors %}class='error'{% endif %}>
         {% if field.errors %}{{ field.errors }}<br />{% endif %}
         {{ field }}
