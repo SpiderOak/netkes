@@ -20,8 +20,6 @@
     var parent_name = parent.id.substring(3); // remove id_ from parent id
 
     $("[data-parent='{}']".replace("{}", parent_name)).each(function () {
-      console.log(parent.value);
-      console.log($(this).data('conditional-parent-value'));
       var parentVisible = $(parent).is(":visible");
 
       if ($(this).data("conditional-parent-value") === parent.value && parentVisible) {
