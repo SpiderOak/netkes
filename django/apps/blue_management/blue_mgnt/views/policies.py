@@ -545,7 +545,10 @@ def policy_create(request, api, account_info, config, username):  # NOQA
         )
 
     return render_to_response(
-        'policy_detail.html', {'form': form})
+        'policy_detail.html', {
+            'form': form,
+            'device_preferences': api.get_device_preferences(),
+        })
 
 
 @csrf_exempt

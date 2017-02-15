@@ -16,15 +16,14 @@
       </tr>
       {% endif %}
     {% endfor %}
-<table class='widget-table widget-table-details' id='policy-table'>
-	<tr>
-		<td colspan="3">
-			<i>
-				<b>Managed</b>: any user set policy will be superseded by the policy set here<br/>
-				<b>User controlled</b>: the user defines this particular item
-			</i>
-		</td>
-	</tr>
+    <tr>
+      <td colspan="3">
+        <i>
+          <b>Managed</b>: any user set policy will be superseded by the policy set here<br/>
+          <b>User controlled</b>: the user defines this particular item
+        </i>
+      </td>
+    </tr>
     {% for category in device_preferences %}
     <tr><td colspan="3"><strong>{{ category.category }}</strong></td></tr>
       {% for cat_field in category.fields %}
