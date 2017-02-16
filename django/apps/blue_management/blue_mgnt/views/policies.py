@@ -32,6 +32,19 @@ ROOT_INHERIT_CHOICES = (
 
 INHERIT_CHOICES = (('--inherit--', 'Inherit'), ) + ROOT_INHERIT_CHOICES
 
+DEFAULTS = {
+    "Autorun": True,
+    "EnableAutomaticScan": True,
+    "EnablePreviews": True,
+    "FullScheduleEnable": False,
+    "HttpProxyEnabled": False,
+    "windowsnewerthanxpBackupSelectionEnabled": True,
+    "windowsnewerthanxpBackupSelectionScope": "atleast",
+    "windowsnewerthanxpBackupSelectionType": "basic",
+    "windowsnewerthanxpBasicBackupSelectionDesktop": True,
+    "windowsnewerthanxpBasicBackupSelectionDocuments": True,
+}
+
 
 class ListField(forms.Field):
     """ Accepts comma separated strings and returns them as a list """
@@ -195,15 +208,16 @@ class PolicyForm(forms.Form):
 
         self._add_inherit_from_field()
         self._add_fields_from_preferences()
+
+        # Set all inheritance fields to --unset-- if this is a brand new policy
+        if not any([self._policy['id'], self._inherit, self._policy.get('inherits_from')]):  # NOQA
+            self._set_all_inheritance_fields(inheritance='--unset--')
+
         self._set_initial_values_from_policy()
 
         # Set all inheritance fields to --inherit-- if we are copying a policy
         if self._inherit and not self._policy.get('inherits_from'):
             self._set_all_inheritance_fields()
-
-        # Set all inheritance fields to --unset-- if this is a brand new policy
-        if not any([self._policy['id'], self._inherit, self._policy.get('inherits_from')]):  # NOQA
-            self._set_all_inheritance_fields(inheritance='--unset--')
 
         self._sort_fields()
 
@@ -296,8 +310,13 @@ class PolicyForm(forms.Form):
 
             # Otherwise, if there is no value, set this to unset
             else:
-                self.fields[field].initial = None
-                self.fields[inheritance_field].initial = '--unset--'
+                # Set default value
+                if field in DEFAULTS:
+                    self.fields[field].initial = DEFAULTS[field]
+                    self.fields[inheritance_field].initial = '--set--'
+                else:
+                    self.fields[field].initial = None
+                    self.fields[inheritance_field].initial = '--unset--'
 
     def _create_ordered_fields(self):
         # Store the fields as parent: [child, child, child]
