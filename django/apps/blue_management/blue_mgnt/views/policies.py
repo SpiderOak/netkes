@@ -32,6 +32,19 @@ ROOT_INHERIT_CHOICES = (
 
 INHERIT_CHOICES = (('--inherit--', 'Inherit'), ) + ROOT_INHERIT_CHOICES
 
+DEFAULTS = {
+    "AutoRun": True,
+    "EnableAutomaticScan": True,
+    "EnablePreviews": True,
+    "FullScheduleEnable": False,
+    "HttpProxyEnabled": False,
+    "BackupSelectionEnabled": True,
+    "BackupSelectionScope": "atleast",
+    "BackupSelectionType": "basic",
+    "windowsnewerthanxpBasicBackupSelectionDesktop": True,
+    "windowsnewerthanxpBasicBackupSelectionDocuments": True,
+}
+
 
 class ListField(forms.Field):
     """ Accepts comma separated strings and returns them as a list """
@@ -248,6 +261,12 @@ class PolicyForm(forms.Form):
                 self.fields[pref.name].widget.attrs.update(
                     _attrs_from_preference(pref)
                 )
+
+                # Set default value
+                if pref.name in DEFAULTS:
+                    inheritance_field = '{}_inheritance'.format(pref.name)
+                    self.fields[pref.name].initial = DEFAULTS[pref.name]
+                    self.fields[inheritance_field].initial = '--set--'
 
     def _set_all_inheritance_fields(self, inheritance='--inherit--'):
         """ A method for quickly setting all inheritance fields """
