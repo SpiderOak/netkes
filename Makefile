@@ -23,7 +23,7 @@ test: test_netkes
 psql:
 	sudo -u postgres psql openmanage
 
-build_release: VERSION = ${VERSION}
+#build_release: VERSION = ${VERSION}
 build_release:
 ifndef VERSION
 	$(error Need VERSION argument)
