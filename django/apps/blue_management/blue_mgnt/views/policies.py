@@ -304,14 +304,14 @@ class PolicyForm(forms.Form):
                 self.fields[field].initial = None
                 self.fields[inheritance_field].initial = value
 
-            elif (self._inherit and value == '--inherit--') and parent_value:
+            elif self._inherit and parent_value is not None:
                 self.fields[field].initial = parent_value
                 self.fields[inheritance_field].initial = '--inherit--'
 
             # Otherwise, if there is no value, set this to unset
             else:
                 # Set default value
-                if field in DEFAULTS:
+                if not self._inherit and field in DEFAULTS:
                     self.fields[field].initial = DEFAULTS[field]
                     self.fields[inheritance_field].initial = '--set--'
                 else:
