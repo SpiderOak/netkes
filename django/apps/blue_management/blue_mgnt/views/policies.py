@@ -143,7 +143,7 @@ def _field_type(preference, required=True, choices=None):
         return forms.CharField(required=required, label=label)
 
     if preference.field_type == 'integer':
-        return forms.IntegerField(required=required, label=label)
+        return forms.IntegerField(required=required, label=label, min_value=0)
 
     if preference.field_type == 'boolean':
         return forms.BooleanField(required=False, label=label)
@@ -433,7 +433,9 @@ class PolicyForm(forms.Form):
     def _validate_preference(self, preference):
         """ Run additional validation on each preference if needed """
 
-        if preference.field_type == "integer" and self.cleaned_data[preference.name] is None:
+        if preference.field_type == "integer" and \
+           preference.name in self.cleaned_data and \
+           self.cleaned_data[preference.name] is None:
             return False
 
         if preference.conditional_parent_value is None:
