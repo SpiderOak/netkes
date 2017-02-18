@@ -433,6 +433,9 @@ class PolicyForm(forms.Form):
     def _validate_preference(self, preference):
         """ Run additional validation on each preference if needed """
 
+        if preference.field_type == "integer" and self.cleaned_data[preference.name] is None:
+            return False
+
         if preference.conditional_parent_value is None:
             return True
 
