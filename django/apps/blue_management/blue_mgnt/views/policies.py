@@ -454,6 +454,10 @@ class PolicyForm(forms.Form):
         # Clean and validate the data
         super(PolicyForm, self).clean()
 
+        self.cleaned_data["name"] = self.cleaned_data["name"].strip()
+        if len(self.cleaned_data["name"]) == 0:
+            raise ValidationError("Name must not be empty")
+
         # Remove inheritance fields and apply their values where needed
         self._sanitize_inheritance()
 
