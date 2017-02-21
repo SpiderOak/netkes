@@ -253,6 +253,10 @@ class PolicyForm(forms.Form):
                 else:
                     inherit_choices = ROOT_INHERIT_CHOICES
 
+                if pref.name in ['DeletedItemsAutomaticPurge',
+                                 'HistoricalVersionAutomaticPurge']:
+                    inherit_choices = [x for x in inherit_choices if x[0] != '--unset--']
+
                 inherit_field_name = "_".join([pref.name, 'inheritance'])
                 inherit_field = forms.ChoiceField(choices=inherit_choices)
                 inherit_field.widget.attrs['class'] = 'policy-inherit-select'
@@ -456,7 +460,7 @@ class PolicyForm(forms.Form):
 
         self.cleaned_data["name"] = self.cleaned_data["name"].strip()
         if len(self.cleaned_data["name"]) == 0:
-            raise ValidationError("Name must not be empty")
+            raise forms.ValidationError("Name must not be empty")
 
         # Remove inheritance fields and apply their values where needed
         self._sanitize_inheritance()
