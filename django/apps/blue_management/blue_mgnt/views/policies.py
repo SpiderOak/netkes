@@ -184,7 +184,7 @@ def _attrs_from_preference(preference):
 
 class PolicyForm(forms.Form):
     id = forms.IntegerField(required=False, widget=forms.HiddenInput)
-    name = forms.CharField()
+    name = forms.CharField(max_length=50)
 
     def __init__(self, *args, **kwargs):
         self.api = kwargs.pop('api')
