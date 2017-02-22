@@ -460,6 +460,12 @@ class PolicyForm(forms.Form):
 
         return self._validate_child(preference)
 
+    def clean_name(self):
+        name = self.cleaned_data.get("name", '').strip()
+        if not name:
+            raise forms.ValidationError("Name must not be empty")
+        return name
+
     def clean(self):
         """ Clean the data based on preference requirements """
 
@@ -468,12 +474,7 @@ class PolicyForm(forms.Form):
             if not k.endswith('_inheritance') and v in INHERIT_CHOICES:
                 self.data[k] = None
 
-        # Clean and validate the data
         super(PolicyForm, self).clean()
-
-        self.cleaned_data["name"] = self.cleaned_data["name"].strip()
-        if len(self.cleaned_data["name"]) == 0:
-            raise forms.ValidationError("Name must not be empty")
 
         # Remove inheritance fields and apply their values where needed
         self._sanitize_inheritance()
