@@ -62,7 +62,7 @@ class ListField(forms.Field):
         if value in self.empty_values:
             return ''
         if isinstance(value, list):
-            return ", ".join(value)
+            return "\n".join(value)
         return value.lstrip("[").rstrip("]")
 
     def to_python(self, value):
@@ -70,7 +70,7 @@ class ListField(forms.Field):
         if isinstance(value, list):
             return value
         if isinstance(value, (str, unicode)):
-            return [i.strip() for i in value.split(",") if i]
+            return [i.strip() for i in value.splitlines() if i]
         return []
 
 
@@ -131,7 +131,19 @@ def _field_type(preference, required=True, choices=None):
         label = label.replace('Windowsnewerthanxp', 'Windows Vista+')
 
     if preference.field_type == 'string[]':
-        return ListField(required=required, label=label)
+        widget = forms.Textarea()
+        if preference.name in ['macAdvancedBackupSelectionSelected',
+                               'macAdvancedBackupSelectionDeselected']:
+            widget.attrs['placeholder'] = '/Users/Macbook1/Pictures\n/Users/Macbook1/Documents'
+        if preference.name in ['linuxAdvancedBackupSelectionSelected',
+                               'linuxAdvancedBackupSelectionDeselected']:
+            widget.attrs['placeholder'] = '/home/admin\n/user/bin'
+        if preference.name in ['windowsxpAdvancedBackupSelectionSelected',
+                               'windowsxpAdvancedBackupSelectionDeselected',
+                               'windowsnewerthanxpAdvancedBackupSelectionSelected',
+                               'windowsnewerthanxpAdvancedBackupSelectionDeselected']:
+            widget.attrs['placeholder'] = 'c:\\Users\nC:\\files'
+        return ListField(required=required, label=label, widget=widget)
 
     if preference.field_type == 'string':
         if choices:
@@ -456,7 +468,7 @@ class PolicyForm(forms.Form):
 
         self.cleaned_data["name"] = self.cleaned_data["name"].strip()
         if len(self.cleaned_data["name"]) == 0:
-            raise ValidationError("Name must not be empty")
+            raise forms.ValidationError("Name must not be empty")
 
         # Remove inheritance fields and apply their values where needed
         self._sanitize_inheritance()
