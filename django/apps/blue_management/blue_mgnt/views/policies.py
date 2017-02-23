@@ -265,6 +265,10 @@ class PolicyForm(forms.Form):
                 else:
                     inherit_choices = ROOT_INHERIT_CHOICES
 
+                if pref.name in ['DeletedItemsAutomaticPurge',
+                                 'HistoricalVersionAutomaticPurge']:
+                    inherit_choices = [x for x in inherit_choices if x[0] != '--unset--']
+
                 inherit_field_name = "_".join([pref.name, 'inheritance'])
                 inherit_field = forms.ChoiceField(choices=inherit_choices)
                 inherit_field.widget.attrs['class'] = 'policy-inherit-select'
