@@ -134,15 +134,16 @@ def _field_type(preference, required=True, choices=None):
         widget = forms.Textarea()
         if preference.name in ['macAdvancedBackupSelectionSelected',
                                'macAdvancedBackupSelectionDeselected']:
-            widget.attrs['placeholder'] = '/Users/Macbook1/Pictures\n/Users/Macbook1/Documents'
+            widget.attrs['placeholder'] = '$HOME/Pictures\n$HOME/Documents'
         if preference.name in ['linuxAdvancedBackupSelectionSelected',
                                'linuxAdvancedBackupSelectionDeselected']:
-            widget.attrs['placeholder'] = '/home/admin\n/user/bin'
+            widget.attrs['placeholder'] = '$HOME/pictures\n$HOME/documents'
         if preference.name in ['windowsxpAdvancedBackupSelectionSelected',
-                               'windowsxpAdvancedBackupSelectionDeselected',
-                               'windowsnewerthanxpAdvancedBackupSelectionSelected',
+                               'windowsxpAdvancedBackupSelectionDeselected']:
+            widget.attrs['placeholder'] = '%USERPROFILE%\My Documents\n%USERPROFILE%\My Pictures'
+        if preference.name in ['windowsnewerthanxpAdvancedBackupSelectionSelected',
                                'windowsnewerthanxpAdvancedBackupSelectionDeselected']:
-            widget.attrs['placeholder'] = 'c:\\Users\nC:\\files'
+            widget.attrs['placeholder'] = '%USERPROFILE%\Documents\n%USERPROFILE%\Pictures'
         return ListField(required=required, label=label, widget=widget)
 
     if preference.field_type == 'string':
