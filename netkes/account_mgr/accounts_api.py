@@ -1,8 +1,7 @@
-import json
 import urllib
-import urllib2
 import types
 import logging
+import requests
 
 from api_client import ApiClient
 
@@ -113,16 +112,16 @@ class Api(object):
     def update_enterprise_settings(self, settings):
         try:
             return self.client.post_json('partner/settings', settings)
-        except urllib2.HTTPError, err:
-            if err.code == 400:
+        except requests.exceptions.HTTPError, err:
+            if err.response.status_code == 400:
                 raise self.BadParams()
             raise
 
     def update_enterprise_password(self, new_password):
         try:
             return self.client.post_json('partner/password', new_password)
-        except urllib2.HTTPError, err:
-            if err.code == 400:
+        except requests.exceptions.HTTPError, err:
+            if err.response.status_code == 400:
                 raise self.BadParams()
             raise
 
@@ -137,11 +136,11 @@ class Api(object):
     def create_policy(self, policy_info):
         try:
             return self.client.post_json('devicepolicies/', policy_info)
-        except urllib2.HTTPError, err:
-            if err.code == 400:
+        except requests.exceptions.HTTPError, err:
+            if err.response.status_code == 400:
                 raise self.BadParams()
-            elif err.code == 409:
-                data = json.loads(err.read())
+            elif err.response.status_code == 409:
+                data = err.response.json()
                 if 'inherits_from' in data['conflicts']:
                     raise self.BadPolicy()
             raise
@@ -149,21 +148,21 @@ class Api(object):
     def get_policy(self, policy_id):
         try:
             return self.client.get_json('devicepolicies/%d' % (policy_id,))
-        except urllib2.HTTPError, err:
-            if err.code == 404:
+        except requests.exceptions.HTTPError, err:
+            if err.response.status_code == 404:
                 raise self.NotFound()
             raise
 
     def edit_policy(self, policy_id, policy_info):
         try:
             self.client.post_json('devicepolicies/%d' % (policy_id,), policy_info)
-        except urllib2.HTTPError, err:
-            if err.code == 404:
+        except requests.exceptions.HTTPError, err:
+            if err.response.status_code == 404:
                 raise self.NotFound()
-            elif err.code == 400:
+            elif err.response.status_code == 400:
                 raise self.BadParams()
-            elif err.code == 409:
-                data = json.loads(err.read())
+            elif err.response.status_code == 409:
+                data = err.response.json()
                 if 'inherits_from' in data['conflicts']:
                     raise self.BadPolicy()
             raise
@@ -171,11 +170,11 @@ class Api(object):
     def delete_policy(self, policy_id):
         try:
             self.client.delete('devicepolicies/%d' % (policy_id,))
-        except urllib2.HTTPError, err:
-            if err.code == 404:
+        except requests.exceptions.HTTPError, err:
+            if err.response.status_code == 404:
                 raise self.NotFound()
-            elif err.code == 409:
-                data = json.loads(err.read())
+            elif err.response.status_code == 409:
+                data = err.response.json()
                 if 'policy_id' in data['conflicts']:
                     raise self.PolicyInUse()
             raise
@@ -192,36 +191,36 @@ class Api(object):
         try:
             resp = self.client.post_json_raw_response(
                 'groups/', group_info)
-        except urllib2.HTTPError, err:
-            if err.code == 400:
+        except requests.exceptions.HTTPError, err:
+            if err.response.status_code == 400:
                 raise self.BadParams()
-            elif err.code == 409:
-                data = json.loads(err.read())
+            elif err.response.status_code == 409:
+                data = err.response.json()
                 if 'name' in data['conflicts']:
                     raise self.DuplicateGroupName()
                 elif 'plan_id' in data['conflicts']:
                     raise self.BadPlan()
             raise
-        return int(resp.info()['location'].rsplit('/', 1)[-1])
+        return int(resp.headers['Location'].rsplit('/', 1)[-1])
 
     def get_group(self, group_id):
         try:
             return self.client.get_json('groups/%d' % (group_id,))
-        except urllib2.HTTPError, err:
-            if err.code == 404:
+        except requests.exceptions.HTTPError, err:
+            if err.response.status_code == 404:
                 raise self.NotFound()
             raise
 
     def edit_group(self, group_id, group_info):
         try:
             self.client.post_json('groups/%d' % (group_id,), group_info)
-        except urllib2.HTTPError, err:
-            if err.code == 404:
+        except requests.exceptions.HTTPError, err:
+            if err.response.status_code == 404:
                 raise self.NotFound()
-            elif err.code == 400:
+            elif err.response.status_code == 400:
                 raise self.BadParams()
-            elif err.code == 409:
-                data = json.loads(err.read())
+            elif err.response.status_code == 409:
+                data = err.response.json()
                 if 'name' in data['conflicts']:
                     raise self.DuplicateGroupName()
                 elif 'plan_id' in data['conflicts']:
@@ -236,8 +235,8 @@ class Api(object):
                 self.client.delete('groups/%d?move_to=%d' % (group_id, new_group_id))
             else:
                 self.client.delete('groups/%d' % (group_id,))
-        except urllib2.HTTPError, err:
-            if err.code == 404:
+        except requests.exceptions.HTTPError, err:
+            if err.response.status_code == 404:
                 raise self.NotFound()
             raise
 
@@ -295,13 +294,13 @@ class Api(object):
     def create_user(self, user_info):
         try:
             return self.client.post_json('users/', user_info)
-        except urllib2.HTTPError, err:
-            if err.code == 400:
+        except requests.exceptions.HTTPError, err:
+            if err.response.status_code == 400:
                 raise self.BadParams()
-            if err.code == 402:
+            if err.response.status_code == 402:
                 raise self.PaymentRequired()
-            elif err.code == 409:
-                data = json.loads(err.read())
+            elif err.response.status_code == 409:
+                data = err.response.json()
                 if 'username' in data['conflicts']:
                     raise self.DuplicateUsername()
                 if 'email' in data['conflicts']:
@@ -316,8 +315,8 @@ class Api(object):
         try:
             return self.client.get_json(
                 'users/%s' % (username_or_email,))
-        except urllib2.HTTPError, err:
-            if err.code == 404:
+        except requests.exceptions.HTTPError, err:
+            if err.response.status_code == 404:
                 raise self.NotFound()
             raise
 
@@ -325,8 +324,8 @@ class Api(object):
         try:
             return self.client.get_json(
                 'users/%s/devices' % (username_or_email,))
-        except urllib2.HTTPError, err:
-            if err.code == 404:
+        except requests.exceptions.HTTPError, err:
+            if err.response.status_code == 404:
                 raise self.NotFound()
             raise
 
@@ -348,8 +347,8 @@ class Api(object):
         try:
             return self.client.get_json(
                 'users/%s/shares/' % (username_or_email,))
-        except urllib2.HTTPError, err:
-            if err.code == 404:
+        except requests.exceptions.HTTPError, err:
+            if err.response.status_code == 404:
                 raise self.NotFound()
             raise
 
@@ -357,8 +356,8 @@ class Api(object):
         try:
             return self.client.get_json(
                 'users/%s/shares/%s' % (username_or_email, room_key))
-        except urllib2.HTTPError, err:
-            if err.code == 404:
+        except requests.exceptions.HTTPError, err:
+            if err.response.status_code == 404:
                 raise self.NotFound()
             raise
 
@@ -367,8 +366,8 @@ class Api(object):
         try:
             return self.client.post_json(
                 'users/%s/shares/%s?action=%s' % (username_or_email, room_key, action), {})
-        except urllib2.HTTPError, err:
-            if err.code == 404:
+        except requests.exceptions.HTTPError, err:
+            if err.response.status_code == 404:
                 raise self.NotFound()
             raise
 
@@ -376,15 +375,15 @@ class Api(object):
         try:
             self.client.post_json(
                 'users/%s' % (username_or_email,), user_info)
-        except urllib2.HTTPError, err:
-            if err.code == 404:
+        except requests.exceptions.HTTPError, err:
+            if err.response.status_code == 404:
                 raise self.NotFound()
-            elif err.code == 400:
+            elif err.response.status_code == 400:
                 raise self.BadParams()
-            elif err.code == 402:
+            elif err.response.status_code == 402:
                 raise self.QuotaExceeded()
-            elif err.code == 409:
-                data = json.loads(err.read())
+            elif err.response.status_code == 409:
+                data = err.response.json()
                 if 'email' in data['conflicts']:
                     raise self.DuplicateEmail()
                 elif 'group_id' in data['conflicts']:
@@ -396,8 +395,8 @@ class Api(object):
     def delete_user(self, username_or_email):
         try:
             self.client.delete('users/%s' % (username_or_email,))
-        except urllib2.HTTPError, err:
-            if err.code == 404:
+        except requests.exceptions.HTTPError, err:
+            if err.response.status_code == 404:
                 raise self.NotFound()
             raise
 
@@ -405,9 +404,9 @@ class Api(object):
         try:
             self.client.post_json('users/%s?action=sendactivationemail' % (
                 username_or_email,), data)
-        except urllib2.HTTPError, err:
-            if err.code == 404:
+        except requests.exceptions.HTTPError, err:
+            if err.response.status_code == 404:
                 raise self.NotFound()
-            elif err.code == 409:
+            elif err.response.status_code == 409:
                 raise self.EmailNotSent()
             raise
