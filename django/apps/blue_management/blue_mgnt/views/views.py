@@ -1,9 +1,9 @@
 import os
+import requests
 import datetime
 import csv
 import subprocess
 import urllib
-import urllib2
 from base64 import b64encode
 import urlparse
 import logging
@@ -136,7 +136,7 @@ class NetkesBackend(ModelBackend):
             try:
                 api.ping()
                 initial_auth = True
-            except urllib2.HTTPError:
+            except requests.exceptions.HTTPError:
                 log.info('''Failed initial log in for "%s" as a superuser.
                          Password incorrect or unable to contact
                          accounts api''' % username)
@@ -733,6 +733,7 @@ def fingerprint(request, api, account_info, config, username):
         fingerprint=fingerprint,
     ),
         RequestContext(request))
+
 
 # NOTE: This could use some cleaning up
 class Pagination(object):
