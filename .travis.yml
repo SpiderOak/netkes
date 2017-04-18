@@ -18,20 +18,16 @@ before_install:
 install:
   - pip install setuptools --upgrade
   - pip install pip==9.0.1
-  - pip install Django==1.8.17
-  - pip install pytz==2016.10
-  - pip install py-bcrypt==0.4
-  - pip install pycrypto==2.6.1
-  - pip install pynacl==1.1.1
-  - pip install inflection==0.3.1
+  - pip install -r upgrade/requirements.txt
   - pip install cffi --upgrade
   - pip install mock --upgrade
   - pip install six --upgrade
   - pip install pycparser==2.10
   - pip install cerealizer
-  - pip install requests
   - pip install psycopg2
   - pip install python-ldap
 script:
+  - pip freeze
+  - python -c "import cerealizer; print cerealizer.VERSION"
   - python test_netkes_client.py
   - make test_netkes
