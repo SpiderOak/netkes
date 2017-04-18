@@ -13,19 +13,13 @@ addons:
       - libldap2-dev 
       - libsasl2-dev 
       - libssl-dev
+virtualenv:
+  system_site_packages: true
 before_install:
   - wget https://bootstrap.pypa.io/ez_setup.py -O - | sudo python
 install:
-  - pip install setuptools --upgrade
-  - pip install pip==9.0.1
   - pip install -r upgrade/requirements.txt
-  - pip install cffi --upgrade
-  - pip install mock --upgrade
-  - pip install six --upgrade
-  - pip install pycparser==2.10
-  - pip install cerealizer
-  - pip install psycopg2
-  - pip install python-ldap
+  - pip install pycparser==2.17
 script:
   - pip freeze
   - python -c "import cerealizer; print cerealizer.VERSION"
