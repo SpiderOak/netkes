@@ -1,17 +1,25 @@
 import json
 import unittest
 from mock import patch, sentinel, Mock
+import requests
 
 from account_mgr import accounts_api
 
 
-class FakeHttpError(accounts_api.urllib2.HTTPError):
-    def __init__(self, code, body=''):
-        self.code = code
-        self.body = body
+class FakeHttpError(requests.exceptions.HTTPError):
+    class Response(object):
+        def __init__(self, status_code, json_data):
+            self.status_code = status_code
+            self.json_data = json_data
 
-    def read(self):
-        return self.body
+        def json(self):
+            return json.loads(self.json_data)
+
+    def __init__(self, *args, **kwargs):
+        code = args[0]
+        json_data = kwargs.pop('json', '')
+        kwargs['response'] = self.Response(code, json_data)
+        super(FakeHttpError, self).__init__(*args, **kwargs)
 
 
 class TestAccountsApi(unittest.TestCase):
@@ -94,7 +102,7 @@ class TestAccountsApi(unittest.TestCase):
 
     def test_create_group(self):
         response = self.client.post_json_raw_response.return_value
-        response.info.return_value = {'location': 'groups/42'}
+        response.headers = {'Location': 'groups/42'}
         self.assertEqual(self.api.create_group(sentinel.info), 42)
         self.client.post_json_raw_response.assert_called_once_with(
             'groups/', sentinel.info)
@@ -106,7 +114,7 @@ class TestAccountsApi(unittest.TestCase):
             self.api.create_group(sentinel.info)
 
     def test_create_group_duplicate_name(self):
-        response = FakeHttpError(409, json.dumps({
+        response = FakeHttpError(409, json=json.dumps({
             'reason': 'The following fields conflict '
                       'with an existing record',
             'conflicts': ['name']
@@ -116,7 +124,7 @@ class TestAccountsApi(unittest.TestCase):
             self.api.create_group(sentinel.info)
 
     def test_create_group_invalid_plan(self):
-        response = FakeHttpError(409, json.dumps({
+        response = FakeHttpError(409, json=json.dumps({
             'reason': 'Invalid values for the following fields',
             'conflicts': ['plan_id']
         }))
@@ -152,7 +160,7 @@ class TestAccountsApi(unittest.TestCase):
             self.api.edit_group(42, sentinel.info)
 
     def test_edit_group_duplicate_name(self):
-        response = FakeHttpError(409, json.dumps({
+        response = FakeHttpError(409, json=json.dumps({
             'reason': 'The following fields conflict '
                       'with an existing record',
             'conflicts': ['name']
@@ -162,7 +170,7 @@ class TestAccountsApi(unittest.TestCase):
             self.api.edit_group(42, sentinel.info)
 
     def test_edit_group_invalid_plan(self):
-        response = FakeHttpError(409, json.dumps({
+        response = FakeHttpError(409, json=json.dumps({
             'reason': 'Invalid values for the following fields',
             'conflicts': ['plan_id']
         }))
@@ -172,7 +180,7 @@ class TestAccountsApi(unittest.TestCase):
 
     def test_edit_group_quota_exceeded(self):
         data = json.dumps({'conflicts': 'avatars_over_quota'})
-        self.client.post_json.side_effect = FakeHttpError(409, data)
+        self.client.post_json.side_effect = FakeHttpError(409, json=data)
         with self.assertRaises(self.api.QuotaExceeded):
             self.api.edit_group(42, sentinel.info)
 
@@ -205,7 +213,7 @@ class TestAccountsApi(unittest.TestCase):
             self.api.create_user(sentinel.info)
 
     def test_create_user_duplicate_username(self):
-        response = FakeHttpError(409, json.dumps({
+        response = FakeHttpError(409, json=json.dumps({
             'reason': 'The following fields conflict '
                       'with an existing record',
             'conflicts': ['username']
@@ -215,7 +223,7 @@ class TestAccountsApi(unittest.TestCase):
             self.api.create_user(sentinel.info)
 
     def test_create_user_duplicate_email(self):
-        response = FakeHttpError(409, json.dumps({
+        response = FakeHttpError(409, json=json.dumps({
             'reason': 'The following fields conflict '
                       'with an existing record',
             'conflicts': ['email']
@@ -225,7 +233,7 @@ class TestAccountsApi(unittest.TestCase):
             self.api.create_user(sentinel.info)
 
     def test_create_user_invalid_group(self):
-        response = FakeHttpError(409, json.dumps({
+        response = FakeHttpError(409, json=json.dumps({
             'reason': 'Invalid values for the following fields',
             'conflicts': ['group_id']
         }))
@@ -234,7 +242,7 @@ class TestAccountsApi(unittest.TestCase):
             self.api.create_user(sentinel.info)
 
     def test_create_user_invalid_plan(self):
-        response = FakeHttpError(409, json.dumps({
+        response = FakeHttpError(409, json=json.dumps({
             'reason': 'Invalid values for the following fields',
             'conflicts': ['plan_id']
         }))
@@ -283,7 +291,7 @@ class TestAccountsApi(unittest.TestCase):
             self.api.edit_user('username', sentinel.info)
 
     def test_edit_user_duplicate_email(self):
-        response = FakeHttpError(409, json.dumps({
+        response = FakeHttpError(409, json=json.dumps({
             'reason': 'The following fields conflict '
                       'with an existing record',
             'conflicts': ['email']
@@ -293,7 +301,7 @@ class TestAccountsApi(unittest.TestCase):
             self.api.edit_user('username', sentinel.info)
 
     def test_edit_user_invalid_group(self):
-        response = FakeHttpError(409, json.dumps({
+        response = FakeHttpError(409, json=json.dumps({
             'reason': 'Invalid values for the following fields',
             'conflicts': ['group_id']
         }))
@@ -302,7 +310,7 @@ class TestAccountsApi(unittest.TestCase):
             self.api.edit_user('username', sentinel.info)
 
     def test_edit_user_invalid_plan(self):
-        response = FakeHttpError(409, json.dumps({
+        response = FakeHttpError(409, json=json.dumps({
             'reason': 'Invalid values for the following fields',
             'conflicts': ['plan_id']
         }))

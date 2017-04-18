@@ -12,9 +12,10 @@ manage:
 	. /etc/default/openmanage; python manage.py ${COMMAND}
 
 test_netkes:
-	python -m netkes/account_mgr/test/test_account_mgr 
-	python -m netkes/account_mgr/test/test_accounts_api
-	python -m netkes/account_mgr/test/test_ldap_reader
+	cd ~/netkes/netkes
+	. /etc/default/openmanage; python -m netkes/account_mgr/test/test_account_mgr 
+	. /etc/default/openmanage; python -m netkes/account_mgr/test/test_accounts_api
+	. /etc/default/openmanage; python -m netkes/account_mgr/test/test_ldap_reader
 
 test: COMMAND = test blue_mgnt.tests.TestViewAuth
 test: manage
