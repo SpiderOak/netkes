@@ -17,17 +17,17 @@ before_install:
   - wget https://bootstrap.pypa.io/ez_setup.py -O - | sudo python
 install:
   - pip install setuptools --upgrade
-  - pip install pip==1.4.1
-  - pip install Django==1.5.10
-  - pip install pytz==2013.8
+  - pip install pip==9.0.1
+  - pip install Django==1.8.17
+  - pip install pytz==2016.10
   - pip install py-bcrypt==0.4
-  - pip install pycrypto==2.4.1
-  - pip install cffi==0.8.2
+  - pip install pycrypto==2.6.1
+  - pip install pynacl==1.1.1
+  - pip install inflection==0.3.1
+  - pip install cffi --upgrade
   - pip install mock --upgrade
   - pip install six --upgrade
-#  - pip install six==1.6.1
   - pip install pycparser==2.10
-  - pip install pynacl==0.2.3
   - pip install cerealizer
   - pip install requests
   - pip install psycopg2

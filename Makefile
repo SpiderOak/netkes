@@ -12,7 +12,6 @@ manage:
 	. /etc/default/openmanage; python manage.py ${COMMAND}
 
 test_netkes:
-	cd ~/netkes/netkes
 	. /etc/default/openmanage; python -m netkes/account_mgr/test/test_account_mgr 
 	. /etc/default/openmanage; python -m netkes/account_mgr/test/test_accounts_api
 	. /etc/default/openmanage; python -m netkes/account_mgr/test/test_ldap_reader
