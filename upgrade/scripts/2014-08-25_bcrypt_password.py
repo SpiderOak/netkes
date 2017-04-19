@@ -6,8 +6,8 @@ from netkes.account_mgr.accounts_api import Api
 
 config = config_mgr.ConfigManager(config_mgr.default_config())
 
-# This only needs to be run for existing vms. 
-# It's unnecessary for new vms. 
+# This only needs to be run for existing vms.
+# It's unnecessary for new vms.
 if config.config['api_password']:
     hash_ = sha256(config.config['api_password']).digest()
     salt = '$2a$14$' + b64encode(hash_[:16]).rstrip('=').replace('+', '.')
@@ -25,4 +25,3 @@ if config.config['api_password']:
     api.update_enterprise_password(api_pass)
 
     config.apply_config()
-

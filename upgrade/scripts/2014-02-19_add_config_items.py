@@ -14,4 +14,3 @@ for group in config.config['groups']:
         group['priority'] = 0
 
 config.apply_config()
-
