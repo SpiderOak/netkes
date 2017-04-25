@@ -23,6 +23,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'admin_setup_tokens',
+                'managed': False,
             },
         ),
         migrations.CreateModel(
@@ -39,6 +40,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'admin_setup_tokens_use',
+                'managed': False,
             },
         ),
     ]

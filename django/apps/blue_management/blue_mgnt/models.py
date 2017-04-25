@@ -16,6 +16,7 @@ class AdminSetupTokensUse(models.Model):
         return self.date_created > (datetime.datetime.now() - datetime.timedelta(minutes=5))
 
     class Meta:
+        managed = False
         db_table = 'admin_setup_tokens_use'
 
 
@@ -28,6 +29,7 @@ class AdminSetupTokens(models.Model):
     auto_generated = models.BooleanField(default=False)
 
     class Meta:
+        managed = False
         db_table = 'admin_setup_tokens'
 
 
@@ -50,16 +52,6 @@ class BumpedUser(models.Model):
         db_table = 'bumped_user'
 
     def __unicode__(self):
-        return '{}: {}, {}'.format(self.email, 
-                                   self.time_to_reset_bonus_gb, 
+        return '{}: {}, {}'.format(self.email,
+                                   self.time_to_reset_bonus_gb,
                                    self.bonus_gb_reset)
-
-
-
-
-
-
-
-
-
-
