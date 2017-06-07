@@ -3,7 +3,7 @@ import json
 
 from django import forms
 from django.http import HttpResponse
-from django.shortcuts import redirect, render_to_response
+from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.conf import settings as django_settings
 from django.core.cache import cache
@@ -45,7 +45,7 @@ def _billing(request, api, account_info, config, username, tmpl):
     if current_plan and current_plan['status'] == 'pending':
         tmpl = 'billing_pending.html'
         cache.delete('billing_info')
-       
+
     return render_to_response(tmpl, ctx, RequestContext(request))
 
 
@@ -83,7 +83,7 @@ def create_subscription(request, api, account_info, config, username):
                 check_form.cleaned_data['frequency'],
                 check_form.cleaned_data['stripe_token'],
             )
-            if resp['success']: 
+            if resp['success']:
                 cache.delete('billing_info')
             return json_response(request, {
                 'success': resp['success'],

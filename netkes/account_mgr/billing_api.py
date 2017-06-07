@@ -30,11 +30,11 @@ class BillingApi(object):
         try:
             resp = self.client.post('coupon', {'coupon': coupon_code})
         except requests.exceptions.HTTPError, err:
-            self.logger.info(err.read())
+            self.logger.info(err.response.json())
             raise
         else:
-            data = json.loads(resp.read())
-            return data
+            if resp.text:
+                return resp.json()
 
     def create_subscription(self, coupon, frequency, stripe_token):
         try:
@@ -44,15 +44,15 @@ class BillingApi(object):
                 'stripe_token': stripe_token,
             })
         except requests.exceptions.HTTPError, err:
-            self.logger.info(err.read())
+            self.logger.info(err.response.json())
             raise
         else:
-            data = json.loads(resp.read())
-            return data
+            if resp.text:
+                return resp.json()
 
     def billing_info(self):
         try:
             return self.client.get_json('billing_info')
         except requests.exceptions.HTTPError, err:
-            self.logger.info(err.read())
+            self.logger.info(err.response.json())
             raise
