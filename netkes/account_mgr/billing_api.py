@@ -56,3 +56,10 @@ class BillingApi(object):
         except requests.exceptions.HTTPError, err:
             self.logger.info(err.response.json())
             raise
+
+    def payments(self):
+        try:
+            return self.client.get_json('payments')
+        except requests.exceptions.HTTPError, err:
+            self.logger.info(err.response.json())
+            raise

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% load filter_todate %}
+{% load so_filters %}
+
+{% block title %}Invoices - Management Console{{ block.super }}{% endblock %}
+
+{% block breadcrumb %}<a href="{% url 'blue_mgnt:manage' %}">Back to Manage</a>{% endblock breadcrumb %}
+{% block navtab %}{% include "partials/navtab-widget.html" with active="manage" %}{% endblock navtab %}
+{% block content %}
+<table class="widget-table">
+  <thead>
+    <th>Month</th>
+    <th>Charges</th>
+    <th>Total</th>
+  </thead>
+  <tbody>
+    {% for invoice in invoices %}
+    <tr>
+      <td><a href="/invoices/{{ invoice.month }}/">{{ invoice.month }}</a></td>
+      <td>{{ invoice.payments|length }}</td>
+      <td>${{ invoice.total_in_dollars|floatformat:2 }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock content %}
