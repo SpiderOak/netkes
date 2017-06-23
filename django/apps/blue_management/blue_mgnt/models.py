@@ -55,3 +55,14 @@ class BumpedUser(models.Model):
         return '{}: {}, {}'.format(self.email,
                                    self.time_to_reset_bonus_gb,
                                    self.bonus_gb_reset)
+
+
+class InvoiceNote(models.Model):
+    note = models.TextField(
+        default='',
+        help_text=('An optional note that will appear on your invoices. '
+                   'Use this if you need to add an address, VAT number, or similar.'),
+    )
+
+    def __unicode__(self):
+        return self.note

@@ -3,9 +3,12 @@ import calendar
 import logging
 
 from django.http import Http404
-from django.shortcuts import render_to_response
+from django.shortcuts import redirect, render_to_response
+from django.forms import ModelForm
+from django.template import RequestContext
 
 from views import enterprise_required, get_billing_api
+from blue_mgnt.models import InvoiceNote
 
 
 LOG = logging.getLogger(__file__)
@@ -45,13 +48,35 @@ def group_payments_by_month(payments):
     return invoices
 
 
+class InvoiceNoteForm(ModelForm):
+    class Meta:
+        model = InvoiceNote
+        fields = ['note']
+
+
+def get_invoice_note():
+    if InvoiceNote.objects.count():
+        return InvoiceNote.objects.all()[0]
+
+
 @enterprise_required
 def invoice_list(request, api, account_info, config, username):
     """ Get the list of policies and assign their parent names to each policy
     """
     billing_api = get_billing_api(config)
     invoices = group_payments_by_month(billing_api.payments())
-    return render_to_response('invoice_list.html', {'invoices': invoices})
+    invoice_note = get_invoice_note()
+    if request.method == 'POST':
+        invoice_note_form = InvoiceNoteForm(request.POST, instance=invoice_note)
+        if invoice_note_form.is_valid():
+            invoice_note_form.save()
+            return redirect('blue_mgnt:invoice_list')
+    else:
+        invoice_note_form = InvoiceNoteForm(instance=invoice_note)
+    return render_to_response('invoice_list.html', {
+        'invoices': invoices,
+        'invoice_note_form': invoice_note_form,
+    }, RequestContext(request))
 
 
 @enterprise_required
@@ -60,6 +85,7 @@ def invoice_detail(request, api, account_info, config, username, invoice_month):
     """
     billing_api = get_billing_api(config)
     invoices = group_payments_by_month(billing_api.payments())
+    invoice_note = get_invoice_note()
 
     invoice = None
     for invoice_ in invoices:
@@ -69,5 +95,6 @@ def invoice_detail(request, api, account_info, config, username, invoice_month):
         return render_to_response('invoice_detail.html', {
             'invoice': invoice,
             'invoice_month': invoice_month,
+            'invoice_note': invoice_note,
         })
     raise Http404('Invoice does not exist for this month')

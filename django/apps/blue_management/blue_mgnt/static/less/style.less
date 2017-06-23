@@ -428,6 +428,9 @@ h1.page-header {
 }
 
 .invoice {
+    pre {
+        font-family: @FONTFAMILY_R;
+    }
     width: 100%;
     border: 1px solid #dddddd;
     background-color: #ffffff;
@@ -437,6 +440,13 @@ h1.page-header {
         font-weight: 900;
         color: black;
         font-size: 17px;
+    }
+}
+
+#invoice-note {
+    .help-text {
+        max-width: 500px;
+        white-space: normal;
     }
 }
 

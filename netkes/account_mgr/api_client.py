@@ -2,7 +2,7 @@ import os
 from urlparse import urljoin
 import requests
 
-VERIFY = os.environ.get('REQUESTS_VERIFY_SSL', True)
+VERIFY = bool(os.environ.get('REQUESTS_VERIFY_SSL', True))
 
 
 class ApiClient(object):

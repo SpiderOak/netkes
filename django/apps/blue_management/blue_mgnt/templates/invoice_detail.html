@@ -4,7 +4,7 @@
 
 {% block title %}Invoices - Management Console{{ block.super }}{% endblock %}
 
-{% block breadcrumb %}<a href="{% url 'blue_mgnt:manage' %}">Back to Manage</a>{% endblock breadcrumb %}
+{% block breadcrumb %}<a href="{% url 'blue_mgnt:invoice_list' %}">Back to Invoices</a>{% endblock breadcrumb %}
 {% block navtab %}{% include "partials/navtab-widget.html" with active="manage" %}{% endblock navtab %}
 {% block body_classes %}invoice_body{% endblock %}
 {% block content %}
@@ -20,6 +20,11 @@
     <h3>Invoice Date</h3>
     <p>{{ invoice.last_day_of_month|date:"F j, Y" }}</p>
     <br />
+    {% if invoice_note %}
+    <h3>Note</h3>
+    <pre>{{ invoice_note.note }}</pre>
+    <br />
+    {% endif %}
     <table class="widget-table">
       <thead>
         <th>Date</th>
