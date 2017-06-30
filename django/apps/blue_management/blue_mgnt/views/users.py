@@ -2,7 +2,6 @@ import datetime
 from base64 import b32encode
 import csv
 import re
-from collections import namedtuple
 import urllib
 
 from views import enterprise_required, log_admin_action
@@ -29,6 +28,7 @@ new_user_value_re_tests = {
         'username': re.compile(r'^[a-zA-Z][a-zA-Z0-9_]{3,37}$'),
     },
 }
+
 
 class UserDetailWidget(ReadOnlyWidget):
     def render(self, name, value, attrs):

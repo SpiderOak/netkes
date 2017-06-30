@@ -427,6 +427,39 @@ h1.page-header {
     }
 }
 
+.invoice {
+    pre {
+        font-family: @FONTFAMILY_R;
+    }
+    width: 100%;
+    border: 1px solid #dddddd;
+    background-color: #ffffff;
+    font-size: 15px;
+    padding: 15px;
+    .total {
+        font-weight: 900;
+        color: black;
+        font-size: 17px;
+    }
+}
+
+#invoice-note {
+    .help-text {
+        max-width: 500px;
+        white-space: normal;
+    }
+}
+
+.invoice_body {
+    @media print {
+        header { display: none; }
+        nav { display: none; }
+        .account-overview { display: none; }
+        .breadcrumb { display: none; }
+        .footer { display: none; }
+    }
+}
+
 /* widgets */
 
 .widget-table {

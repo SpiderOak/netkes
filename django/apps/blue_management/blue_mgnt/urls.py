@@ -1,13 +1,10 @@
 from django.conf.urls import patterns
 from django.views.generic import RedirectView
 
-from views import views
-from views import groups
-from views import users
-from views import managementvm
-from views import settings
-from views import billing
-from views import policies
+from views import (
+    views, groups, users, managementvm, settings, billing,
+    policies, invoices
+)
 
 urlpatterns = patterns('',
     (r'^$', users.users, {}, 'index'),  # NOQA
@@ -57,4 +54,6 @@ urlpatterns = patterns('',
      policies.policy_delete, {'delete': True}, 'policy_delete'),
     (r'^policies/(?P<policy_id>\d+)/delete/confirm/$',
      policies.policy_delete, {'delete': False}, 'policy_delete_confirm'),
+    (r'^invoices/$', invoices.invoice_list, {}, 'invoice_list'),
+    (r'^invoices/(?P<invoice_month>\d+-\d+-\d+)/$', invoices.invoice_detail, {}, 'invoice_detail'),
 )
