@@ -207,7 +207,7 @@ Run %s -h for help.''' % (sys.argv[0],)
 
                 log.info("LDAP -> SpiderOak sync starting")
                 group_manager.run_group_management(config, db_conn)
-        except requests.exceptions.ConnectTimeout:
+        except requests.exceptions.Timeout:
             log.error("Network request timed out")
             return 1
         except TimeoutError:
