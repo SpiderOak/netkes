@@ -86,9 +86,11 @@ popd
 
 echo "Syncing database"
 pushd $OPENMANAGE_DJANGO_ROOT/omva
-python manage.py migrate --fake openmanage 0001_initial --noinput
-python manage.py migrate --fake blue_mgnt 0001_initial --noinput
-python manage.py migrate --fake-initial --noinput
+if [[ -z $(sudo -u postgres psql openmanage -c "select * from django_migrations where app = 'blue_mgnt' and name = '0001_initial';" -t) ]]; then
+    python manage.py migrate --fake openmanage 0001_initial --noinput
+    python manage.py migrate --fake blue_mgnt 0001_initial --noinput
+    python manage.py migrate --fake-initial --noinput
+fi
 python manage.py migrate --noinput
 popd
 
