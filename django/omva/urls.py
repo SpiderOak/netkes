@@ -1,6 +1,6 @@
-from django.conf.urls import *
+from django.conf.urls import include, url
 
-urlpatterns = patterns('',
-    (r'^openmanage/', include('openmanage.urls')),
-    (r'^', include('omva.enterprise.urls')),
-)
+urlpatterns = [
+    url(r'^openmanage/', include('openmanage.urls')),
+    url(r'^', include('omva.enterprise.urls')),
+]

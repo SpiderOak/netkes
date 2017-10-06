@@ -28,9 +28,9 @@ from django.conf import settings as django_settings
 from django.contrib.auth.models import Group, Permission
 from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth.decorators import permission_required
-from django.forms.util import ErrorList
+from django.forms.utils import ErrorList
 from django.forms.forms import NON_FIELD_ERRORS
-from django.core.servers.basehttp import FileWrapper
+from wsgiref.util import FileWrapper
 from django.core.cache import cache
 
 from blue_mgnt import models

@@ -1,6 +1,5 @@
 import os
 import datetime
-import subprocess
 import glob
 from base64 import b32encode
 
@@ -10,28 +9,26 @@ from views import (
 )
 from django.template import RequestContext
 from django.shortcuts import redirect, render_to_response
-from django.db import connection
 from django import forms
 from django.core.urlresolvers import reverse
-from django.contrib.auth.models import Group, Permission
-from django.forms.formsets import formset_factory
 from django.contrib.auth.decorators import permission_required
 from django.conf import settings as django_settings
 
-from interval.forms import IntervalFormField
-
 from blue_mgnt import models
 from netkes.account_mgr import setup_token
-from views import pageit, profile
 
-RESULTS_PER_PAGE = 25 
+RESULTS_PER_PAGE = 25
+
 
 def get_login_link(username, auth_token):
     b32_username = b32encode(username).rstrip('=')
-    return '%s/storage/%s/escrowlogin-v2?auth_token=%s' % (get_base_url(),
-                                                        b32_username,
-                                                        auth_token
-                                                       )
+    return '%s/storage/%s/escrowlogin-v2?auth_token=%s' % (
+        get_base_url(),
+        b32_username,
+        auth_token
+    )
+
+
 @enterprise_required
 @permission_required('blue_mgnt.can_view_user_data', raise_exception=True)
 def escrow_login(request, api, account_info, config, username,
@@ -48,19 +45,25 @@ def escrow_login(request, api, account_info, config, username,
     models.AdminSetupTokens.objects.create(**data)
     return redirect(get_login_link(escrow_username, data['token']))
 
+
 class CodeForm(forms.Form):
-    expiry_interval = IntervalFormField('D',
-                                        label='Expiry',
-                                        initial=datetime.timedelta(days=1))
-    no_devices_only = forms.BooleanField(required=False,
-                                         initial=True,
-                                         label='No Devices Only?',
-                                         help_text='testing it out'
-                                        )
-    single_use_only = forms.BooleanField(required=False,
-                                         initial=True,
-                                         label='Single Use Only?',
-                                         )
+    expiry_interval = forms.IntegerField(
+        min_value=0,
+        label='Expiry',
+        initial=1
+    )
+    no_devices_only = forms.BooleanField(
+        required=False,
+        initial=True,
+        label='No Devices Only?',
+        help_text='testing it out'
+    )
+    single_use_only = forms.BooleanField(
+        required=False,
+        initial=True,
+        label='Single Use Only?',
+    )
+
 
 @enterprise_required
 @permission_required('blue_mgnt.can_manage_auth_codes', raise_exception=True)
@@ -79,10 +82,9 @@ def auth_codes(request, api, account_info, config, username, saved=False):
     new_code = CodeForm()
 
     pagination = Pagination('blue_mgnt:auth_codes',
-                            code_count, 
+                            code_count,
                             page,
-                            RESULTS_PER_PAGE,
-                           )
+                            RESULTS_PER_PAGE, )
 
     if request.method == 'POST':
         if request.POST.get('form', '') == 'new_code':
@@ -90,7 +92,10 @@ def auth_codes(request, api, account_info, config, username, saved=False):
             if new_code.is_valid():
                 data = dict(
                     token=setup_token.new_token(),
-                    expiry=new_code.cleaned_data['expiry_interval'] + datetime.datetime.now(),
+                    expiry=(
+                        datetime.datetime.now() +
+                        datetime.timedelta(days=new_code.cleaned_data['expiry_interval'])
+                    ),
                     no_devices_only=new_code.cleaned_data['no_devices_only'],
                     single_use_only=new_code.cleaned_data['single_use_only']
                 )
@@ -119,7 +124,8 @@ def auth_codes(request, api, account_info, config, username, saved=False):
         account_info=account_info,
         saved=saved,
     ),
-    RequestContext(request))
+        RequestContext(request))
+
 
 @enterprise_required
 @permission_required('blue_mgnt.can_manage_logs', raise_exception=True)
@@ -137,10 +143,9 @@ def logs(request, api, account_info, config, username, saved=False):
         log_entries = [log for log in log_entries if search.lower() in log.lower()]
 
     pagination = Pagination('blue_mgnt:logs',
-                            len(log_entries), 
+                            len(log_entries),
                             page,
-                            RESULTS_PER_PAGE,
-                           )
+                            RESULTS_PER_PAGE, )
 
     log_entries = log_entries[user_offset:user_offset + RESULTS_PER_PAGE]
 
@@ -154,7 +159,4 @@ def logs(request, api, account_info, config, username, saved=False):
         log_entries=log_entries,
         account_info=account_info,
     ),
-    RequestContext(request))
-
-
-
+        RequestContext(request))
