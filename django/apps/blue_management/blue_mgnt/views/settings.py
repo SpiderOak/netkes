@@ -3,14 +3,13 @@ import subprocess
 from IPy import IP
 
 from views import (
-    enterprise_required, render_to_response,
+    enterprise_required, render,
     log_admin_action, hash_password
 )
 
 from django.utils.safestring import mark_safe
 from django import forms
 from django.forms.formsets import formset_factory
-from django.template import RequestContext
 from django.shortcuts import redirect
 from django.contrib.auth.decorators import permission_required
 from django.core.cache import cache
@@ -217,7 +216,7 @@ def settings(request, api, account_info, config, username, saved=False):
                 save_settings(request, api, options)
                 return redirect('blue_mgnt:settings_saved')
 
-    return render_to_response('settings.html', dict(
+    return render(request, 'settings.html', dict(
         user=request.user,
         username=username,
         features=features,
@@ -228,9 +227,7 @@ def settings(request, api, account_info, config, username, saved=False):
         saved=saved,
         error=error,
         account_info=account_info,
-    ),
-        RequestContext(request)
-    )
+    ))
 
 
 class PasswordForm(forms.Form):
@@ -265,13 +262,11 @@ def password(request, api, account_info, config, username, saved=False):
                 config_mgr_.apply_config()
                 return redirect('blue_mgnt:password_saved')
 
-    return render_to_response('password.html', dict(
+    return render(request, 'password.html', dict(
         user=request.user,
         username=username,
         features=features,
         password_form=password_form,
         saved=saved,
         account_info=account_info,
-    ),
-        RequestContext(request)
-    )
+    ))

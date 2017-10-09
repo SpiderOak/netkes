@@ -16,10 +16,9 @@ from hashlib import sha256
 from collections import namedtuple
 
 from django.http import HttpResponse, HttpResponseForbidden
-from django.shortcuts import redirect, render_to_response
+from django.shortcuts import redirect, render
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ObjectDoesNotExist
-from django.template import RequestContext
 from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login
@@ -304,11 +303,10 @@ def login_user(request):
                 errors = form._errors.setdefault(NON_FIELD_ERRORS, ErrorList())
                 errors.append('Invalid username or password')
 
-    return render_to_response('login.html', dict(
+    return render(request, 'login.html', dict(
         form=form,
         request_login=True,
-    ),
-        RequestContext(request))
+    ))
 
 
 def logout(request):
@@ -498,11 +496,10 @@ def download_logs(request, api, account_info, config, username):
 
 @enterprise_required
 def users_csv(request, api, account_info, config, username):
-    return render_to_response('csv.html', dict(
+    return render(request, 'csv.html', dict(
         features=api.enterprise_features(),
         account_info=account_info,
-    ),
-        RequestContext(request))
+    ))
 
 
 @enterprise_required
@@ -608,7 +605,7 @@ def shares(request, api, account_info, config, username, saved=False):
             api.update_enterprise_settings(dict(sharing_enabled=sharing_enabled))
             return redirect('blue_mgnt:shares_saved')
 
-    return render_to_response('shares.html', dict(
+    return render(request, 'shares.html', dict(
         share_url=get_base_url(),
         sharing_enabled=opts['sharing_enabled'],
         page=page,
@@ -620,8 +617,7 @@ def shares(request, api, account_info, config, username, saved=False):
         users=users,
         account_info=account_info,
         saved=saved,
-    ),
-        RequestContext(request))
+    ))
 
 
 @enterprise_required
@@ -640,14 +636,13 @@ def share_detail(request, api, account_info, config, username, email,
             api.edit_share(email, room_key, enable)
             return redirect('blue_mgnt:share_detail', email, room_key)
 
-    return render_to_response('share_detail.html', dict(
+    return render(request, 'share_detail.html', dict(
         username=username,
         share_url=get_base_url(),
         share=share,
         api_user=api_user,
         account_info=account_info,
-    ),
-        RequestContext(request))
+    ))
 
 Report = namedtuple('Report', ['title', 'description', 'query'])
 
@@ -684,7 +679,7 @@ def reports(request, api, account_info, config, username, saved=False):
                "?search_by=purgehold_active=1&columns=name,email,bytes_stored,group_id,purgehold_active"),  # NOQA
     ]
 
-    return render_to_response('reports.html', dict(
+    return render(request, 'reports.html', dict(
         reports=reports,
         username=username,
         account_info=account_info,
@@ -692,8 +687,7 @@ def reports(request, api, account_info, config, username, saved=False):
         average_num_devices=average_num_devices,
         device_count=account_info['device_count'],
         share_count=account_info['share_count'],
-    ),
-        RequestContext(request))
+    ))
 
 
 @enterprise_required
@@ -702,13 +696,12 @@ def manage(request, api, account_info, config, username):
     billing_info = None
     if not features['ldap']:
         billing_info = get_billing_info(config)
-    return render_to_response('manage.html', dict(
+    return render('manage.html', dict(
         user=request.user,
         username=username,
         account_info=account_info,
         billing_info=billing_info,
-    ),
-        RequestContext(request))
+    ))
 
 
 @enterprise_required
@@ -726,13 +719,12 @@ def fingerprint(request, api, account_info, config, username):
     fingerprint = ' '.join([word for x, word in fingerprint
                             if x % 2 == 0])
 
-    return render_to_response('fingerprint.html', dict(
+    return render(request, 'fingerprint.html', dict(
         user=request.user,
         username=username,
         account_info=account_info,
         fingerprint=fingerprint,
-    ),
-        RequestContext(request))
+    ))
 
 
 # NOTE: This could use some cleaning up

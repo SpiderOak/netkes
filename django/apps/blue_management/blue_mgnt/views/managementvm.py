@@ -7,8 +7,7 @@ from views import (
     enterprise_required, log_admin_action, get_base_url,
     Pagination
 )
-from django.template import RequestContext
-from django.shortcuts import redirect, render_to_response
+from django.shortcuts import redirect, render
 from django import forms
 from django.core.urlresolvers import reverse
 from django.contrib.auth.decorators import permission_required
@@ -111,7 +110,7 @@ def auth_codes(request, api, account_info, config, username, saved=False):
             return redirect(reverse('blue_mgnt:auth_codes_saved') +
                             '?show_inactive=%s' % show_inactive)
 
-    return render_to_response('authcodes.html', dict(
+    return render(request, 'authcodes.html', dict(
         page=page,
         show_inactive=show_inactive,
         new_code=new_code,
@@ -123,8 +122,7 @@ def auth_codes(request, api, account_info, config, username, saved=False):
         codes=codes,
         account_info=account_info,
         saved=saved,
-    ),
-        RequestContext(request))
+    ))
 
 
 @enterprise_required
@@ -149,7 +147,7 @@ def logs(request, api, account_info, config, username, saved=False):
 
     log_entries = log_entries[user_offset:user_offset + RESULTS_PER_PAGE]
 
-    return render_to_response('logs.html', dict(
+    return render(request, 'logs.html', dict(
         page=page,
         pagination=pagination,
         datetime=datetime,
@@ -158,5 +156,4 @@ def logs(request, api, account_info, config, username, saved=False):
         username=username,
         log_entries=log_entries,
         account_info=account_info,
-    ),
-        RequestContext(request))
+    ))
