@@ -99,19 +99,22 @@ def settings(request, api, account_info, config, username, saved=False):
         autopurge_interval = forms.IntegerField(
             min_value=0,
             label='Deleted Items Automatic Purge',
+            help_text='days',
             initial=opts['autopurge_interval'],
             required=False,
         )
         versionpurge_interval = forms.IntegerField(
             min_value=0,
             label='Historical Version Automatic Purge',
+            help_text='days',
             initial=opts['versionpurge_interval'],
             required=False,
         )
         purgehold_duration = forms.IntegerField(
             min_value=0,
             label='Purgehold Duration',
-            initial=opts['purgehold_duration'] * 86400,
+            help_text='days',
+            initial=opts['purgehold_duration'] / 86400,
             required=False,
         )
         support_email = forms.EmailField(initial=opts['support_email'])

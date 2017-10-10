@@ -696,7 +696,7 @@ def manage(request, api, account_info, config, username):
     billing_info = None
     if not features['ldap']:
         billing_info = get_billing_info(config)
-    return render('manage.html', dict(
+    return render(request, 'manage.html', dict(
         user=request.user,
         username=username,
         account_info=account_info,

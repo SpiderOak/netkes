@@ -46,16 +46,16 @@ def escrow_login(request, api, account_info, config, username,
 
 
 class CodeForm(forms.Form):
-    expiry_interval = forms.IntegerField(
+    expiry_days = forms.IntegerField(
         min_value=0,
         label='Expiry',
+        help_text='days',
         initial=1
     )
     no_devices_only = forms.BooleanField(
         required=False,
         initial=True,
         label='No Devices Only?',
-        help_text='testing it out'
     )
     single_use_only = forms.BooleanField(
         required=False,
@@ -93,7 +93,7 @@ def auth_codes(request, api, account_info, config, username, saved=False):
                     token=setup_token.new_token(),
                     expiry=(
                         datetime.datetime.now() +
-                        datetime.timedelta(days=new_code.cleaned_data['expiry_interval'])
+                        datetime.timedelta(days=new_code.cleaned_data['expiry_days'])
                     ),
                     no_devices_only=new_code.cleaned_data['no_devices_only'],
                     single_use_only=new_code.cleaned_data['single_use_only']

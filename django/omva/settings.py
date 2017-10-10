@@ -8,7 +8,6 @@ sys.path += [os.path.join(PROJECT_DIR, '../apps')]
 sys.path += ['/opt/openmanage/django/apps']
 
 DEBUG = False
-TEMPLATE_DEBUG = DEBUG
 
 ADMINS = ()
 
@@ -26,13 +25,6 @@ DATABASES = {
     }
 }
 
-DATABASE_ENGINE = 'postgresql_psycopg2'
-DATABASE_NAME = 'openmanage'
-DATABASE_USER = 'admin_console'
-DATABASE_PASSWORD = 'iexyjtso'
-DATABASE_HOST = 'localhost'
-DATABASE_PORT = ''
-
 SESSION_SAVE_EVERY_REQUEST = True
 SESSION_COOKIE_AGE = 60 * 15
 
@@ -46,12 +38,7 @@ MANAGEMENT_VM = True
 
 LOGIN_URL = '/login/'
 
-# Local time zone for this installation. Choices can be found here:
-# http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
-# although not all choices may be available on all operating systems.
-# If running in a Windows environment this must be set to the same as your
-# system time zone.
-TIME_ZONE = None
+TIME_ZONE = 'America/Chicago'
 
 # Language code for this installation. All choices can be found here:
 # http://www.i18nguy.com/unicode/language-identifiers.html
@@ -82,12 +69,6 @@ ADMIN_MEDIA_PREFIX = '/static/affiliate/admin/'
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = os.environ['DJANGO_SECRET_KEY']
 
-# List of callables that know how to import templates from various sources.
-TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.Loader',
-    'django.template.loaders.app_directories.Loader'
-)
-
 MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -101,17 +82,20 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.contrib.auth.context_processors.auth',
+                'django.template.context_processors.debug',
+                'django.template.context_processors.i18n',
+                'django.template.context_processors.media',
+                'django.template.context_processors.request',
+                'django.template.context_processors.tz',
+                'django.contrib.messages.context_processors.messages',
+                'blue_mgnt.context_processors.blue_common',
+            ]
+        }
     },
 ]
-
-TEMPLATE_CONTEXT_PROCESSORS = (
-    'django.contrib.auth.context_processors.auth',
-    'django.core.context_processors.debug',
-    'django.core.context_processors.i18n',
-    'django.core.context_processors.media',
-    'django.core.context_processors.request',
-    'blue_mgnt.context_processors.blue_common',
-)
 
 INSTALLED_APPS = (
     'django.contrib.auth',
