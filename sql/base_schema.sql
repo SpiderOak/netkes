@@ -4,7 +4,7 @@ CREATE USER directory_agent WITH PASSWORD 'initial';
 CREATE USER admin_console WITH PASSWORD 'iexyjtso';
 
 CREATE TABLE passwords (
-  email varchar(64) primary key,
+  email varchar(150) primary key,
   pw_hash varchar(128)
 );
 GRANT SELECT, UPDATE, INSERT, DELETE ON passwords TO directory_agent;

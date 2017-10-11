@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Password',
             fields=[
-                ('email', models.CharField(max_length=64, serialize=False, primary_key=True)),
+                ('email', models.CharField(max_length=150, serialize=False, primary_key=True)),
                 ('pw_hash', models.CharField(max_length=128)),
             ],
             options={

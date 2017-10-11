@@ -9,7 +9,7 @@ apply_scripts:
 
 manage: 
 	cd ~/netkes/django/omva; \
-	. /etc/default/openmanage; python manage.py ${COMMAND}
+	sudo bash -c ". /etc/default/openmanage; python manage.py ${COMMAND}"
 
 test_netkes:
 	. /etc/default/openmanage; python -m netkes/account_mgr/test/test_account_mgr 

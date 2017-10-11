@@ -517,7 +517,7 @@ def user_detail(request, api, account_info, config, username, email, saved=False
     class UserForm(forms.Form):
         if local_user:
             name = forms.CharField(max_length=45)
-            email = forms.EmailField()
+            email = forms.EmailField(max_length=150)
             group_id = forms.ChoiceField(local_groups, label='Group')
             enabled = forms.BooleanField(required=False)
         else:

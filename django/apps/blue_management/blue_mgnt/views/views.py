@@ -102,7 +102,7 @@ def get_base_url(url=None):
 
 
 class LoginForm(forms.Form):
-    username = forms.CharField(max_length=45)
+    username = forms.CharField(max_length=150)
     password = forms.CharField(widget=forms.PasswordInput)
 
 
