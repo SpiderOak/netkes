@@ -18,36 +18,16 @@
                 {% if field.errors %}
                     {% for error in field.errors %}
                     <span class="error-highlight">
-                        {{ field }}
+                        {{ field }} {{ field.help_text }}
                         <span class="error-tag">{{ error }}</span>
                     </span>
                     {% endfor %}
                 {% else %}
-                    {{ field }}
+                    {{ field }} {{ field.help_text }}
                 {% endif %}
             </td>
         </tr>
         {% endfor %}
-        {% comment %}
-        <!-- MOCKUP -->
-        <tr>
-            <td>
-                <label>Actions</label>
-            </td>
-            <td>
-                <input type="radio" class="radio-submit"name="action-select" id=""> Global
-                <input type="radio" class="radio-submit" name="action-select" id=""> By Group:
-                <select>
-                    <option>Select Group</option>
-                    <option value="a">a</option>
-                    <option value="b">b</option>
-                    <option value="c">c</option>
-                    <option value="d">d</option>
-                </select>
-            </td>
-        </tr>
-        <!-- END MOCKUP -->
-        {% endcomment %}
     </table>
     <div class="widget-actions">
         <input type='submit' value="Create Auth Code" class="rhs button button-primary-basic">

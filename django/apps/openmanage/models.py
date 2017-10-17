@@ -3,7 +3,7 @@ from django.db import connection
 
 
 class Password(models.Model):
-    email = models.CharField(max_length=64, primary_key=True)
+    email = models.CharField(max_length=150, primary_key=True)
     pw_hash = models.CharField(max_length=128)
 
     def update_email(self, new_email):

@@ -3,9 +3,8 @@ import calendar
 import logging
 
 from django.http import Http404
-from django.shortcuts import redirect, render_to_response
+from django.shortcuts import redirect, render
 from django.forms import ModelForm
-from django.template import RequestContext
 
 from views import enterprise_required, get_billing_api
 from blue_mgnt.models import InvoiceNote
@@ -73,10 +72,10 @@ def invoice_list(request, api, account_info, config, username):
             return redirect('blue_mgnt:invoice_list')
     else:
         invoice_note_form = InvoiceNoteForm(instance=invoice_note)
-    return render_to_response('invoice_list.html', {
+    return render(request, 'invoice_list.html', {
         'invoices': invoices,
         'invoice_note_form': invoice_note_form,
-    }, RequestContext(request))
+    })
 
 
 @enterprise_required
@@ -92,7 +91,7 @@ def invoice_detail(request, api, account_info, config, username, invoice_month):
         if invoice_.month == invoice_month:
             invoice = invoice_
     if invoice:
-        return render_to_response('invoice_detail.html', {
+        return render(request, 'invoice_detail.html', {
             'invoice': invoice,
             'invoice_month': invoice_month,
             'invoice_note': invoice_note,

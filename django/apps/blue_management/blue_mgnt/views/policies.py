@@ -7,7 +7,7 @@ from django import forms
 from django.http import Http404
 from django.core.cache import cache
 from django.core import validators
-from django.shortcuts import render_to_response, redirect
+from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt
 
 from views import enterprise_required
@@ -558,7 +558,7 @@ def policy_list(request, api, account_info, config, username):
     """ Get the list of policies and assign their parent names to each policy
     """
     policies = _assign_parents(api.list_policies())
-    return render_to_response('policy_list.html', {'policies': policies})
+    return render('policy_list.html', {'policies': policies})
 
 
 @csrf_exempt
@@ -590,7 +590,7 @@ def policy_create(request, api, account_info, config, username):  # NOQA
             inherit=inherit,
         )
 
-    return render_to_response(
+    return render(
         'policy_detail.html', {
             'form': form,
             'device_preferences': api.get_device_preferences(),
@@ -620,7 +620,7 @@ def policy_detail(request, api, account_info, config, username, policy_id):  # N
             policy=policy,
         )
 
-    return render_to_response(
+    return render(
         'policy_detail.html', {
             'form': form,
             'policy': policy,
@@ -658,7 +658,7 @@ def policy_delete(request, api, account_info, config, username, policy_id, delet
             except api.PolicyInUse:
                 in_use = True
 
-    return render_to_response(
+    return render(
         'policy_delete.html',
         {'policy': policy, 'in_use': in_use, 'deleted': delete_success}
     )

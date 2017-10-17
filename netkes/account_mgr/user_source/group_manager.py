@@ -9,7 +9,6 @@ SpiderOak fit the LDAP groups.
 """
 
 import logging
-import psycopg2
 
 import account_mgr
 from account_mgr.user_source import ldap_source
@@ -83,10 +82,10 @@ def _process_query(db_conn, query, extras=None):
     cur.execute(query)
     results = list()
     for row in cur.fetchall():
-        userinfo = {'uniqueid' : row[0]}
+        userinfo = {'uniqueid': row[0]}
         for index, extra in enumerate(extras):
             userinfo[extra] = row[index+1]
-            
+
         if 'avatar_id' in extras:
             log.debug('Query processing avatar %d' % (userinfo['avatar_id'],))
         else:
@@ -95,6 +94,7 @@ def _process_query(db_conn, query, extras=None):
         results.append(userinfo)
 
     return results
+
 
 def _calculate_changes_against_db(db_conn, config, users):
     """
@@ -108,28 +108,32 @@ def _calculate_changes_against_db(db_conn, config, users):
     cur.execute("ALTER TABLE ldap_users DROP COLUMN avatar_id;")
     cur.execute("ALTER TABLE ldap_users DROP COLUMN enabled;")
     if 'dir_email_source' in get_config():
-        cur.executemany("INSERT INTO ldap_users (uniqueid, username, email, givenname, surname, group_id) VALUES (%(uniqueid)s, %(username)s, %(email)s, %(firstname)s, %(lastname)s, %(group_id)s);",
-                    users)
+        cur.executemany("INSERT INTO ldap_users (uniqueid, username, email, givenname, "
+                        "surname, group_id) VALUES (%(uniqueid)s, %(username)s, %(email)s, "
+                        "%(firstname)s, %(lastname)s, %(group_id)s);",
+                        users)
     else:
-        cur.executemany("INSERT INTO ldap_users (uniqueid, email, givenname, surname, group_id) VALUES (%(uniqueid)s, %(email)s, %(firstname)s, %(lastname)s, %(group_id)s);",
-                    users)
+        cur.executemany("INSERT INTO ldap_users (uniqueid, email, givenname, surname, "
+                        "group_id) VALUES (%(uniqueid)s, %(email)s, %(firstname)s, "
+                        "%(lastname)s, %(group_id)s);",
+                        users)
 
-    ordered_groups = sorted(config['groups'], 
+    ordered_groups = sorted(config['groups'],
                             key=lambda x: x['priority'],
                             reverse=True)
 
     delete_duplicate_groups = '''
-    delete from ldap_users lu1 
+    delete from ldap_users lu1
     using ldap_users lu2
-    where lu1.email = lu2.email and lu1.group_id != lu2.group_id 
+    where lu1.email = lu2.email and lu1.group_id != lu2.group_id
         and lu2.group_id = %s
     '''
 
     for group in ordered_groups:
-        group_id = group['group_id']
         cur.execute(delete_duplicate_groups, [group['group_id']])
 
-    cur.execute("SELECT email, count(email) as occurences from ldap_users group by email having ( count(email) > 1 )")
+    cur.execute("SELECT email, count(email) as occurences from ldap_users "
+                "group by email having ( count(email) > 1 )")
 
     for row in cur.fetchall():
         log.error("---> Duplicate user %s found %d times in LDAP query!", row[0], row[1])
@@ -144,7 +148,7 @@ def _calculate_changes_against_db(db_conn, config, users):
     else:
         create_attrs = ['email', 'firstname', 'lastname', 'group_id']
         users_create_query = _USERS_TO_CREATE_NO_USERNAME_QUERY
-    
+
     api_actions['create'] = _process_query(db_conn, users_create_query,
                                            create_attrs)
     log.debug('Enabling users:')
@@ -155,7 +159,7 @@ def _calculate_changes_against_db(db_conn, config, users):
                                             ['avatar_id', 'email'])
     log.debug('Group change:')
     api_actions['group'] = _process_query(db_conn, _USERS_TO_PLANCHANGE_QUERY,
-                                         ['avatar_id', 'email', 'group_id'])
+                                          ['avatar_id', 'email', 'group_id'])
     log.debug('Email change:')
     api_actions['email'] = _process_query(db_conn, _USERS_TO_EMAILCHANGE_QUERY,
                                           ['avatar_id', 'email', 'orig_email'])
@@ -166,15 +170,15 @@ def _calculate_changes_against_db(db_conn, config, users):
 def run_group_management(config, db_conn):
     """
     Resolves differences between the LDAP and our idea of the SpiderOak user DB.
-      
+
     :param config: configuration dict.  Should be the standard OpenManage setup.
     :param user_source: UserSource object to pull users from.
     :param db_conn: DB connection object
     """
-    log = logging.getLogger('run_group_management')
-
     # First step, collect the users from the LDAP groups.
-    ldap_conn = ldap_source.OMLDAPConnection(config["dir_uri"], config["dir_base_dn"], config["dir_user"], config["dir_password"])
+    ldap_conn = ldap_source.OMLDAPConnection(
+        config["dir_uri"], config["dir_base_dn"], config["dir_user"], config["dir_password"]
+    )
 
     ldap_users = ldap_source.collect_groups(ldap_conn, config)
     change_groups = _calculate_changes_against_db(db_conn, config, ldap_users)
@@ -194,17 +198,19 @@ def _run_disabled_users_for_repair(ldap_conn, config, desc, resultslist):
     for result in resultslist:
         log.debug("Results for %s", result)
         user = {}
-        for i in range(0,len(result)):
+        for i in range(0, len(result)):
             user[desc[i][0]] = result[i]
-            
+
         userlist.append(user)
 
     return list(ldap_source.get_user_guids(ldap_conn, config, userlist))
-    
+
+
 def get_config_group(config, group_id):
     for group in config['groups']:
         if group['group_id'] == group_id:
             return group
+
 
 def run_db_repair(config, db_conn):
     """Repairs the current user DB and billing API versus LDAP."""
@@ -222,9 +228,11 @@ def run_db_repair(config, db_conn):
     cur.execute("CREATE TEMPORARY TABLE ldap_users (LIKE users) ON COMMIT DROP;")
     cur.execute("ALTER TABLE ldap_users DROP COLUMN avatar_id;")
     cur.execute("ALTER TABLE ldap_users DROP COLUMN enabled;")
-    cur.executemany("INSERT INTO ldap_users (uniqueid, email, givenname, surname, group_id) VALUES (%(uniqueid)s, %(email)s, %(firstname)s, %(lastname)s, %(group_id)s);",
+    cur.executemany("INSERT INTO ldap_users (uniqueid, email, givenname, surname, "
+                    "group_id) VALUES (%(uniqueid)s, %(email)s, %(firstname)s, "
+                    "%(lastname)s, %(group_id)s);",
                     ldap_users)
-    
+
     # Collect the users from the SpiderOak Accounts API, and insert into
     # a temporary table.
     log.info("Collecting SpiderOak user details")
@@ -232,10 +240,10 @@ def run_db_repair(config, db_conn):
     api = account_mgr.get_api(config)
 
     spider_users = api.list_users()
-    
+
     for spider_user in spider_users:
         first_name, sep, last_name = spider_user['name'].strip().partition(' ')
-        if not last_name: 
+        if not last_name:
             last_name = ' '
         spider_user['firstname'] = first_name
         spider_user['lastname'] = last_name
@@ -247,15 +255,14 @@ def run_db_repair(config, db_conn):
                     "(avatar_id, email, givenname, surname, group_id, enabled) VALUES "
                     "(%(avatar_id)s, %(email)s, %(firstname)s, %(lastname)s, "
                     "%(group_id)s, %(enabled)s);",
-                    spider_users)    
+                    spider_users)
 
     # Delete duplicate rows
     cur.execute("DELETE FROM ldap_users "
                 "WHERE ctid NOT IN "
                 "(SELECT MAX(l.ctid) "
                 "FROM ldap_users l "
-                "GROUP BY l.email)"
-               )
+                "GROUP BY l.email)")
 
     # Clear out the current database.
     cur.execute("DELETE FROM users;")
@@ -283,14 +290,14 @@ def run_db_repair(config, db_conn):
                 "WHERE l.email IS NULL")
     orphans = cur.fetchall()
     # We only care about ldap users here
-    orphans = [x for x in orphans \
+    orphans = [x for x in orphans
                if get_config_group(config, x[4])["user_source"] == 'ldap']
 
     # "found_orphans" are the users who exist *somewhere* in the LDAP. lost_orphans do not.
     found_orphans = _run_disabled_users_for_repair(ldap_conn, config, cur.description, orphans)
     found_emails = [y['email'] for y in found_orphans]
     lost_orphans = [x for x in orphans if x[0] not in found_emails]
-    
+
     # Put the found orphans in the DB.
     cur.executemany("INSERT INTO users "
                     "(avatar_id, email, givenname, surname, group_id, enabled, uniqueid) "
@@ -304,7 +311,5 @@ def run_db_repair(config, db_conn):
     # we want to only disable orphans who are enabled so they can be rounded up and
     # deleted.
     for orphan in lost_orphans:
-        if orphan[5]: # If the user is enabled then disable them. 
+        if orphan[5]:  # If the user is enabled then disable them.
             api.edit_user(orphan[0], dict(enabled=False))
-    
-    

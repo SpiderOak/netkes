@@ -1,23 +1,23 @@
-import datetime
 import pytz
 import subprocess
 from IPy import IP
+import ldap
 
 from views import (
-    enterprise_required, render_to_response,
+    enterprise_required, render,
     log_admin_action, hash_password
 )
 
 from django.utils.safestring import mark_safe
 from django import forms
 from django.forms.formsets import formset_factory
-from django.template import RequestContext
 from django.shortcuts import redirect
 from django.contrib.auth.decorators import permission_required
 from django.core.cache import cache
 
-from interval.forms import IntervalFormField
 from netkes.netkes_agent import config_mgr
+from netkes import account_mgr
+from netkes.account_mgr.user_source.ldap_source import get_auth_username
 
 AGENT_CONFIG_VARS = [
     'api_root',
@@ -40,6 +40,7 @@ AGENT_CONFIG_VARS = [
     'resolve_sync_conflicts',
 ]
 
+
 def save_settings(request, api, options):
     cleaned_data = options.cleaned_data
     data = dict()
@@ -48,14 +49,12 @@ def save_settings(request, api, options):
         del data['timezone']
     if 'enable_local_users' in data:
         del data['enable_local_users']
-    if 'share_link_ttl' in data:
-        data['share_link_ttl'] = data['share_link_ttl'].days * 1440
     if 'autopurge_interval' in data:
-        data['autopurge_interval'] = data['autopurge_interval'].days
+        data['autopurge_interval'] = data['autopurge_interval']
     if 'versionpurge_interval' in data:
-        data['versionpurge_interval'] = data['versionpurge_interval'].days
+        data['versionpurge_interval'] = data['versionpurge_interval']
     if 'purgehold_duration' in data:
-        data['purgehold_duration'] = data['purgehold_duration'].days * 86400
+        data['purgehold_duration'] = data['purgehold_duration'] * 86400
     for var in AGENT_CONFIG_VARS:
         if var in data:
             del data[var]
@@ -81,10 +80,23 @@ class IPBlockForm(forms.Form):
     def clean_ip_block(self):
         data = self.cleaned_data['ip_block']
         try:
-            ip = IP(data)
-        except ValueError, e:
+            ip = IP(data)  # NOQA
+        except ValueError:
             raise forms.ValidationError('Invalid IP Block')
         return data
+
+
+def login_test(config, username, password):
+    if account_mgr.authenticator(config, username, password, False):
+        return 'Authentication was successful!'
+    else:
+        conn = ldap.initialize(config['dir_uri'])
+        try:
+            auth_user = get_auth_username(config, username)
+            conn.simple_bind_s(auth_user, password)
+        except Exception, e:
+            return 'Authentication failed. {}'.format(e)
+        return 'Authentication failed.'
 
 
 @enterprise_required
@@ -94,33 +106,31 @@ def settings(request, api, account_info, config, username, saved=False):
     features = api.enterprise_features()
 
     class OpenmanageOptsForm(forms.Form):
-        #share_link_ttl = IntervalFormField(
-        #    'D',
-        #    label='Share Link Time-to-Live',
-        #    initial=datetime.timedelta(minutes=opts['share_link_ttl'])
-        #)
         if features['ldap']:
             ad_domain = forms.CharField(
                 required=False,
                 label='Restrict client installs to domain',
                 initial=opts['ad_domain']
             )
-        autopurge_interval = IntervalFormField(
-            'D',
+        autopurge_interval = forms.IntegerField(
+            min_value=0,
             label='Deleted Items Automatic Purge',
-            initial=datetime.timedelta(days=opts['autopurge_interval']),
+            help_text='days',
+            initial=opts['autopurge_interval'],
             required=False,
         )
-        versionpurge_interval = IntervalFormField(
-            'D',
+        versionpurge_interval = forms.IntegerField(
+            min_value=0,
             label='Historical Version Automatic Purge',
-            initial=datetime.timedelta(days=opts['versionpurge_interval']),
+            help_text='days',
+            initial=opts['versionpurge_interval'],
             required=False,
         )
-        purgehold_duration = IntervalFormField(
-            'D',
+        purgehold_duration = forms.IntegerField(
+            min_value=0,
             label='Purgehold Duration',
-            initial=datetime.timedelta(seconds=opts['purgehold_duration']),
+            help_text='days',
+            initial=opts['purgehold_duration'] / 86400,
             required=False,
         )
         support_email = forms.EmailField(initial=opts['support_email'])
@@ -144,9 +154,9 @@ def settings(request, api, account_info, config, username, saved=False):
                         if var == 'resolve_sync_conflicts':
                             initial = False
                             help_text = mark_safe(
-    'Only enable this feature if you have read the documentation '
-    '<a href="https://spideroak.com/articles/account-page-in-spideroak-enterprise#resolve-sync-conflicts">'
-    'here.</a>'
+                                'Only enable this feature if you have read the documentation '
+                                '<a href="https://spideroak.com/articles/account-page-in-spideroak-enterprise#resolve-sync-conflicts">'  # NOQA
+                                'here.</a>'
                             )
                         else:
                             initial = True
@@ -169,7 +179,7 @@ def settings(request, api, account_info, config, username, saved=False):
         def clean(self):
             if any(self.errors):
                 return
-            blocks = [a.cleaned_data['ip_block'] for a in self.forms \
+            blocks = [a.cleaned_data['ip_block'] for a in self.forms
                       if a.cleaned_data.get('ip_block') and not a.cleaned_data.get('DELETE')]
             api.update_enterprise_settings(dict(signup_network_restriction=blocks))
             log_admin_action(request, 'update signup network restrictions: %s' % blocks)
@@ -178,11 +188,11 @@ def settings(request, api, account_info, config, username, saved=False):
                                      can_delete=True,
                                      formset=BaseIPBlockFormSet)
 
-    ip_blocks = IPBlockFormSet(initial=[dict(ip_block=x) for x in opts['signup_network_restriction']],
+    ip_blocks = IPBlockFormSet(initial=[dict(ip_block=x) for x in
+                                        opts['signup_network_restriction']],
                                prefix='ip_blocks')
     error = False
-    sync_output = ''
-    rebuild_output = ''
+    command_output = ''
 
     if request.method == 'POST' and request.user.has_perm('blue_mgnt.can_manage_settings'):
         if request.POST.get('form', '') == 'ip_block':
@@ -199,26 +209,31 @@ def settings(request, api, account_info, config, username, saved=False):
             log_admin_action(request, 'sync management vm')
             p = subprocess.Popen('/opt/openmanage/bin/run_openmanage.sh',
                                  stdout=subprocess.PIPE,
-                                 stderr=subprocess.STDOUT
-                                )
-            sync_output = p.communicate()[0]
-            if not sync_output:
+                                 stderr=subprocess.STDOUT)
+            command_output = p.communicate()[0]
+            if not command_output:
                 cache.clear()
                 return redirect('blue_mgnt:settings_saved')
         elif request.POST.get('form', '') == 'rebuild_db':
             log_admin_action(request, 'Rebuild DB')
             p = subprocess.Popen('/opt/openmanage/bin/rebuild_db.sh',
                                  stdout=subprocess.PIPE,
-                                 stderr=subprocess.STDOUT
-                                )
-            rebuild_output = p.communicate()[0]
-            if not rebuild_output:
+                                 stderr=subprocess.STDOUT)
+            command_output = p.communicate()[0]
+            if not command_output:
                 return redirect('blue_mgnt:settings_saved')
         elif request.POST.get('form', '') == 'restart_directory':
             log_admin_action(request, 'restart directory')
             config_mgr_ = config_mgr.ConfigManager(config_mgr.default_config())
             config_mgr_._kick_services()
             return redirect('blue_mgnt:settings_saved')
+        elif request.POST.get('form', '') == 'login_test':
+            log_admin_action(request, 'login test')
+            command_output = login_test(
+                config,
+                request.POST.get('username', ''),
+                request.POST.get('password', ''),
+            )
         else:
             options = OpenmanageOptsForm(request.POST)
 
@@ -226,19 +241,17 @@ def settings(request, api, account_info, config, username, saved=False):
                 save_settings(request, api, options)
                 return redirect('blue_mgnt:settings_saved')
 
-    return render_to_response('settings.html', dict(
+    return render(request, 'settings.html', dict(
         user=request.user,
         username=username,
         features=features,
         ip_blocks=ip_blocks,
-        sync_output=sync_output,
-        rebuild_output=rebuild_output,
+        command_output=command_output,
         options=options,
         saved=saved,
         error=error,
         account_info=account_info,
-    ),
-    RequestContext(request))
+    ))
 
 
 class PasswordForm(forms.Form):
@@ -250,6 +263,7 @@ class PasswordForm(forms.Form):
         if self.cleaned_data.get('password') != password:
             raise forms.ValidationError('Passwords do not match.')
         return password
+
 
 @enterprise_required
 @permission_required('blue_mgnt.can_manage_settings', raise_exception=True)
@@ -272,12 +286,11 @@ def password(request, api, account_info, config, username, saved=False):
                 config_mgr_.apply_config()
                 return redirect('blue_mgnt:password_saved')
 
-    return render_to_response('password.html', dict(
+    return render(request, 'password.html', dict(
         user=request.user,
         username=username,
         features=features,
         password_form=password_form,
         saved=saved,
         account_info=account_info,
-    ),
-    RequestContext(request))
+    ))
