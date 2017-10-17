@@ -87,16 +87,17 @@ class IPBlockForm(forms.Form):
 
 
 def login_test(config, username, password):
-    if account_mgr.authenticator(config, username, password, False):
-        return 'Authentication was successful!'
-    else:
-        conn = ldap.initialize(config['dir_uri'])
-        try:
-            auth_user = get_auth_username(config, username)
-            conn.simple_bind_s(auth_user, password)
-        except Exception, e:
-            return 'Authentication failed. {}'.format(e)
-        return 'Authentication failed.'
+    if username:
+        if account_mgr.authenticator(config, username, password, False):
+            return 'Authentication was successful!'
+        else:
+            conn = ldap.initialize(config['dir_uri'])
+            try:
+                auth_user = get_auth_username(config, username)
+                conn.simple_bind_s(auth_user, password)
+            except Exception, e:
+                return 'Authentication failed. {}'.format(e)
+    return 'Authentication failed.'
 
 
 @enterprise_required
