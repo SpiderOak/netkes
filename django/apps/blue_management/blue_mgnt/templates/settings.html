@@ -8,18 +8,20 @@
 {% endblock modal_options %}
 {% block navtab %}{% include "partials/navtab-widget.html" with active="manage" %}{% endblock navtab %}
 {% block content %}
-{% if sync_output or rebuild_output %}
+<!-- Command output -->
+{% if command_output  %}
 <div class="status-message">
     <div class="status-content">
         <h2 class="page-header"><i class="ss-icon">&#x2699;</i>Status
             <span class="actions"><i class="ss-icon">&#x2421;</i></span>
         </h2>
             <div class="spacer"><!--ZXP--></div>
-            <code>{{ sync_output }}</code>
-            <code>{{ rebuild_output }}</code>
+            <code>{{ command_output }}</code>
     </div>
 </div>
 {% endif %}
+
+<!-- Settings -->
 <h1 class="page-header">
 	<i class="ss-icon">&#x1F464;</i> Accounts
     <div class="actions">
@@ -69,35 +71,66 @@
         </div>
         <input type='hidden' value='management' name='form'>
     </form>
-    <div class="widget-splitactions float">
-        <a class="button button-secondary" href="{% url 'blue_mgnt:password' %}">Change Password</a>
-        {% if perms.blue_mgnt.can_manage_settings %}
-        <form method="post" action="{% url 'blue_mgnt:settings' %}">
-            {% csrf_token %}
-            <input type='hidden' value='reboot' name='form'>
-            <button type='submit' id="reboot" class="button button-muted">Reboot Virtual Appliance</button>
-        </form>
-        <form method="post" action="{% url 'blue_mgnt:settings' %}">
-            {% csrf_token %}
-            <input type='hidden' value='restart_directory' name='form'>
-            <button type='submit' id="restart" class="button button-muted">Restart Directory / Services</button>
-        </form>
-        {% if features.ldap %}
-        <div class="space-20none">
-            <form method="post" action="{% url 'blue_mgnt:settings' %}">
-                {% csrf_token %}
-                <input type='hidden' value='sync' name='form'>
-                <input type='submit' value="Sync Virtual Appliance" class="button button-muted">
-            </form>
-            <form method="post" action="{% url 'blue_mgnt:settings' %}">
-                {% csrf_token %}
-                <input type='hidden' value='rebuild_db' name='form'>
-                <input type='submit' value="Rebuild DB" class="button button-muted">
-            </form>
-        </div>
-        {% endif %}
-        {% endif %}
-    </div>
+
+<!-- Tests -->
+<div class="spacer"></div>
+<h1 class="page-header">Tests</h1>
+<div class="spacer"></div>
+<fieldset>
+  <form method="post" action="{% url 'blue_mgnt:settings' %}">
+    {% csrf_token %}
+    <input type='hidden' value='login_test' name='form'>
+    <table class="widget-table">
+      <tr>
+        <td class="widget-table-label">
+          <label for="id_login_test_username">Username:</label>
+          <input type="text" name="username" id="id_login_test_username">
+        </td>
+        <td>
+          <label for="id_login_test_password">Password:</label>
+          <input type="password" name="password" id="id_login_test_password">
+        </td>
+        <td>
+          <input type='submit' value="Test LDAP/AD Authentication" class="button button-muted">
+        </td>
+      </tr>
+    </table>
+  </form>
+</fieldset>
+<div class="spacer"></div>
+
+<!-- management actions -->
+<br /><br />
+<h1 class="page-header">Management actions</h1>
+<div class="widget-splitactions float">
+  <a class="button button-secondary" href="{% url 'blue_mgnt:password' %}">Change Password</a>
+  {% if perms.blue_mgnt.can_manage_settings %}
+  <form method="post" action="{% url 'blue_mgnt:settings' %}">
+    {% csrf_token %}
+    <input type='hidden' value='reboot' name='form'>
+    <button type='submit' id="reboot" class="button button-muted">Reboot Virtual Appliance</button>
+  </form>
+  <form method="post" action="{% url 'blue_mgnt:settings' %}">
+    {% csrf_token %}
+    <input type='hidden' value='restart_directory' name='form'>
+    <button type='submit' id="restart" class="button button-muted">Restart Directory / Services</button>
+  </form>
+  {% if features.ldap %}
+  <div class="space-20none">
+    <form method="post" action="{% url 'blue_mgnt:settings' %}">
+      {% csrf_token %}
+      <input type='hidden' value='sync' name='form'>
+      <input type='submit' value="Sync Virtual Appliance" class="button button-muted">
+    </form>
+    <form method="post" action="{% url 'blue_mgnt:settings' %}">
+      {% csrf_token %}
+      <input type='hidden' value='rebuild_db' name='form'>
+      <input type='submit' value="Rebuild DB" class="button button-muted">
+    </form>
+  </div>
+  {% endif %}
+  {% endif %}
+</div>
 {% endblock content %}
 {% block js_templates %}
 <script>

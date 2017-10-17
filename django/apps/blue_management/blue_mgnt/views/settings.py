@@ -1,6 +1,7 @@
 import pytz
 import subprocess
 from IPy import IP
+import ldap
 
 from views import (
     enterprise_required, render,
@@ -15,6 +16,8 @@ from django.contrib.auth.decorators import permission_required
 from django.core.cache import cache
 
 from netkes.netkes_agent import config_mgr
+from netkes import account_mgr
+from netkes.account_mgr.user_source.ldap_source import get_auth_username
 
 AGENT_CONFIG_VARS = [
     'api_root',
@@ -81,6 +84,19 @@ class IPBlockForm(forms.Form):
         except ValueError:
             raise forms.ValidationError('Invalid IP Block')
         return data
+
+
+def login_test(config, username, password):
+    if account_mgr.authenticator(config, username, password, False):
+        return 'Authentication was successful!'
+    else:
+        conn = ldap.initialize(config['dir_uri'])
+        try:
+            auth_user = get_auth_username(config, username)
+            conn.simple_bind_s(auth_user, password)
+        except Exception, e:
+            return 'Authentication failed. {}'.format(e)
+        return 'Authentication failed.'
 
 
 @enterprise_required
@@ -176,8 +192,7 @@ def settings(request, api, account_info, config, username, saved=False):
                                         opts['signup_network_restriction']],
                                prefix='ip_blocks')
     error = False
-    sync_output = ''
-    rebuild_output = ''
+    command_output = ''
 
     if request.method == 'POST' and request.user.has_perm('blue_mgnt.can_manage_settings'):
         if request.POST.get('form', '') == 'ip_block':
@@ -195,8 +210,8 @@ def settings(request, api, account_info, config, username, saved=False):
             p = subprocess.Popen('/opt/openmanage/bin/run_openmanage.sh',
                                  stdout=subprocess.PIPE,
                                  stderr=subprocess.STDOUT)
-            sync_output = p.communicate()[0]
-            if not sync_output:
+            command_output = p.communicate()[0]
+            if not command_output:
                 cache.clear()
                 return redirect('blue_mgnt:settings_saved')
         elif request.POST.get('form', '') == 'rebuild_db':
@@ -204,14 +219,21 @@ def settings(request, api, account_info, config, username, saved=False):
             p = subprocess.Popen('/opt/openmanage/bin/rebuild_db.sh',
                                  stdout=subprocess.PIPE,
                                  stderr=subprocess.STDOUT)
-            rebuild_output = p.communicate()[0]
-            if not rebuild_output:
+            command_output = p.communicate()[0]
+            if not command_output:
                 return redirect('blue_mgnt:settings_saved')
         elif request.POST.get('form', '') == 'restart_directory':
             log_admin_action(request, 'restart directory')
             config_mgr_ = config_mgr.ConfigManager(config_mgr.default_config())
             config_mgr_._kick_services()
             return redirect('blue_mgnt:settings_saved')
+        elif request.POST.get('form', '') == 'login_test':
+            log_admin_action(request, 'login test')
+            command_output = login_test(
+                config,
+                request.POST.get('username', ''),
+                request.POST.get('password', ''),
+            )
         else:
             options = OpenmanageOptsForm(request.POST)
 
@@ -224,8 +246,7 @@ def settings(request, api, account_info, config, username, saved=False):
         username=username,
         features=features,
         ip_blocks=ip_blocks,
-        sync_output=sync_output,
-        rebuild_output=rebuild_output,
+        command_output=command_output,
         options=options,
         saved=saved,
         error=error,
