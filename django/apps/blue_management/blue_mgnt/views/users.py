@@ -206,7 +206,7 @@ def get_new_user_form(api, features, account_info, config, local_groups, groups,
     class NewUserForm(forms.Form):
         if not features['email_as_username']:
             username = forms.CharField(max_length=45)
-        email = forms.EmailField()
+        email = forms.EmailField(max_length=144)
         name = forms.CharField(max_length=45)
         group_id = forms.ChoiceField(local_groups, label='Group')
 
@@ -517,7 +517,7 @@ def user_detail(request, api, account_info, config, username, email, saved=False
     class UserForm(forms.Form):
         if local_user:
             name = forms.CharField(max_length=45)
-            email = forms.EmailField(max_length=150)
+            email = forms.EmailField(max_length=144)
             group_id = forms.ChoiceField(local_groups, label='Group')
             enabled = forms.BooleanField(required=False)
         else:
