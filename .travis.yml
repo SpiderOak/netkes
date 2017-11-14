@@ -13,25 +13,13 @@ addons:
       - libldap2-dev 
       - libsasl2-dev 
       - libssl-dev
+virtualenv:
+  system_site_packages: true
 before_install:
   - wget https://bootstrap.pypa.io/ez_setup.py -O - | sudo python
 install:
-  - pip install setuptools --upgrade
-  - pip install pip==1.4.1
-  - pip install Django==1.5.10
-  - pip install pytz==2013.8
-  - pip install py-bcrypt==0.4
-  - pip install pycrypto==2.4.1
-  - pip install cffi==0.8.2
-  - pip install mock --upgrade
-  - pip install six --upgrade
-#  - pip install six==1.6.1
-  - pip install pycparser==2.10
-  - pip install pynacl==0.2.3
-  - pip install cerealizer
-  - pip install requests
-  - pip install psycopg2
-  - pip install python-ldap
+  - pip install -r upgrade/requirements.txt
+  - pip install pycparser==2.17
 script:
   - python test_netkes_client.py
-  - make test_netkes
+  - make test_travis_ci

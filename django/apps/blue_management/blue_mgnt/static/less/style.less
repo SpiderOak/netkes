@@ -66,6 +66,9 @@
         font: 13px~"/"23px @FONTFAMILY_R;
         /* display: block; */
     }
+    textarea {
+        height: 150px;
+    }
 
     select {
         max-width: 135px;
@@ -424,6 +427,39 @@ h1.page-header {
     }
 }
 
+.invoice {
+    pre {
+        font-family: @FONTFAMILY_R;
+    }
+    width: 100%;
+    border: 1px solid #dddddd;
+    background-color: #ffffff;
+    font-size: 15px;
+    padding: 15px;
+    .total {
+        font-weight: 900;
+        color: black;
+        font-size: 17px;
+    }
+}
+
+#invoice-note {
+    .help-text {
+        max-width: 500px;
+        white-space: normal;
+    }
+}
+
+.invoice_body {
+    @media print {
+        header { display: none; }
+        nav { display: none; }
+        .account-overview { display: none; }
+        .breadcrumb { display: none; }
+        .footer { display: none; }
+    }
+}
+
 /* widgets */
 
 .widget-table {
@@ -450,6 +486,10 @@ h1.page-header {
             display: none;
         }
     }
+    &>tbody>tr>th {
+        border-bottom: 1px solid #dddddd;
+        text-align: right;
+    }
     &>tbody>tr>td {
         padding: 14px 4px 14px 8px;
         border-bottom: 1px solid #dddddd;
@@ -472,6 +512,9 @@ h1.page-header {
         padding-left: 7px;
         color: @INPUT_EDIT_COLOR;
         font: 13px~"/"23px @FONTFAMILY_R;
+    }
+    textarea {
+        height: 150px;
     }
 
     td > label,

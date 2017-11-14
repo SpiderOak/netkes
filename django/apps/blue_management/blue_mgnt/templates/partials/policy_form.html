@@ -1,41 +1,53 @@
 {% if form %}
 <form method='POST' action='.'>
-    {% for field in form.hidden_fields %}
-        {{ field }}
+  {% for field in form.hidden_fields %}
+  {{ field }}
+  {% endfor %}
+  <table class='widget-table widget-table-details' id='policy-table'>
+    {% for field in form.visible_fields %}
+      {% if forloop.first %}
+      {# Put Name on it's own line #}
+      <tr>
+        <th>{{ field.label_tag }}</th>
+        <td colspan='2' {% if field.errors %}class='error'{% endif %}>
+          {% if field.errors %}{{ field.errors }}<br />{% endif %}
+          {{ field }}
+        </td>
+      </tr>
+      {% endif %}
     {% endfor %}
-    <table class='widget-table widget-table-details' id='policy-table'>
-        {% for field in form.visible_fields %}
-            {% if forloop.counter < 2 %}
-                {# Put Name and Inherit from on their own lines #}
-                    <th>{{ field.label_tag }}</th>
-                    <td colspan='2' {% if field.errors %}class='error'{% endif %}>
-                        {% if field.errors %}{{ field.errors }}<br />{% endif %}
-                        {{ field }}
-                    </td>
-                </tr>
-                <tr>
-            {% else %}
-                {% if '_inheritance' in field.name %}
-                    <td>{{ field }}</td>
-                {% else %}
-                    <th>{{ field.label_tag }}</th>
-                    <td {% if field.errors %}class='error'{% endif %}>
-                        {% if field.errors %}{{ field.errors }}<br />{% endif %}
-                        {{ field }}
-                    </td>
-                {% endif %}
-
-                {% if forloop.last %}
-                    </tr>
-                {% elif forloop.counter0|divisibleby:2 %}
-                    </tr><tr>
-                {% endif %}
+    <tr>
+      <td colspan="3">
+        <i>
+          <b>Managed</b>: any user set policy will be superseded by the policy set here<br/>
+          <b>User controlled</b>: the user defines this particular item
+        </i>
+      </td>
+    </tr>
+    {% for category in device_preferences %}
+    <tr><td colspan="3"><strong>{{ category.category }}</strong></td></tr>
+      {% for cat_field in category.fields %}
+        {% include 'partials/policy_field.html' with field_name=cat_field.name %}
+        {% if cat_field.fields %}
+          <tr><td colspan="3"><table class="widget-table widget-table-details child-table">
+          {% for child in cat_field.fields %}
+          {% include 'partials/policy_field.html' with field_name=child.name %}
+            {% if child.fields %}
+              <tr><td colspan="3"><table class="widget-table widget-table-details child-table">
+              {% for child2 in child.fields %}
+              {% include 'partials/policy_field.html' with field_name=child2.name %}
+              {% endfor %}
+              </table></td></tr>
             {% endif %}
-        {% endfor %}
-        <tr>
-          <td>{% if policy.id %}<a href="{% url 'blue_mgnt:policy_delete' policy.id %}">Delete Policy</a>{% endif %}</td>
-          <td><input type='submit' class='button' value='Save' /></td>
-        </tr>
+          {% endfor %}
+          </table></td></tr>
+        {% endif %}
+      {% endfor %}
+    {% endfor %}
+    <tr>
+      <td colspan="2">{% if policy.id %}<a href="{% url 'blue_mgnt:policy_delete' policy.id %}">Delete Policy</a>{% endif %}</td>
+      <td><input type='submit' class='button button-primary-basic' value='Save' /></td>
+    </tr>
   </table>
 </form>
 

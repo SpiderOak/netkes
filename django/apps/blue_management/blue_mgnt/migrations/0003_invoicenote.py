@@ -7,17 +7,15 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
+        ('blue_mgnt', '0002_adminsetuptokens_adminsetuptokensuse'),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Password',
+            name='InvoiceNote',
             fields=[
-                ('email', models.CharField(max_length=150, serialize=False, primary_key=True)),
-                ('pw_hash', models.CharField(max_length=128)),
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('note', models.TextField()),
             ],
-            options={
-                'db_table': 'passwords',
-            },
         ),
     ]

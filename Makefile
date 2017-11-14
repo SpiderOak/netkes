@@ -9,9 +9,14 @@ apply_scripts:
 
 manage: 
 	cd ~/netkes/django/omva; \
-	. /etc/default/openmanage; python manage.py ${COMMAND}
+	sudo bash -c ". /etc/default/openmanage; python manage.py ${COMMAND}"
 
 test_netkes:
+	. /etc/default/openmanage; python -m netkes/account_mgr/test/test_account_mgr 
+	. /etc/default/openmanage; python -m netkes/account_mgr/test/test_accounts_api
+	. /etc/default/openmanage; python -m netkes/account_mgr/test/test_ldap_reader
+
+test_travis_ci:
 	python -m netkes/account_mgr/test/test_account_mgr 
 	python -m netkes/account_mgr/test/test_accounts_api
 	python -m netkes/account_mgr/test/test_ldap_reader
@@ -23,7 +28,7 @@ test: test_netkes
 psql:
 	sudo -u postgres psql openmanage
 
-build_release: VERSION = ${VERSION}
+#build_release: VERSION = ${VERSION}
 build_release:
 ifndef VERSION
 	$(error Need VERSION argument)

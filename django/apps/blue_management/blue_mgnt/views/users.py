@@ -2,7 +2,6 @@ import datetime
 from base64 import b32encode
 import csv
 import re
-from collections import namedtuple
 import urllib
 
 from views import enterprise_required, log_admin_action
@@ -14,8 +13,7 @@ from groups import get_config_group
 from django import forms
 from django.core.urlresolvers import reverse
 from django.forms.formsets import formset_factory
-from django.template import RequestContext
-from django.shortcuts import redirect, render_to_response
+from django.shortcuts import redirect, render
 from django.utils.safestring import mark_safe
 
 from netkes.account_mgr.user_source import local_source
@@ -29,6 +27,7 @@ new_user_value_re_tests = {
         'username': re.compile(r'^[a-zA-Z][a-zA-Z0-9_]{3,37}$'),
     },
 }
+
 
 class UserDetailWidget(ReadOnlyWidget):
     def render(self, name, value, attrs):
@@ -70,12 +69,13 @@ def get_base_user_form_set(api, request):
                 data = dict(group_id=form.cleaned_data['group_id'], )
                 if request.user.has_perm('blue_mgnt.can_manage_users'):
                     log_admin_action(request,
-                                    'edit user %s ' % form.cleaned_data['orig_email'] + \
-                                    'with data: %s' % data)
+                                     'edit user %s ' % form.cleaned_data['orig_email'] +
+                                     'with data: %s' % data)
                     api.edit_user(form.cleaned_data['orig_email'], data)
     return BaseUserFormSet
 
-def get_user_csv_form(api):
+
+def get_user_csv_form(api, request):
     class UserCSVForm(forms.Form):
         csv_file = forms.FileField(label='User CSV')
 
@@ -88,8 +88,10 @@ def get_user_csv_form(api):
                     raise forms.ValidationError('Invalid data in row %s. email is required' % x)
                 if row.get('name'):
                     if not new_user_value_re_tests['avatar']['firstname'].match(row['name']):
-                        raise forms.ValidationError('Invalid data in row %s. Names must be between 1 and 45 characters long' % x)
-                    name = row['name']
+                        raise forms.ValidationError(
+                            ('Invalid data in row %s. Names must ' % x)
+                            ('be between 1 and 45 characters long')
+                        )
                 if row.get('new_email'):
                     if not new_user_value_re_tests['avatar']['email'].match(row['new_email']):
                         raise forms.ValidationError('Invalid data in row %s. Invalid new_email' % x)
@@ -105,23 +107,25 @@ def get_user_csv_form(api):
                     user_info['enabled'] = row['enabled']
                 try:
                     log_admin_action(request,
-                                     'edit user %s through csv. ' % row['email'] + \
-                                     'set user data to: %s' % user_info
-                                    )
+                                     'edit user %s through csv. ' % row['email'] +
+                                     'set user data to: %s' % user_info)
                     api.edit_user(row['email'], user_info)
-                except Api.NotFound:
+                except api.NotFound:
                     raise forms.ValidationError('Invalid data in row %s. email not found' % x)
             return data
     return UserCSVForm
 
+
 def get_plan_id(groups, group_id):
-    return [x for x in groups if \
+    return [x for x in groups if
             x['group_id'] == int(group_id)][0]['plan_id']
+
 
 def get_group(groups, group_name):
     for group in groups:
         if group['name'].lower() == group_name.lower():
             return group
+
 
 def create_user(api, account_info, config, data):
     email = data['email']
@@ -132,6 +136,7 @@ def create_user(api, account_info, config, data):
                                    email, '')
     if config['send_activation_email']:
         api.send_activation_email(email, dict(template_name='set_password'))
+
 
 def _csv_create_users(api, account_info, groups, config, request, csv_data):
     for x, row in enumerate(csv_data):
@@ -159,13 +164,14 @@ def _csv_create_users(api, account_info, groups, config, request, csv_data):
             return x, forms.ValidationError(msg)
         except api.PaymentRequired:
             msg = ('Payment required. '
-                    'Please update your <a href="/billing/">billing</a> '
-                    'information to unlock your account.')
+                   'Please update your <a href="/billing/">billing</a> '
+                   'information to unlock your account.')
             return x, forms.ValidationError(mark_safe(msg))
         except api.DuplicateUsername:
             msg = 'Invalid data in row %s. Username already in use' % x
             return x, forms.ValidationError(msg)
     return x + 1, None
+
 
 def get_new_user_csv_form(api, groups, account_info, config, request):
     class UserCSVForm(forms.Form):
@@ -195,11 +201,12 @@ def get_new_user_csv_form(api, groups, account_info, config, request):
             return data
     return UserCSVForm
 
+
 def get_new_user_form(api, features, account_info, config, local_groups, groups, request):
     class NewUserForm(forms.Form):
         if not features['email_as_username']:
             username = forms.CharField(max_length=45)
-        email = forms.EmailField()
+        email = forms.EmailField(max_length=144)
         name = forms.CharField(max_length=45)
         group_id = forms.ChoiceField(local_groups, label='Group')
 
@@ -244,10 +251,12 @@ def get_new_user_form(api, features, account_info, config, local_groups, groups,
             return cleaned_data
     return NewUserForm
 
+
 def get_group_name(groups, group_id):
     for group in groups:
         if group['group_id'] == group_id:
             return group['name']
+
 
 def get_plan_name(plans, plan_id):
     for plan in plans:
@@ -258,6 +267,7 @@ def get_plan_name(plans, plan_id):
             else:
                 return 'Unlimited'
 
+
 def get_local_groups(config, groups):
     local_groups = []
     for c_group in config['groups']:
@@ -267,14 +277,17 @@ def get_local_groups(config, groups):
                     local_groups.append((c_group['group_id'], api_group['name']))
     return local_groups
 
+
 def is_local_user(config, group_id):
     for group in config['groups']:
         if group['group_id'] == group_id:
             return group['user_source'] == 'local'
     return False
 
+
 def get_login_link(username):
     return reverse('blue_mgnt:escrow_login', args=[username])
+
 
 class UserColumn(object):
     def __init__(self, name, header, type_):
@@ -299,6 +312,7 @@ USER_COLUMNS = [
     UserColumn('purgehold_active', 'Purgehold Active', 'text'),
 ]
 
+
 def get_user_columns(columns):
     user_columns = []
     for column in columns:
@@ -310,6 +324,7 @@ def get_user_columns(columns):
         if not found:
             return user_columns, '"%s" is not a valid column' % column
     return user_columns, False
+
 
 def get_user_rows(all_users, delete_user_formset, user_formset,
                   config, user_columns, groups):
@@ -336,6 +351,7 @@ def get_user_rows(all_users, delete_user_formset, user_formset,
             user_row['selected_columns'].append((value, column.type))
         yield user_row
 
+
 @enterprise_required
 def users(request, api, account_info, config, username, saved=False):
     show_disabled = int(request.GET.get('show_disabled', 1))
@@ -348,8 +364,7 @@ def users(request, api, account_info, config, username, saved=False):
     page = int(request.GET.get('page', 1))
     pagination = Pagination('blue_mgnt:users',
                             user_count,
-                            page,
-                           )
+                            page, )
     order_by = request.GET.get('order_by', '')
     search_by = urllib.unquote(request.GET.get('search_by', ''))
     all_user_columns = USER_COLUMNS
@@ -383,22 +398,21 @@ def users(request, api, account_info, config, username, saved=False):
         all_users = api.list_users(pagination.per_page,
                                    pagination.query_offset,
                                    order_by=order_by,
-                                   search_by=search_by,
-                                  )
+                                   search_by=search_by, )
 
     if len(all_users) < pagination.per_page:
         pagination = Pagination('blue_mgnt:users',
                                 page * pagination.per_page,
-                                page,
-                               )
+                                page, )
 
     if not show_disabled:
         all_users = [x for x in all_users if x['enabled']]
 
-    users = [dict(orig_email=x['email'],
-                  group_id=x['group_id'],
-                  is_local_user=is_local_user(config, x['group_id']),
-                 ) for x in all_users]
+    users = [dict(
+        orig_email=x['email'],
+        group_id=x['group_id'],
+        is_local_user=is_local_user(config, x['group_id']),
+    ) for x in all_users]
     local_users = [user for user in users if user['is_local_user']]
 
     user_formset = UserFormSet(initial=local_users, prefix='tmp_user')
@@ -412,8 +426,7 @@ def users(request, api, account_info, config, username, saved=False):
 
     user_rows = get_user_rows(all_users, delete_user_formset,
                               user_formset, config,
-                              user_columns, groups
-                             )
+                              user_columns, groups)
 
     get_args = urllib.urlencode(dict(
         search=search,
@@ -423,9 +436,11 @@ def users(request, api, account_info, config, username, saved=False):
     ))
 
     class UserColumnsForm(forms.Form):
-        columns = forms.MultipleChoiceField(required=False,
-                choices=[(item.name, item.header) for item in USER_COLUMNS],
-                widget=forms.CheckboxSelectMultiple)
+        columns = forms.MultipleChoiceField(
+            required=False,
+            choices=[(item.name, item.header) for item in USER_COLUMNS],
+            widget=forms.CheckboxSelectMultiple
+        )
 
     column_form = UserColumnsForm(initial={'columns': columns})
 
@@ -441,16 +456,18 @@ def users(request, api, account_info, config, username, saved=False):
         else:
             user_formset = UserFormSet(request.POST, prefix='tmp_user')
             delete_user_formset = DeleteUserFormSet(request.POST, prefix='delete_user')
-            if (request.user.has_perm('blue_mgnt.can_manage_users')
+            if (
+                request.user.has_perm('blue_mgnt.can_manage_users')
                 and user_formset.is_valid()
-                and delete_user_formset.is_valid()):
+                and delete_user_formset.is_valid()
+            ):
                 for form in delete_user_formset.deleted_forms:
                     orig_email = form.cleaned_data['orig_email']
                     api.delete_user(orig_email)
                     log_admin_action(request, 'delete user "%s"' % orig_email)
                 return redirect(reverse('blue_mgnt:users_saved') + '?search=%s' % search)
 
-    return render_to_response('users.html', dict(
+    return render(request, 'users.html', dict(
         order_by=order_by,
         search_by=search_by,
         columns=column_arg,
@@ -473,8 +490,8 @@ def users(request, api, account_info, config, username, saved=False):
         pagination=pagination,
         all_user_columns=all_user_columns,
         column_form=column_form,
-    ),
-    RequestContext(request))
+    ))
+
 
 @enterprise_required
 def user_detail(request, api, account_info, config, username, email, saved=False):
@@ -500,7 +517,7 @@ def user_detail(request, api, account_info, config, username, email, saved=False
     class UserForm(forms.Form):
         if local_user:
             name = forms.CharField(max_length=45)
-            email = forms.EmailField()
+            email = forms.EmailField(max_length=144)
             group_id = forms.ChoiceField(local_groups, label='Group')
             enabled = forms.BooleanField(required=False)
         else:
@@ -518,7 +535,7 @@ def user_detail(request, api, account_info, config, username, email, saved=False
         )
         purgehold_active = forms.BooleanField(
             label="Purgehold Active",
-            help_text="If set deleted data will not be purged from the system.",\
+            help_text="If set deleted data will not be purged from the system.",
             required=False,
         )
 
@@ -570,8 +587,7 @@ def user_detail(request, api, account_info, config, username, email, saved=False
                 local_source.set_user_password(local_source._get_db_conn(config),
                                                email, '')
                 api.send_activation_email(email, dict(template_name='set_password',
-                                                      reg_code='not used'
-                                                     ))
+                                                      reg_code='not used'))
                 return redirect('blue_mgnt:user_detail_saved', email)
         if request.POST.get('form', '') == 'password':
             password_form = PasswordForm(request.POST)
@@ -579,7 +595,7 @@ def user_detail(request, api, account_info, config, username, email, saved=False
                 log_admin_action(request, 'change password for: %s' % email)
                 password = password_form.cleaned_data['password'].encode('utf-8')
                 local_source.set_user_password(local_source._get_db_conn(config),
-                                                email, password)
+                                               email, password)
                 return redirect('blue_mgnt:user_detail_saved', data.get('email', email))
         if request.POST.get('form', '') == 'delete_user':
             if request.user.has_perm('blue_mgnt.can_manage_users'):
@@ -600,13 +616,14 @@ def user_detail(request, api, account_info, config, username, email, saved=False
         if request.POST.get('form', '') == 'edit_share':
             room_key = request.POST['room_key']
             enable = request.POST['enabled'] == 'False'
-            msg = 'edit share %s for user %s. Action %s share' % \
-                    (room_key, email, 'enable' if enable else 'disable')
+            msg = 'edit share %s for user %s. Action %s share' % (
+                room_key, email, 'enable' if enable else 'disable'
+            )
             log_admin_action(request, msg)
             api.edit_share(email, room_key, enable)
             return redirect('blue_mgnt:user_detail_saved', email)
 
-    return render_to_response('user_detail.html', dict(
+    return render(request, 'user_detail.html', dict(
         shares=api.list_shares(email),
         share_url=get_base_url(),
         username=username,
@@ -622,5 +639,4 @@ def user_detail(request, api, account_info, config, username, email, saved=False
         datetime=datetime,
         devices=devices,
         saved=saved,
-    ),
-    RequestContext(request))
+    ))

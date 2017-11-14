@@ -7,8 +7,7 @@ from views import get_config_group
 from django import forms
 from django.core.urlresolvers import reverse
 from django.forms.formsets import formset_factory
-from django.template import RequestContext
-from django.shortcuts import redirect, render_to_response
+from django.shortcuts import redirect, render
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.models import Group, Permission
 from django.core.exceptions import ObjectDoesNotExist
@@ -259,7 +258,7 @@ def groups(request, api, account_info, config, username, saved=False):
             if groups.is_valid():
                 return redirect(reverse('blue_mgnt:groups_saved') + '?search=%s' % search)
 
-    return render_to_response('groups.html', dict(
+    return render(request, 'groups.html', dict(
         initial=initial,
         config=config,
         user=request.user,
@@ -275,8 +274,7 @@ def groups(request, api, account_info, config, username, saved=False):
         search=search,
         search_back=search_back,
         show_force=getattr(groups, 'show_force', False),
-    ),
-        RequestContext(request))
+    ))
 
 
 def get_or_create_admin_group(user_group_id):
@@ -349,7 +347,7 @@ def group_detail(request, api, account_info, config, username, group_id, saved=F
             if group_form.is_valid():
                 return redirect('blue_mgnt:group_detail_saved', group_id)
 
-    return render_to_response('group_detail.html', dict(
+    return render(request, 'group_detail.html', dict(
         delete_group=delete_group,
         group_form=group_form,
         group_id=group_id,
@@ -357,5 +355,4 @@ def group_detail(request, api, account_info, config, username, group_id, saved=F
         fields_not_to_show=fields_not_to_show,
         show_force=getattr(group_form, 'show_force', False),
         account_info=account_info,
-    ),
-        RequestContext(request))
+    ))

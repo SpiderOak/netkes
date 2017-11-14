@@ -2,11 +2,8 @@
 
 import os
 import datetime
-from hashlib import sha256
 import subprocess
 from binascii import a2b_base64
-import bcrypt
-import nacl.secret
 from nacl.exceptions import CryptoError
 
 from netkes import common
@@ -32,7 +29,7 @@ backup = api.backup()
 
 data = a2b_base64(backup['data'])
 
-try: 
+try:
     secret_box, nonce = create_secret_box(config['local_password'], config['api_user'])
     data = secret_box.decrypt(data)
 except CryptoError:

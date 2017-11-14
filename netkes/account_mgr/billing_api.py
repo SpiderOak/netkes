@@ -1,7 +1,5 @@
-import json
 import logging
-import urllib
-import urllib2
+import requests
 
 from api_client import ApiClient
 
@@ -30,12 +28,12 @@ class BillingApi(object):
     def fetch_coupon(self, coupon_code):
         try:
             resp = self.client.post('coupon', {'coupon': coupon_code})
-        except urllib2.HTTPError, err:
-            self.logger.info(err.read())
+        except requests.exceptions.HTTPError, err:
+            self.logger.info(err.response.json())
             raise
         else:
-            data = json.loads(resp.read())
-            return data
+            if resp.text:
+                return resp.json()
 
     def create_subscription(self, coupon, frequency, stripe_token):
         try:
@@ -44,16 +42,23 @@ class BillingApi(object):
                 'frequency': frequency,
                 'stripe_token': stripe_token,
             })
-        except urllib2.HTTPError, err:
-            self.logger.info(err.read())
+        except requests.exceptions.HTTPError, err:
+            self.logger.info(err.response.json())
             raise
         else:
-            data = json.loads(resp.read())
-            return data
+            if resp.text:
+                return resp.json()
 
     def billing_info(self):
         try:
             return self.client.get_json('billing_info')
-        except urllib2.HTTPError, err:
-            self.logger.info(err.read())
+        except requests.exceptions.HTTPError, err:
+            self.logger.info(err.response.json())
+            raise
+
+    def payments(self):
+        try:
+            return self.client.get_json('payments')
+        except requests.exceptions.HTTPError, err:
+            self.logger.info(err.response.json())
             raise

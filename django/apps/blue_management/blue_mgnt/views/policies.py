@@ -7,7 +7,7 @@ from django import forms
 from django.http import Http404
 from django.core.cache import cache
 from django.core import validators
-from django.shortcuts import render_to_response, redirect
+from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt
 
 from views import enterprise_required
@@ -26,11 +26,24 @@ Preference = namedtuple('Preference', [
 )
 
 ROOT_INHERIT_CHOICES = (
-    ('--set--', 'Set'),
-    ('--unset--', "Don't Set")
+    ('--set--', 'Managed'),
+    ('--unset--', "User controlled")
 )
 
 INHERIT_CHOICES = (('--inherit--', 'Inherit'), ) + ROOT_INHERIT_CHOICES
+
+DEFAULTS = {
+    "Autorun": True,
+    "EnableAutomaticScan": True,
+    "EnablePreviews": True,
+    "FullScheduleEnable": False,
+    "HttpProxyEnabled": False,
+    "windowsnewerthanxpBackupSelectionEnabled": True,
+    "windowsnewerthanxpBackupSelectionScope": "atleast",
+    "windowsnewerthanxpBackupSelectionType": "basic",
+    "windowsnewerthanxpBasicBackupSelectionDesktop": True,
+    "windowsnewerthanxpBasicBackupSelectionDocuments": True,
+}
 
 
 class ListField(forms.Field):
@@ -49,7 +62,7 @@ class ListField(forms.Field):
         if value in self.empty_values:
             return ''
         if isinstance(value, list):
-            return ", ".join(value)
+            return "\n".join(value)
         return value.lstrip("[").rstrip("]")
 
     def to_python(self, value):
@@ -57,7 +70,7 @@ class ListField(forms.Field):
         if isinstance(value, list):
             return value
         if isinstance(value, (str, unicode)):
-            return [i.strip() for i in value.split(",") if i]
+            return [i.strip() for i in value.splitlines() if i]
         return []
 
 
@@ -107,11 +120,31 @@ def _build_choices(choices):
 def _field_type(preference, required=True, choices=None):
     """ Get the correct Django forms field based on the provided value """
 
+    platforms = ['mac', 'linux', 'windowsxp', 'windowsnewerthanxp']
     label = preference.description
-    if not label:
+    if not label or any(preference.name.startswith(platform) for platform in platforms):
         label = inflection.humanize(inflection.underscore(preference.name))
+
+    if 'Windowsxp' in label:
+        label = label.replace('Windowsxp', 'Windows XP')
+    if 'Windowsnewerthanxp' in label:
+        label = label.replace('Windowsnewerthanxp', 'Windows Vista+')
+
     if preference.field_type == 'string[]':
-        return ListField(required=required, label=label)
+        widget = forms.Textarea()
+        if preference.name in ['macAdvancedBackupSelectionSelected',
+                               'macAdvancedBackupSelectionDeselected']:
+            widget.attrs['placeholder'] = '$HOME/Pictures\n$HOME/Documents'
+        if preference.name in ['linuxAdvancedBackupSelectionSelected',
+                               'linuxAdvancedBackupSelectionDeselected']:
+            widget.attrs['placeholder'] = '$HOME/pictures\n$HOME/documents'
+        if preference.name in ['windowsxpAdvancedBackupSelectionSelected',
+                               'windowsxpAdvancedBackupSelectionDeselected']:
+            widget.attrs['placeholder'] = '%USERPROFILE%\My Documents\n%USERPROFILE%\My Pictures'
+        if preference.name in ['windowsnewerthanxpAdvancedBackupSelectionSelected',
+                               'windowsnewerthanxpAdvancedBackupSelectionDeselected']:
+            widget.attrs['placeholder'] = '%USERPROFILE%\Documents\n%USERPROFILE%\Pictures'
+        return ListField(required=required, label=label, widget=widget)
 
     if preference.field_type == 'string':
         if choices:
@@ -120,10 +153,10 @@ def _field_type(preference, required=True, choices=None):
                 required=required,
                 label=label
             )
-        return forms.CharField(required=required)
+        return forms.CharField(required=required, label=label)
 
     if preference.field_type == 'integer':
-        return forms.IntegerField(required=required, label=label)
+        return forms.IntegerField(required=required, label=label, min_value=0)
 
     if preference.field_type == 'boolean':
         return forms.BooleanField(required=False, label=label)
@@ -151,7 +184,7 @@ def _attrs_from_preference(preference):
 
 class PolicyForm(forms.Form):
     id = forms.IntegerField(required=False, widget=forms.HiddenInput)
-    name = forms.CharField()
+    name = forms.CharField(max_length=50)
 
     def __init__(self, *args, **kwargs):
         self.api = kwargs.pop('api')
@@ -188,15 +221,16 @@ class PolicyForm(forms.Form):
 
         self._add_inherit_from_field()
         self._add_fields_from_preferences()
+
+        # Set all inheritance fields to --unset-- if this is a brand new policy
+        if not any([self._policy['id'], self._inherit, self._policy.get('inherits_from')]):  # NOQA
+            self._set_all_inheritance_fields(inheritance='--unset--')
+
         self._set_initial_values_from_policy()
 
         # Set all inheritance fields to --inherit-- if we are copying a policy
         if self._inherit and not self._policy.get('inherits_from'):
             self._set_all_inheritance_fields()
-
-        # Set all inheritance fields to --unset-- if this is a brand new policy
-        if not any([self._policy['id'], self._inherit, self._policy.get('inherits_from')]):  # NOQA
-            self._set_all_inheritance_fields(inheritance='--unset--')
 
         self._sort_fields()
 
@@ -231,6 +265,10 @@ class PolicyForm(forms.Form):
                     inherit_choices = INHERIT_CHOICES
                 else:
                     inherit_choices = ROOT_INHERIT_CHOICES
+
+                if pref.name in ['DeletedItemsAutomaticPurge',
+                                 'HistoricalVersionAutomaticPurge']:
+                    inherit_choices = [x for x in inherit_choices if x[0] != '--unset--']
 
                 inherit_field_name = "_".join([pref.name, 'inheritance'])
                 inherit_field = forms.ChoiceField(choices=inherit_choices)
@@ -283,14 +321,19 @@ class PolicyForm(forms.Form):
                 self.fields[field].initial = None
                 self.fields[inheritance_field].initial = value
 
-            elif (self._inherit and value == '--inherit--') and parent_value:
+            elif self._inherit and parent_value is not None:
                 self.fields[field].initial = parent_value
                 self.fields[inheritance_field].initial = '--inherit--'
 
             # Otherwise, if there is no value, set this to unset
             else:
-                self.fields[field].initial = None
-                self.fields[inheritance_field].initial = '--unset--'
+                # Set default value
+                if not self._inherit and field in DEFAULTS:
+                    self.fields[field].initial = DEFAULTS[field]
+                    self.fields[inheritance_field].initial = '--set--'
+                else:
+                    self.fields[field].initial = None
+                    self.fields[inheritance_field].initial = '--unset--'
 
     def _create_ordered_fields(self):
         # Store the fields as parent: [child, child, child]
@@ -407,10 +450,21 @@ class PolicyForm(forms.Form):
     def _validate_preference(self, preference):
         """ Run additional validation on each preference if needed """
 
+        if preference.field_type == "integer" and \
+           preference.name in self.cleaned_data and \
+           self.cleaned_data[preference.name] is None:
+            return False
+
         if preference.conditional_parent_value is None:
             return True
 
         return self._validate_child(preference)
+
+    def clean_name(self):
+        name = self.cleaned_data.get("name", '').strip()
+        if not name:
+            raise forms.ValidationError("Name must not be empty")
+        return name
 
     def clean(self):
         """ Clean the data based on preference requirements """
@@ -420,7 +474,6 @@ class PolicyForm(forms.Form):
             if not k.endswith('_inheritance') and v in INHERIT_CHOICES:
                 self.data[k] = None
 
-        # Clean and validate the data
         super(PolicyForm, self).clean()
 
         # Remove inheritance fields and apply their values where needed
@@ -505,7 +558,7 @@ def policy_list(request, api, account_info, config, username):
     """ Get the list of policies and assign their parent names to each policy
     """
     policies = _assign_parents(api.list_policies())
-    return render_to_response('policy_list.html', {'policies': policies})
+    return render('policy_list.html', {'policies': policies})
 
 
 @csrf_exempt
@@ -537,8 +590,11 @@ def policy_create(request, api, account_info, config, username):  # NOQA
             inherit=inherit,
         )
 
-    return render_to_response(
-        'policy_detail.html', {'form': form})
+    return render(
+        'policy_detail.html', {
+            'form': form,
+            'device_preferences': api.get_device_preferences(),
+        })
 
 
 @csrf_exempt
@@ -564,10 +620,11 @@ def policy_detail(request, api, account_info, config, username, policy_id):  # N
             policy=policy,
         )
 
-    return render_to_response(
+    return render(
         'policy_detail.html', {
             'form': form,
             'policy': policy,
+            'device_preferences': api.get_device_preferences(),
         })
 
 
@@ -601,7 +658,7 @@ def policy_delete(request, api, account_info, config, username, policy_id, delet
             except api.PolicyInUse:
                 in_use = True
 
-    return render_to_response(
+    return render(
         'policy_delete.html',
         {'policy': policy, 'in_use': in_use, 'deleted': delete_success}
     )

@@ -39,6 +39,14 @@ sudo -u postgres psql --single-transaction --pset pager=off -f openmanage.sql op
 # We already have keys so we don't need to run first setup
 touch /opt/openmanage/etc/.ran_firstsetup
 
+# Run Django migrations
+pushd $OPENMANAGE_DJANGO_ROOT/omva
+python manage.py migrate --fake openmanage 0001_initial --noinput
+python manage.py migrate --fake blue_mgnt 0001_initial --noinput
+python manage.py migrate --fake-initial --noinput
+python manage.py migrate --noinput
+popd
+
 # Clean up.
 popd
 rm -r openmanage-backup*

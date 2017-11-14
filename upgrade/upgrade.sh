@@ -68,6 +68,8 @@ else
     echo "agent_config.json hasn't changed"
 fi
 
+\cp -rf /opt/openmanage.$CURRENT_DATE/etc/keys/* /opt/openmanage/etc/keys
+
 echo "Setting django secret key"
 random_string="$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c 64;echo;)"
 secret_key="export DJANGO_SECRET_KEY=\"$random_string\""
@@ -80,13 +82,17 @@ apt-get -y autoremove
 
 find /opt/openmanage/upgrade/resources/ -name '*.deb' | xargs dpkg -i
 
-cat /opt/openmanage/upgrade/requirements.txt | xargs pip install
+pushd /opt/openmanage/upgrade
+pip install --no-index --find-links=./resources -r requirements.txt
+popd
 
 echo "Syncing database"
 pushd $OPENMANAGE_DJANGO_ROOT/omva
-python manage.py migrate --fake openmanage 0001_initial --noinput
-python manage.py migrate --fake blue_mgnt 0001_initial --noinput
-python manage.py migrate --fake-initial --noinput
+if [[ -z $(sudo -u postgres psql openmanage -c "select * from django_migrations where app = 'blue_mgnt' and name = '0001_initial';" -t) ]]; then
+    python manage.py migrate --fake openmanage 0001_initial --noinput
+    python manage.py migrate --fake blue_mgnt 0001_initial --noinput
+    python manage.py migrate --fake-initial --noinput
+fi
 python manage.py migrate --noinput
 popd
 

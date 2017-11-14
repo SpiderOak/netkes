@@ -102,7 +102,7 @@
             this.set("quantity", quantity);
             if (SMB.current_plan_quantity && SMB.current_plan_frequency) {
                 this.set("has_current_plan", true);
-                this.set("frequency", SMB.current_plan_frequency.replace(/^smb_/, "")); 
+                this.set("frequency", SMB.current_plan_frequency.indexOf('month') !== -1 ? 'monthly' : 'yearly'); 
                 // assume that if they have a plan they have a cc on file
                 this.set("has_cc", true);
                 this.set("payment_method", "existing");

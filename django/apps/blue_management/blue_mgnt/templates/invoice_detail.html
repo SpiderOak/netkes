@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% load filter_todate %}
+{% load so_filters %}
+
+{% block title %}Invoices - Management Console{{ block.super }}{% endblock %}
+
+{% block breadcrumb %}<a href="{% url 'blue_mgnt:invoice_list' %}">Back to Invoices</a>{% endblock breadcrumb %}
+{% block navtab %}{% include "partials/navtab-widget.html" with active="manage" %}{% endblock navtab %}
+{% block body_classes %}invoice_body{% endblock %}
+{% block content %}
+<div class="content">
+  <div class="invoice">
+    <h3>SpiderOak, Inc.</h3>
+    <p>SpiderOak, Inc.</p>
+    <p>4171 Central Street, Suite 324</p>
+    <p>Kansas City, MO 64112 USA</p>
+    <p>billing@spideroak.com</p>
+    <p>EIN: 20-4583518</p>
+    <br />
+    <h3>Invoice Date</h3>
+    <p>{{ invoice.last_day_of_month|date:"F j, Y" }}</p>
+    <br />
+    {% if invoice_note %}
+    <h3>Note</h3>
+    <pre>{{ invoice_note.note }}</pre>
+    <br />
+    {% endif %}
+    <table class="widget-table">
+      <thead>
+        <th>Date</th>
+        <th>Cost</th>
+      </thead>
+      <tbody>
+        {% for payment in invoice.payments %}
+        <tr>
+          <td>{{ payment.created|date:"F j, Y" }}</a></td>
+          <td>${{ payment.amount_in_dollars|floatformat:2 }}</td>
+        </tr>
+        {% endfor %}
+        <tr>
+          <td></td>
+          <td><span class="total">Total:</span> ${{ invoice.total_in_dollars|floatformat:2 }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock content %}

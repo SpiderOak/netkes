@@ -3,14 +3,13 @@ import json
 
 from django import forms
 from django.http import HttpResponse
-from django.shortcuts import redirect, render_to_response
-from django.template import RequestContext
-from django.conf import settings as django_settings
+from django.shortcuts import render
 from django.core.cache import cache
 from django.views.decorators.csrf import csrf_exempt
 from django.core.exceptions import PermissionDenied
 
-from views import enterprise_required, log_admin_action, get_billing_api
+from views import enterprise_required, get_billing_api
+
 
 def json_response(request, data):
     return HttpResponse(json.dumps(data), content_type='application/json')
@@ -45,8 +44,8 @@ def _billing(request, api, account_info, config, username, tmpl):
     if current_plan and current_plan['status'] == 'pending':
         tmpl = 'billing_pending.html'
         cache.delete('billing_info')
-       
-    return render_to_response(tmpl, ctx, RequestContext(request))
+
+    return render(request, tmpl, ctx)
 
 
 @enterprise_required
@@ -83,7 +82,7 @@ def create_subscription(request, api, account_info, config, username):
                 check_form.cleaned_data['frequency'],
                 check_form.cleaned_data['stripe_token'],
             )
-            if resp['success']: 
+            if resp['success']:
                 cache.delete('billing_info')
             return json_response(request, {
                 'success': resp['success'],
