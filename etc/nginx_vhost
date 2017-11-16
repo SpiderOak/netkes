@@ -31,10 +31,6 @@ server {
     add_header X-Frame-Options SAMEORIGIN;
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload";
 
-    location / {
-        try_files $uri $uri/ @console;
-    }
-
     # Configuration to take us to the netkes_agent.
     location ~ ^(\/auth|\/layers|\/data) {
         proxy_pass http://c_netkes_agent;
@@ -49,7 +45,7 @@ server {
         root /opt/openmanage/django;
     }
 
-    location @console {
+    location / {
         proxy_pass http://c_admin_console;
         proxy_read_timeout 900;
         proxy_intercept_errors off;

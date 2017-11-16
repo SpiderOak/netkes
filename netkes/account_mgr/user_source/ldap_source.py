@@ -35,11 +35,13 @@ _PAGE_SIZE = 900
 # Are we going to use paged queries?
 _TRY_PAGED_QUERIES = True
 
+
 class InvalidGroupConfiguration(Exception):
     '''
     Thrown when invalid group configuration is used.
     '''
     pass
+
 
 class TooManyLdapResults(Exception):
     '''
@@ -47,11 +49,13 @@ class TooManyLdapResults(Exception):
     '''
     pass
 
+
 class NotEnoughLdapResults(Exception):
     '''
     Thrown when we don't get enough LDAP results.
     '''
     pass
+
 
 class OMLDAPConnection(object):
     def __init__(self, uri, base_dn, username, password):
@@ -63,16 +67,16 @@ class OMLDAPConnection(object):
 
         self.base_dn = base_dn
 
+
 class LdapGroup(object):
     _ou_object_classes = set(['container', 'organizationalUnit'])
 
     def __init__(self, ldap_conn, config, ldap_id, group_id):
-        log = logging.getLogger('LdapGroup __init__')
         self.ldap_conn = ldap_conn
         self.ldap_id = ldap_id
         self.group_id = group_id
         self.config = config
-        
+
         # Locally cached list of users.
         self._users = None
 
@@ -97,7 +101,7 @@ class LdapGroup(object):
             ldap_id,
             ldap.SCOPE_BASE,
             attrlist=['objectClass'])
-        
+
         # The following are objectTypes for OUs.
         # Possibly multiple entries come back for objectClass:
         for objClass in results[0][1]['objectClass']:
@@ -123,7 +127,6 @@ class LdapGroup(object):
 
         return attrlist
 
-
     def _build_user_dict(self, result_dict):
         """
         Creates a dictionary to append to the user results list, with arrangement based on
@@ -131,11 +134,11 @@ class LdapGroup(object):
         """
 
         user = {
-            'uniqueid'  : _fix_guid(self.config,
-                                    result_dict[self.config['dir_guid_source']][0]),
-            'firstname' : result_dict.get(self.config['dir_fname_source'], [' '])[0],
-            'lastname'  : result_dict.get(self.config['dir_lname_source'], [' '])[0],
-            'group_id'  : self.group_id,
+            'uniqueid': _fix_guid(self.config,
+                                  result_dict[self.config['dir_guid_source']][0]),
+            'firstname': result_dict.get(self.config['dir_fname_source'], [' '])[0],
+            'lastname': result_dict.get(self.config['dir_lname_source'], [' '])[0],
+            'group_id': self.group_id,
         }
 
         if self.config.get('dir_email_source', None) not in (None, '',):
@@ -146,14 +149,14 @@ class LdapGroup(object):
 
         return user
 
-
     def _user_for_uid(self, uid, uid_field):
         log = logging.getLogger("_user_for_uid")
         results = self.ldap_conn.conn.search_s(
-            base      = self.config['dir_base_dn'],
-            scope     = ldap.SCOPE_SUBTREE,
-            filterstr = "(%s=%s)" % (uid_field, uid,),
-            attrlist  = self._create_attrlist())
+            base=self.config['dir_base_dn'],
+            scope=ldap.SCOPE_SUBTREE,
+            filterstr="(%s=%s)" % (uid_field, uid,),
+            attrlist=self._create_attrlist()
+        )
 
         try:
             dn, result = _filter_ldap_results(results)
@@ -170,15 +173,14 @@ class LdapGroup(object):
         user = self.ldap_conn.conn.search_s(
                 uid,
                 ldap.SCOPE_BASE,
-                attrlist = self._create_attrlist())
+                attrlist=self._create_attrlist())
 
         dn, user_dict = user[0]
 
         if dn is None:
             return None
-        
-        return user_dict
 
+        return user_dict
 
     def _build_user_details(self, uid, uid_field):
         '''Gathers details from the user from LDAP, and creates a user dictionary
@@ -203,7 +205,6 @@ class LdapGroup(object):
 
         return self._build_user_dict(user_dict)
 
-
     def __iter__(self):
         """
         Provides an iterable over the user list.
@@ -211,10 +212,11 @@ class LdapGroup(object):
         if self._users is None:
             # userlist() is a virtual method for this base class, so we
             # disable pylint complaints on userlist not existing.
-            self._users = self.userlist() #pylint: disable=E1101
+            self._users = self.userlist()  # pylint: disable=E1101
 
         for user in self._users:
             yield user
+
 
 class LdapOuGroup(LdapGroup):
     def __init__(self, ldap_conn, config, ldap_id, group_id):
@@ -223,13 +225,12 @@ class LdapOuGroup(LdapGroup):
     def userlist(self):
         log = logging.getLogger('_get_group_ou %s' % (self.ldap_id,))
         user_list = []
-        for dn, result_dict in _PagedAsyncSearch(self.ldap_conn, 
-                                                 sizelimit=200000,
-                                                 base_dn = self.ldap_id,
-                                                 scope=ldap.SCOPE_SUBTREE,
-                                                 filterstr = "(|(objectClass=person)(objectClass=user)(objectClass=organizationalUser))",
-                                                 attrlist=self._create_attrlist()):
-
+        for dn, result_dict in _PagedAsyncSearch(
+            self.ldap_conn, sizelimit=200000, base_dn=self.ldap_id,
+            scope=ldap.SCOPE_SUBTREE,
+            filterstr="(|(objectClass=person)(objectClass=user)(objectClass=organizationalUser))",
+            attrlist=self._create_attrlist()
+        ):
             if dn is None or not result_dict:
                 continue
             if self.config['dir_username_source'] not in result_dict:
@@ -242,7 +243,7 @@ class LdapOuGroup(LdapGroup):
             user_list.append(user)
 
         return user_list
-    
+
 
 class LdapGroupGroup(LdapGroup):
     def __init__(self, ldap_conn, config, ldap_id, group_id):
@@ -263,11 +264,10 @@ class LdapGroupGroup(LdapGroup):
                 else:
                     end_range = None
                 break
-        
+
         return (result_key, end_range,)
 
-
-    def _pas_ranged_results_wrapper(self, startrange = None):
+    def _pas_ranged_results_wrapper(self, startrange=None):
         '''
         Wraps PagedAsyncSearch for ranged results from our friends, Microsoft.
 
@@ -303,10 +303,9 @@ class LdapGroupGroup(LdapGroup):
         users = result_dict[result_key]
         if end_range is None:
             return users
-           
+
         users.extend(self._pas_ranged_results_wrapper(end_range + 1))
         return users
-
 
     def userlist(self):
         log = logging.getLogger('_get_group_group %s' % (self.ldap_id,))
@@ -322,13 +321,13 @@ class LdapGroupGroup(LdapGroup):
 
             # Add each user that matches
             if not user_details['firstname'] and not user_details['lastname']:
-                msg = 'Unable to process user %s. The user had no first name or last name.' % user_details
-                print msg
+                msg = 'Unable to process user %s. The user had no first name or last name.' % user_details  # NOQA
                 log.error(msg)
             elif user_details is not None:
                 user_list.append(user_details)
 
         return user_list
+
 
 def _filter_ldap_results(results):
     '''
@@ -339,26 +338,27 @@ def _filter_ldap_results(results):
     if len(results) < 1:
         raise NotEnoughLdapResults()
 
-    result_list = [(dn, result) for dn, result in results if dn is not None ]
+    result_list = [(dn, result) for dn, result in results if dn is not None]
 
     # Having more than one result for this is not good.
     if len(result_list) > 1:
         raise TooManyLdapResults()
 
     return result_list[0]
-    
+
+
 def get_auth_username(config, username):
     """
     Returns the appropriate username to authenticate against.
 
-    Will return either the `username` argument or a username gotten from the LDAP. 
+    Will return either the `username` argument or a username gotten from the LDAP.
     """
-    # If we have no configuration telling us to lookup a different username, 
+    # If we have no configuration telling us to lookup a different username,
     # just return here.
-    log = logging.getLogger("get_auth_username")
-
-    if (config.get('dir_auth_username') in (None, '',) and 
-        config.get('dir_auth_source') in (None, '',)):
+    if (
+        config.get('dir_auth_username') in (None, '',) and
+        config.get('dir_auth_source') in (None, '',)
+    ):
         return username
 
     my_ldap = OMLDAPConnection(config['dir_uri'], config['dir_base_dn'],
@@ -366,29 +366,28 @@ def get_auth_username(config, username):
 
     if config.get('dir_auth_source') == 'dn':
         results = my_ldap.conn.search_s(my_ldap.base_dn,
-                                        filterstr = '(%s=%s)' % \
-                                            (config['dir_username_source'], username,),
-                                        scope = ldap.SCOPE_SUBTREE,)
+                                        filterstr='(%s=%s)' %
+                                        (config['dir_username_source'], username,),
+                                        scope=ldap.SCOPE_SUBTREE,)
     else:
         results = my_ldap.conn.search_s(my_ldap.base_dn,
-                                        filterstr = '(%s=%s)' % \
-                                            (config['dir_username_source'], username,),
-                                        scope = ldap.SCOPE_SUBTREE,
-                                        attrlist = [config['dir_auth_username'],])
+                                        filterstr='(%s=%s)' %
+                                        (config['dir_username_source'], username,),
+                                        scope=ldap.SCOPE_SUBTREE,
+                                        attrlist=[config['dir_auth_username'], ])
 
     try:
         dn, result = _filter_ldap_results(results)
     except NotEnoughLdapResults:
         raise Exception("No LDAP user found for username %s" % (username,))
     except TooManyLdapResults:
-        raise Exception("Too many LDAP users found via field %s for username %s" % 
+        raise Exception("Too many LDAP users found via field %s for username %s" %
                         (config['dir_username_source'], username,))
 
     if config.get('dir_auth_source') == 'dn':
         return dn
     else:
         return result[config['dir_auth_username']][0]
-
 
 
 def can_auth(config, username, password):
@@ -464,7 +463,7 @@ def get_user_guids(ldap_conn, config, userlist):
             base=ldap_conn.base_dn,
             scope=ldap.SCOPE_SUBTREE,
             filterstr=filterstr,
-            attrlist=[config['dir_guid_source'],])
+            attrlist=[config['dir_guid_source'], ])
 
         user_results = [(dn, results,) for dn, results in user_result_list if dn is not None]
         if len(user_results) != 1:
@@ -480,8 +479,8 @@ def get_user_guids(ldap_conn, config, userlist):
         yield newuser
 
 
-
-def _PagedAsyncSearch(ldap_conn, sizelimit, base_dn, scope, filterstr='(objectClass=*)', attrlist=None):
+def _PagedAsyncSearch(ldap_conn, sizelimit, base_dn, scope,
+                      filterstr='(objectClass=*)', attrlist=None):
     """ Helper function that implements a paged LDAP search for
     the Search method below.
     Args:
@@ -495,17 +494,17 @@ def _PagedAsyncSearch(ldap_conn, sizelimit, base_dn, scope, filterstr='(objectCl
     """
 
     paged_results_control = SimplePagedResultsControl(
-        ldap.LDAP_CONTROL_PAGE_OID, True, (_PAGE_SIZE, ''))
+        criticality=True, size=_PAGE_SIZE, cookie='')
     logging.debug('Paged search on %s for %s', base_dn, filterstr)
     users = []
     ix = 0
-    while True: 
+    while True:
         if _PAGE_SIZE == 0:
             serverctrls = []
         else:
             serverctrls = [paged_results_control]
-        msgid = ldap_conn.conn.search_ext(base_dn, scope, 
-                                     filterstr, attrlist=attrlist, serverctrls=serverctrls)
+        msgid = ldap_conn.conn.search_ext(
+            base_dn, scope, filterstr, attrlist=attrlist, serverctrls=serverctrls)
         res = ldap_conn.conn.result3(msgid=msgid)
         unused_code, results, unused_msgid, serverctrls = res
         for result in results:
@@ -515,14 +514,11 @@ def _PagedAsyncSearch(ldap_conn, sizelimit, base_dn, scope, filterstr='(objectCl
                 break
         if sizelimit and ix >= sizelimit:
             break
-        cookie = None 
+        cookie = None
         for serverctrl in serverctrls:
-            if serverctrl.controlType == ldap.LDAP_CONTROL_PAGE_OID:
-                unused_est, cookie = serverctrl.controlValue
-                if cookie:
-                    paged_results_control.controlValue = (_PAGE_SIZE, cookie)
+            if serverctrl.controlType == SimplePagedResultsControl.controlType:
+                cookie = paged_results_control.cookie = serverctrl.cookie
                 break
         if not cookie:
             break
     return users
-
