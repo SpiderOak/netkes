@@ -90,7 +90,9 @@ apt-get -y remove python-crypto
 
 find /opt/openmanage/upgrade/resources/ -name '*.deb' | xargs dpkg -i
 
-cat /opt/openmanage/upgrade/requirements.txt | xargs pip install
+pushd /opt/openmanage/upgrade
+pip install --no-index --find-links=./resources -r requirements.txt
+popd
 
 # Restart services
 for SERVICE in openmanage admin_console; do
