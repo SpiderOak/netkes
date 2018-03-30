@@ -558,7 +558,7 @@ def policy_list(request, api, account_info, config, username):
     """ Get the list of policies and assign their parent names to each policy
     """
     policies = _assign_parents(api.list_policies())
-    return render('policy_list.html', {'policies': policies})
+    return render(request, 'policy_list.html', {'policies': policies})
 
 
 @csrf_exempt
@@ -591,6 +591,7 @@ def policy_create(request, api, account_info, config, username):  # NOQA
         )
 
     return render(
+        request,
         'policy_detail.html', {
             'form': form,
             'device_preferences': api.get_device_preferences(),
@@ -621,6 +622,7 @@ def policy_detail(request, api, account_info, config, username, policy_id):  # N
         )
 
     return render(
+        request,
         'policy_detail.html', {
             'form': form,
             'policy': policy,
@@ -659,6 +661,7 @@ def policy_delete(request, api, account_info, config, username, policy_id, delet
                 in_use = True
 
     return render(
+        request,
         'policy_delete.html',
         {'policy': policy, 'in_use': in_use, 'deleted': delete_success}
     )

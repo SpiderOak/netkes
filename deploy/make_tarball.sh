@@ -75,7 +75,7 @@ mkdir $buildit_dir/sql
 cp $source_dir/sql/*.sql $buildit_dir/sql
 
 # Package the configuration files.
-included_management="openmanage_defaults apt_list py_list agent_config.json.sample nginx_vhost crontab log_rotate_directory_agent"
+included_management="openmanage_defaults apt_list py_list agent_config.json.sample nginx_vhost crontab log_rotate_directory_agent log_rotate_backup_status"
 for file in $included_management; do
     cp $source_dir/etc/$file $buildit_dir/etc
 done
