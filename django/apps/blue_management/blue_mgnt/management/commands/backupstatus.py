@@ -29,7 +29,7 @@ class Command(BaseCommand):
         parser.add_argument('-b', '--backed-up-within', default=90, type=int)
         parser.add_argument('-n', '--not-backed-up-within', default=3, type=int)
         parser.add_argument(
-            '-o', '--outdir', default='/home/openmanage/backup_status', type=str
+            '-o', '--outdir', default='/var/log/omva/backup_status', type=str
         )
 
     def _backed_up_within(self, last_backup_complete, backed_up_within):

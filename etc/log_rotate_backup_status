@@ -1,0 +1,8 @@
+/var/log/omva/backup_status/*.csv {
+  daily
+  maxage 7
+  rotate 7
+  nocompress
+  missingok
+  notifempty
+}

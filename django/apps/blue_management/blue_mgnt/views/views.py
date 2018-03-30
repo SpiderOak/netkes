@@ -555,7 +555,6 @@ def users_csv_download(request, api, account_info, config, username):
 
 class ReadOnlyWidget(forms.Widget):
     def render(self, name, value, attrs):
-        self.build_attrs(attrs, name=name)
         if hasattr(self, 'initial'):
             value = self.initial
         return "%s" % (value if value is not None else '')
