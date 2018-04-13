@@ -68,7 +68,9 @@ class Command(BaseCommand):
                         user['name'],
                         device['name'],
                         user['bytes_stored'],
-                        user['last_login'],
+                        datetime.datetime.fromtimestamp(
+                            device['last_login'],
+                        ).strftime('%Y-%m-%d_%H:%M:%S'),
                         datetime.datetime.fromtimestamp(
                             device['last_backup_complete'],
                         ).strftime('%Y-%m-%d_%H:%M:%S'),
