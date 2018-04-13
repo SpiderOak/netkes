@@ -57,6 +57,8 @@ class Command(BaseCommand):
             for device in api.list_devices(user['email']):
                 last_backup_complete = device['last_backup_complete']
                 if (
+                    last_backup_complete
+                    and
                     self._backed_up_within(last_backup_complete, backed_up_within_seconds)
                     and not
                     self._backed_up_within(last_backup_complete, not_backed_up_within_seconds)
