@@ -1,6 +1,7 @@
 import csv
 import time
 import os
+import datetime
 
 from django.core.management.base import BaseCommand
 from django.utils import timezone
@@ -68,7 +69,9 @@ class Command(BaseCommand):
                         device['name'],
                         user['bytes_stored'],
                         user['last_login'],
-                        device['last_backup_complete'],
+                        datetime.datetime.fromtimestamp(
+                            device['last_backup_complete'],
+                        ).strftime('%Y-%m-%d_%H:%M:%S'),
                     ])
 
         rows = sorted(
