@@ -748,7 +748,7 @@ class Pagination(object):
         # populate self.page_range with list holding the page numbers to render in nav.
         # self.page_range is (currently) hard-coded to always contain 10 items
         # None values represent need to present '...' for skipped page ranges
-        self.page_range = self.paginator.page_range
+        self.page_range = list(self.paginator.page_range)
         if last_page <= 10:
             pass
         else:
@@ -760,7 +760,7 @@ class Pagination(object):
                                        self.page_range[self.page-3:self.page+3] +
                                        [None, last_page])
             else:
-                self.page_range = self.paginator.page_range[:8] + [None, last_page]
+                self.page_range = list(self.paginator.page_range)[:8] + [None, last_page]
 
     @property
     def query_offset(self):
