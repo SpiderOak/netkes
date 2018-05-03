@@ -5,10 +5,11 @@ import os
 os.environ['DJANGO_SETTINGS_MODULE'] = 'omva.settings'
 
 import django
+django.setup()
+
 from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
 
-django.setup()
 
 print "adding permissions"
 
