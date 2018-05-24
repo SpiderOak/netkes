@@ -68,7 +68,7 @@ else
     echo "agent_config.json hasn't changed"
 fi
 
-\cp -rf /opt/openmanage.$CURRENT_DATE/etc/keys/* /opt/openmanage/etc/keys
+rsync /opt/openmanage.$CURRENT_DATE/etc/keys/* /opt/openmanage/etc/keys
 
 echo "Setting django secret key"
 random_string="$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c 64;echo;)"
