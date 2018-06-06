@@ -5,3 +5,4 @@ __init__.py
 
 Provides the bits for working with LDAP.
 """
+import group_manager, ldap_source, local_source, radius_source  # NOQA

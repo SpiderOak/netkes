@@ -1,11 +1,11 @@
 import unittest
-from mock import MagicMock, sentinel
+from mock import MagicMock, sentinel, patch
 from datetime import datetime, timedelta
 
 import account_mgr
 
 
-class TestAdminTokenAuth(unittest.TestCase):
+class TestAdminAuth(unittest.TestCase):
     def setUp(self):
         account_mgr.get_cursor = MagicMock()
         cur = MagicMock()
@@ -14,8 +14,30 @@ class TestAdminTokenAuth(unittest.TestCase):
         account_mgr.get_api = MagicMock()
         self.api = MagicMock()
         account_mgr.get_api.return_value = self.api
-        self.user = {'avatar_id': sentinel.avatar_id}
+        self.user = {
+            'avatar_id': sentinel.avatar_id,
+            'email': sentinel.email,
+        }
+        self.api.get_user.return_value = self.user
         self.time = datetime.now() + timedelta(hours=1)
+
+    @patch('account_mgr.user_source.ldap_source')
+    def test_user_disabled(self, ldap_source):
+        ldap_source.can_auth.return_value = True
+        self.cur.rowcount = 0
+        self.user['enabled'] = False
+        self.assertFalse(
+            account_mgr.authenticator({'auth_method': 'ldap', }, 'test', 'pass')
+        )
+
+    @patch('account_mgr.user_source.ldap_source')
+    def test_user_enabled(self, ldap_source):
+        ldap_source.can_auth.return_value = True
+        self.cur.rowcount = 0
+        self.user['enabled'] = True
+        self.assertTrue(
+            account_mgr.authenticator({'auth_method': 'ldap', }, 'test', 'pass')
+        )
 
     def test_no_restrictions(self):
         self.cur.rowcount = 1
