@@ -69,9 +69,7 @@ def save_settings(request, api, options):
     config_mgr_.apply_config()
 
     if 'timezone' in cleaned_data:
-        with open('/etc/timezone', 'w') as f:
-            f.write(cleaned_data['timezone'])
-        subprocess.call(['dpkg-reconfigure', '-f', 'noninteractive', 'tzdata'])
+        subprocess.call(['timedatectl', 'set-timezone', cleaned_data['timezone']])
 
 
 class IPBlockForm(forms.Form):

@@ -1,6 +1,7 @@
 import csv
 import time
 import os
+import datetime
 
 from django.core.management.base import BaseCommand
 from django.utils import timezone
@@ -57,6 +58,8 @@ class Command(BaseCommand):
             for device in api.list_devices(user['email']):
                 last_backup_complete = device['last_backup_complete']
                 if (
+                    last_backup_complete
+                    and
                     self._backed_up_within(last_backup_complete, backed_up_within_seconds)
                     and not
                     self._backed_up_within(last_backup_complete, not_backed_up_within_seconds)
@@ -65,8 +68,12 @@ class Command(BaseCommand):
                         user['name'],
                         device['name'],
                         user['bytes_stored'],
-                        user['last_login'],
-                        device['last_backup_complete'],
+                        datetime.datetime.fromtimestamp(
+                            device['last_login'],
+                        ).strftime('%Y-%m-%d_%H:%M:%S'),
+                        datetime.datetime.fromtimestamp(
+                            device['last_backup_complete'],
+                        ).strftime('%Y-%m-%d_%H:%M:%S'),
                     ])
 
         rows = sorted(
