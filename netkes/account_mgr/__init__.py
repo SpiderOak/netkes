@@ -116,6 +116,10 @@ def authenticator(config, username, password, use_admin_tokens=True):
     if use_admin_tokens and admin_token_auth(config, user, username, password):
         return True
 
+    if not user['enabled']:
+        # Auth should only work for disabled users when using an auth token.
+        return False
+
     if auth_method == 'ldap':
         log.debug("Attempting to use LDAP simple bind for authenticating %s" % (username,))
         from account_mgr.user_source import ldap_source

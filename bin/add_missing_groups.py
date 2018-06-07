@@ -6,7 +6,7 @@ from netkes.account_mgr.accounts_api import Api
 config = config_mgr.ConfigManager(config_mgr.default_config())
 
 api = Api.create(
-    'https://spideroak.com/apis/accounts/v1/',
+    config.config['api_root'],
     config.config['api_user'],
     config.config['api_password'],
 )
@@ -14,11 +14,13 @@ api = Api.create(
 
 groups = api.list_groups()
 
+
 def find_group(group_id):
     for g in config.config['groups']:
         if g['group_id'] == group_id:
             return g
-    
+
+
 for group in groups:
     if not find_group(group['group_id']):
         config.config['groups'].append({
@@ -32,4 +34,3 @@ for group in groups:
 
 
 config.apply_config()
-

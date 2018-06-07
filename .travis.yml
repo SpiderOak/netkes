@@ -10,6 +10,7 @@ addons:
       - python-ldap 
       - python-cerealizer
       - python-dev 
+      - python-pyrad
       - libldap2-dev 
       - libsasl2-dev 
       - libssl-dev
