@@ -8,7 +8,6 @@ from django.http import Http404
 from django.core.cache import cache
 from django.core import validators
 from django.shortcuts import render, redirect
-from django.views.decorators.csrf import csrf_exempt
 
 from views import enterprise_required
 
@@ -561,7 +560,6 @@ def policy_list(request, api, account_info, config, username):
     return render(request, 'policy_list.html', {'policies': policies})
 
 
-@csrf_exempt
 @enterprise_required
 def policy_create(request, api, account_info, config, username):  # NOQA
     """ Get a policy from the provided policy ID """
@@ -598,7 +596,6 @@ def policy_create(request, api, account_info, config, username):  # NOQA
         })
 
 
-@csrf_exempt
 @enterprise_required
 def policy_detail(request, api, account_info, config, username, policy_id):  # NOQA
     """ Get a policy from the provided policy ID """
@@ -630,7 +627,6 @@ def policy_detail(request, api, account_info, config, username, policy_id):  # N
         })
 
 
-@csrf_exempt
 @enterprise_required
 def policy_delete(request, api, account_info, config, username, policy_id, delete=False):  # NOQA
     """ Return a delete confirmation page or delete the policy based on the

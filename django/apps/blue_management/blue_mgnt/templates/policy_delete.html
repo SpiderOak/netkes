@@ -26,6 +26,7 @@ policy inherits from this policy.
   <div class='widget'>
     <p>Are you sure you want to delete {{ policy.name }}?
     <form method='POST' action='{% url 'blue_mgnt:policy_delete' policy_id=policy.id %}'>
+      {% csrf_token %}
       <button class='button' type="submit" value="cancel" name='delete-button'>
         No, do not delete the policy
       </button>

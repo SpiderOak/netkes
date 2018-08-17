@@ -60,7 +60,14 @@ less.env = "development";
           <li class="line"><a target="_blank" href="https://spideroak.com/mcuserman/">
               <i class="ss-icon">&#x2753;</i>Help
             </a></li>
-            <li class="line"><a href="{% url "blue_mgnt:logout" %}"><i class="ss-icon">&#x1F512;</i>Logout</a></li>
+            <li class="line">
+              <form method='POST' action="{% url "blue_mgnt:logout" %}">
+                {% csrf_token %}
+                <a href="#" onclick="$(this).closest('form').submit()">
+                  <i class="ss-icon">&#x1F512;</i>Logout
+                </a>
+              </form>
+            </li>
         </ul>
       </div>
     </header>
