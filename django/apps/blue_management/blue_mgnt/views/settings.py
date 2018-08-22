@@ -20,6 +20,7 @@ from netkes import account_mgr
 from netkes.account_mgr.user_source.ldap_source import get_auth_username
 
 AGENT_CONFIG_VARS = [
+    'minimum_password_length',
     'api_root',
     'auth_method',
     'dir_auth_source',
@@ -147,8 +148,14 @@ def settings(request, api, account_info, config, username, saved=False):
         def __init__(self, *args, **kwargs):
             super(OpenmanageOptsForm, self).__init__(*args, **kwargs)
 
-            if features['ldap']:
-                for var in AGENT_CONFIG_VARS:
+            for var in AGENT_CONFIG_VARS:
+                if var == 'minimum_password_length':
+                    self.fields[var] = forms.IntegerField(
+                        min_value=1,
+                        initial=config.get(var, 8),
+                        required=False,
+                    )
+                elif features['ldap']:
                     if var in ['send_activation_email', 'resolve_sync_conflicts']:
                         if var == 'resolve_sync_conflicts':
                             initial = False
@@ -164,7 +171,6 @@ def settings(request, api, account_info, config, username, saved=False):
                             initial=config.get(var, initial),
                             required=False,
                             help_text=help_text,
-
                         )
                     else:
                         self.fields[var] = forms.CharField(
@@ -286,6 +292,7 @@ def password(request, api, account_info, config, username, saved=False):
                 return redirect('blue_mgnt:password_saved')
 
     return render(request, 'password.html', dict(
+        minimum_password_length=config.get('minimum_password_length', 8),
         user=request.user,
         username=username,
         features=features,
