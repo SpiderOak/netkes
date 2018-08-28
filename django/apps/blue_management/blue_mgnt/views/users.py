@@ -624,6 +624,7 @@ def user_detail(request, api, account_info, config, username, email, saved=False
             return redirect('blue_mgnt:user_detail_saved', email)
 
     return render(request, 'user_detail.html', dict(
+        minimum_password_length=config.get('minimum_password_length', 8),
         shares=api.list_shares(email),
         share_url=get_base_url(),
         username=username,

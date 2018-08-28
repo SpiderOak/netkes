@@ -31,6 +31,7 @@ from django.forms.utils import ErrorList
 from django.forms.forms import NON_FIELD_ERRORS
 from wsgiref.util import FileWrapper
 from django.core.cache import cache
+from django.views.decorators.http import require_POST
 
 from blue_mgnt import models
 from netkes.account_mgr.accounts_api import Api
@@ -309,6 +310,7 @@ def login_user(request):
     ))
 
 
+@require_POST
 def logout(request):
     if 'username' in request.session:
         del request.session['username']
