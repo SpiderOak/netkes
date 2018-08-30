@@ -42,6 +42,8 @@ from netkes import account_mgr
 from key_escrow import server
 from Pandora import serial
 from Crypto.Util.RFC1751 import key_to_english
+from .utils import escape_row
+
 
 LOG = logging.getLogger('admin_actions')
 
@@ -550,7 +552,7 @@ def users_csv_download(request, api, account_info, config, username):
             row[4] = datetime.datetime.fromtimestamp(user['last_login'])
         if not features['email_as_username']:
             row = [user['username'].encode('utf-8')] + row
-        writer.writerow(row)
+        writer.writerow(escape_row(row))
 
     return response
 

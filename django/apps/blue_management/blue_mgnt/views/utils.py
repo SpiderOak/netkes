@@ -1,19 +1,24 @@
+
+OFFENDING_CSV_CHARS = set('@+-=|%')
+
+
+def is_injection(s):
+    return len(s) > 0 and s[0] in OFFENDING_CSV_CHARS
+
+
 def escape(payload):
     '''
-    Escapes CSV payloads to prevent Excel injection
+    Escapes CSV payloads to prevent Excel injection.
+    Works only on str, and bypasses any other type.
     '''
-    if payload[0] in ('@', '+', '-', '=', '|', '%'):
+    if isinstance(payload, str) and is_injection(payload):
         payload = payload.replace("|", "\|")
         payload = "'" + payload + "'"
     return payload
 
 
-def sanitize_csv_row(row):
+def escape_row(row):
     '''
     Escapes a row of elements to be passed to a csv writer
     '''
-    for element in row:
-        if isinstance(element, str):
-            yield escape(element)
-        else:
-            yield element
+    return map(escape, row)
