@@ -542,6 +542,11 @@ def user_detail(request, api, account_info, config, username, email, saved=False
             required=False,
         )
 
+        def clean_name(self):
+            name = self.cleaned_data['name']
+            name_validator(name)
+            return name
+
         def clean_email(self):
             new_email = self.cleaned_data['email']
             if new_email and new_email != email:
