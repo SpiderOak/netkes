@@ -260,7 +260,7 @@ def settings(request, api, account_info, config, username, saved=False):
 
 
 class PasswordForm(forms.Form):
-    password = forms.CharField(widget=forms.PasswordInput)
+    password = forms.CharField(widget=forms.PasswordInput, min_length=8)
     password_again = forms.CharField(label="Repeat Password", widget=forms.PasswordInput)
 
     def clean_password_again(self):
