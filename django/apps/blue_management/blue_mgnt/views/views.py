@@ -298,8 +298,13 @@ def login_user(request):
                                  api.info()['brand_identifier']])
 
                 request.session['username'] = username
+                url = urllib.unquote(request.GET.get('next', '/'))
+                is_absolute = bool(urlparse.urlparse(url))
 
-                return redirect(urllib.unquote(request.GET.get('next', '/')))
+                if is_absolute:
+                    url = '/'
+                return redirect(url)
+
             else:
                 errors = form._errors.setdefault(NON_FIELD_ERRORS, ErrorList())
                 errors.append('Invalid username or password')
