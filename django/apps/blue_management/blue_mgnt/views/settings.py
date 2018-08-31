@@ -14,6 +14,8 @@ from django.forms.formsets import formset_factory
 from django.shortcuts import redirect
 from django.contrib.auth.decorators import permission_required
 from django.core.cache import cache
+from django.conf import settings as django_settings
+
 
 from netkes.netkes_agent import config_mgr
 from netkes import account_mgr
@@ -260,7 +262,10 @@ def settings(request, api, account_info, config, username, saved=False):
 
 
 class PasswordForm(forms.Form):
-    password = forms.CharField(widget=forms.PasswordInput, min_length=8)
+    password = forms.CharField(
+        widget=forms.PasswordInput,
+        min_length=django_settings.MINIMUM_PASSWORD_LENGTH
+    )
     password_again = forms.CharField(label="Repeat Password", widget=forms.PasswordInput)
 
     def clean_password_again(self):
