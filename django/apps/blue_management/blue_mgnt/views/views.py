@@ -267,6 +267,27 @@ def set_api_version(api):
         api.update_enterprise_settings(dict(api_version=version))
 
 
+def sanitize_redirect(url):
+    parsed = urlparse.urlparse(url)
+    path = os.path.normpath(
+        parsed.path.strip()
+    )
+    # Change single dot to slash in case it's just a plain domain
+    if path == '.':
+        path = '/'
+    without_netloc = urlparse.ParseResult(
+        scheme=None, netloc=None,
+        path=path,
+        params=None,
+        query=None,
+        fragment=None
+    )
+    final_url = urlparse.urlunparse(without_netloc)
+    if url != final_url:
+        LOG.info('Changed url from {} to {}'.format(url, final_url))
+    return final_url
+
+
 def login_user(request):
     form = LoginForm()
     if request.method == 'POST':
@@ -300,8 +321,10 @@ def login_user(request):
                                  api.info()['brand_identifier']])
 
                 request.session['username'] = username
+                url = urllib.unquote(request.GET.get('next', '/'))
 
-                return redirect(urllib.unquote(request.GET.get('next', '/')))
+                return redirect(sanitize_redirect(url))
+
             else:
                 errors = form._errors.setdefault(NON_FIELD_ERRORS, ErrorList())
                 errors.append('Invalid username or password')
