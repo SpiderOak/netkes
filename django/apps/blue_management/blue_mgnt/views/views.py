@@ -276,9 +276,9 @@ def sanitize_redirect(url):
     without_netloc = urlparse.ParseResult(
         scheme=None, netloc=None,
         path=path,
-        params=parsed.params,
-        query=parsed.query,
-        fragment=parsed.fragment
+        params=None,
+        query=None,
+        fragment=None
     )
     final_url = urlparse.urlunparse(without_netloc)
     if url != final_url:
