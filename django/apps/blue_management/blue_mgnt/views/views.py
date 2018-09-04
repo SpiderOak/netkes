@@ -265,6 +265,27 @@ def set_api_version(api):
         api.update_enterprise_settings(dict(api_version=version))
 
 
+def sanitize_redirect(url):
+    parsed = urlparse.urlparse(url)
+    path = os.path.normpath(
+        parsed.path.strip()
+    )
+    # Change single dot to slash in case it's just a plain domain
+    if path == '.':
+        path = '/'
+    without_netloc = urlparse.ParseResult(
+        scheme=None, netloc=None,
+        path=path,
+        params=parsed.params,
+        query=parsed.query,
+        fragment=parsed.fragment
+    )
+    final_url = urlparse.urlunparse(without_netloc)
+    if url != final_url:
+        LOG.info('Changed url from {} to {}'.format(url, final_url))
+    return final_url
+
+
 def login_user(request):
     form = LoginForm()
     if request.method == 'POST':
@@ -299,11 +320,8 @@ def login_user(request):
 
                 request.session['username'] = username
                 url = urllib.unquote(request.GET.get('next', '/'))
-                is_absolute = bool(urlparse.urlparse(url))
 
-                if is_absolute:
-                    url = '/'
-                return redirect(url)
+                return redirect(sanitize_redirect(url))
 
             else:
                 errors = form._errors.setdefault(NON_FIELD_ERRORS, ErrorList())
