@@ -19,6 +19,8 @@ from django.utils.safestring import mark_safe
 from netkes.account_mgr.user_source import local_source
 from blue_mgnt.models import BumpedUser
 import openmanage.models as openmanage_models
+from .validators import name_validator
+
 
 SIZE_OF_BUMP = 5
 
@@ -201,13 +203,14 @@ def get_new_user_csv_form(api, groups, account_info, config, request):
             return data
     return UserCSVForm
 
-
 def get_new_user_form(api, features, account_info, config, local_groups, groups, request):
     class NewUserForm(forms.Form):
         if not features['email_as_username']:
             username = forms.CharField(max_length=45)
         email = forms.EmailField(max_length=144)
-        name = forms.CharField(max_length=45)
+        name = forms.CharField(max_length=45, validators=[
+            name_validator
+        ])
         group_id = forms.ChoiceField(local_groups, label='Group')
 
         def clean_username(self):
@@ -538,6 +541,11 @@ def user_detail(request, api, account_info, config, username, email, saved=False
             help_text="If set deleted data will not be purged from the system.",
             required=False,
         )
+
+        def clean_name(self):
+            name = self.cleaned_data['name']
+            name_validator(name)
+            return name
 
         def clean_email(self):
             new_email = self.cleaned_data['email']
