@@ -13,7 +13,7 @@ def escape(payload):
     '''
     if isinstance(payload, str) and is_injection(payload):
         payload = payload.replace("|", "\| ")
-        payload = "'" + payload + "'"
+        payload = "' " + payload + "'"
     return payload
 
 
