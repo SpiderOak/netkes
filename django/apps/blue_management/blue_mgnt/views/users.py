@@ -574,7 +574,7 @@ def user_detail(request, api, account_info, config, username, email, saved=False
     if not local_user:
         data['group_id'] = get_group_name(groups, data['group_id'])
     user_form = UserForm(initial=data)
-    password_form = PasswordForm()
+    password_form = PasswordForm(config=config)
     if request.method == 'POST':
         if request.POST.get('form', '') == 'edit_user':
             user_form = UserForm(request.POST)
@@ -590,7 +590,7 @@ def user_detail(request, api, account_info, config, username, email, saved=False
                                                       reg_code='not used'))
                 return redirect('blue_mgnt:user_detail_saved', email)
         if request.POST.get('form', '') == 'password':
-            password_form = PasswordForm(request.POST)
+            password_form = PasswordForm(request.POST, config=config)
             if password_form.is_valid():
                 log_admin_action(request, 'change password for: %s' % email)
                 password = password_form.cleaned_data['password'].encode('utf-8')

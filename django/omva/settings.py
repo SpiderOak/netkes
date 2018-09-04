@@ -38,6 +38,8 @@ MANAGEMENT_VM = True
 
 LOGIN_URL = '/login/'
 
+MINIMUM_PASSWORD_LENGTH = 8
+
 TIME_ZONE = 'America/Chicago'
 
 # Language code for this installation. All choices can be found here:

@@ -14,6 +14,9 @@ from django.forms.formsets import formset_factory
 from django.shortcuts import redirect
 from django.contrib.auth.decorators import permission_required
 from django.core.cache import cache
+from django.core.validators import MinLengthValidator
+from django.conf import settings as django_settings
+
 
 from netkes.netkes_agent import config_mgr
 from netkes import account_mgr
@@ -260,8 +263,26 @@ def settings(request, api, account_info, config, username, saved=False):
 
 
 class PasswordForm(forms.Form):
-    password = forms.CharField(widget=forms.PasswordInput)
+    password = forms.CharField(
+        widget=forms.PasswordInput,
+        min_length=django_settings.MINIMUM_PASSWORD_LENGTH
+    )
     password_again = forms.CharField(label="Repeat Password", widget=forms.PasswordInput)
+
+    def __init__(self, *args, **kwargs):
+        config = kwargs.pop('config', None)
+        super(PasswordForm, self).__init__(*args, **kwargs)
+        self._init_password_length_from_config(config)
+
+    def _init_password_length_from_config(self, config):
+        try:
+            min_length = int(config['minimum_password_length'])
+        except (KeyError, TypeError):
+            min_length = django_settings.MINIMUM_PASSWORD_LENGTH
+        field = self.fields['password']
+        field.validators.append(
+            MinLengthValidator(min_length)
+        )
 
     def clean_password_again(self):
         password = self.cleaned_data['password_again']
@@ -274,10 +295,10 @@ class PasswordForm(forms.Form):
 @permission_required('blue_mgnt.can_manage_settings', raise_exception=True)
 def password(request, api, account_info, config, username, saved=False):
     features = api.enterprise_features()
-    password_form = PasswordForm()
+    password_form = PasswordForm(config=config)
     if request.method == 'POST':
         if request.POST.get('form', '') == 'password':
-            password_form = PasswordForm(request.POST)
+            password_form = PasswordForm(request.POST, config=config)
             if password_form.is_valid():
                 new_password = password_form.cleaned_data['password'].encode('utf-8')
                 log_admin_action(request, 'change password')
