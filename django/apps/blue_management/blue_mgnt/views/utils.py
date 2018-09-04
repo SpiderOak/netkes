@@ -12,7 +12,7 @@ def escape(payload):
     Works only on str, and bypasses any other type.
     '''
     if isinstance(payload, str) and is_injection(payload):
-        payload = payload.replace("|", "\|")
+        payload = payload.replace("|", "\| ")
         payload = "'" + payload + "'"
     return payload
 
