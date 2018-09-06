@@ -258,7 +258,7 @@ def password(request):
                 minimum_password_length
             )
             log.warning(message)
-            return HttpResponseServerError(
+            return HttpResponseBadRequest(
                 content=message,
                 content_type='text/plain',
             )
