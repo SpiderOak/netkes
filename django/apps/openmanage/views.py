@@ -274,5 +274,6 @@ def password(request):
 
         password.pw_hash = new_password
         password.save()
+        log.info("Password setup complete")
 
         return HttpResponse()
