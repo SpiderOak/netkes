@@ -10,7 +10,7 @@ import time
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.crypto import constant_time_compare
 from django.http import (
-    HttpResponse, HttpResponseForbidden, HttpResponseBadRequest, 
+    HttpResponse, HttpResponseForbidden, HttpResponseBadRequest,
     HttpResponseNotFound, HttpResponseServerError
 )
 from django.shortcuts import get_object_or_404
@@ -84,7 +84,7 @@ def start_auth_session(request):
 def active_challenge(session_challenge):
     if not session_challenge:
         return False
-    if session_challenge[1] + CHALLENGE_EXPIRATION_TIME < time.time(): 
+    if session_challenge[1] + CHALLENGE_EXPIRATION_TIME < time.time():
         return False
     return True
 
@@ -103,7 +103,7 @@ def valid_auth_session(request):
         if auth:
             return auth['time'] + CHALLENGE_EXPIRATION_TIME > time.time()
     return False
-    
+
 def get_challenge(request):
     return request.session['challenge']
 
@@ -126,8 +126,8 @@ def login_required(fun):
 
             try:
                 sign_key = serial.loads(serial_sign_key)
-            except (serial.EndOfFile, 
-                    serial.NotSerializerFileError, 
+            except (serial.EndOfFile,
+                    serial.NotSerializerFileError,
                     serial.NotSerializableObjectError):
                 log.error("Got bad request. Unable to load sign key")
                 return HttpResponseBadRequest()
@@ -136,14 +136,14 @@ def login_required(fun):
 
             try:
                 data =  server.read_escrow_data(
-                    brand_identifier, 
-                    auth, 
-                    sign_key=sign_key, 
+                    brand_identifier,
+                    auth,
+                    sign_key=sign_key,
                     layer_count=layer_count,
                 )
 
                 plaintext_auth = json.loads(data)
-                if ('challenge' not in plaintext_auth or 
+                if ('challenge' not in plaintext_auth or
                     'password' not in plaintext_auth):
                     log.warn("missing auth key %s" % (brand_identifier,))
                     return HttpResponseBadRequest()
@@ -159,8 +159,8 @@ def login_required(fun):
                 return HttpResponseServerError()
 
             challenge = valid_challenge(request, plaintext_auth['challenge'])
-            authenticated = authenticator(read_config_file(), 
-                                        decoded_user, 
+            authenticated = authenticator(read_config_file(),
+                                        decoded_user,
                                         plaintext_auth['password'])
 
             if not challenge or not authenticated:
@@ -168,7 +168,7 @@ def login_required(fun):
                 return HttpResponseForbidden()
 
             session_challenge = get_challenge(request)
-            secret_box, nonce = create_secret_box(plaintext_auth['password'], 
+            secret_box, nonce = create_secret_box(plaintext_auth['password'],
                                                   session_challenge[0])
             request.session['auth'] = {
                 'secret_box': secret_box,
@@ -194,7 +194,7 @@ def create_secret_box(password, username):
         username,                # this is the salt
         KEYLEN, ITERATIONS
     )
-    
+
     nonce = nacl.utils.random(nacl.secret.SecretBox.NONCE_SIZE)
     return nacl.secret.SecretBox(key), nonce
 
@@ -214,13 +214,13 @@ def read_data(request):
     except KeyError:
         log.warn("KeyError at start")
         return HttpResponseBadRequest()
-    
+
     log.debug("Being sent:")
     log.debug("brand_identifier: %r" % brand_identifier)
     log.debug("layer_count: %r" % layer_count)
 
     try:
-        plaintext_data = server.read_escrow_data(brand_identifier, 
+        plaintext_data = server.read_escrow_data(brand_identifier,
                                                  escrowed_data,
                                                  layer_count=layer_count,
                                                  sign_key=sign_key)
@@ -239,9 +239,13 @@ def read_data(request):
     log.info("Read data for brand %s" % (brand_identifier,))
     return HttpResponse(response, content_type="application/octet-stream")
 
+
 @csrf_exempt
 def password(request):
     log = logging.getLogger('password')
+    config = read_config_file()
+    minimum_password_length = config.get('minimum_password_length', 8)
+
     if request.method == 'POST':
         try:
             email = request.POST['email']
@@ -249,7 +253,15 @@ def password(request):
         except KeyError:
             log.error("Got bad request. Missing arguments.")
             return HttpResponse()
-
+        if len(new_password) < minimum_password_length:
+            message = 'Password too short. It should be at least {} characters long'.format(
+                minimum_password_length
+            )
+            log.warning(message)
+            return HttpResponseServerError(
+                content=message,
+                content_type='text/plain',
+            )
         try:
             password = models.Password.objects.get(pk=email)
         except models.Password.DoesNotExist:
@@ -264,12 +276,3 @@ def password(request):
         password.save()
 
         return HttpResponse()
-
-
-
-
-
-
-
-
-
