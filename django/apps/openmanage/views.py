@@ -28,6 +28,8 @@ from openmanage import models
 CHALLENGE_EXPIRATION_TIME = 60
 KEYLEN = nacl.secret.SecretBox.KEY_SIZE
 ITERATIONS = 100    # from py-bcrypt readme, maybe need to tweak this
+BCRYPT_HASH_LENGTH = 60
+
 
 def setup_logging():
     handler = logging.StreamHandler()
@@ -253,10 +255,8 @@ def password(request):
         except KeyError:
             log.error("Got bad request. Missing arguments.")
             return HttpResponse()
-        if len(new_password) < minimum_password_length:
-            message = 'Password too short. It should be at least {} characters long'.format(
-                minimum_password_length
-            )
+        if len(new_password) != BCRYPT_HASH_LENGTH:
+            message = 'Expected bcrypt hash'
             log.warning(message)
             return HttpResponseBadRequest(
                 content=message,
