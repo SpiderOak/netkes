@@ -76,18 +76,6 @@ def save_settings(request, api, options):
         subprocess.call(['timedatectl', 'set-timezone', cleaned_data['timezone']])
 
 
-class IPBlockForm(forms.Form):
-    ip_block = forms.CharField(max_length=43, label='IP Block:')
-
-    def clean_ip_block(self):
-        data = self.cleaned_data['ip_block']
-        try:
-            ip = IP(data)  # NOQA
-        except ValueError:
-            raise forms.ValidationError('Invalid IP Block')
-        return data
-
-
 def login_test(config, username, password):
     if username:
         if account_mgr.authenticator(config, username, password, False):
@@ -192,23 +180,10 @@ def settings(request, api, account_info, config, username, saved=False):
             api.update_enterprise_settings(dict(signup_network_restriction=blocks))
             log_admin_action(request, 'update signup network restrictions: %s' % blocks)
 
-    IPBlockFormSet = formset_factory(IPBlockForm,
-                                     can_delete=True,
-                                     formset=BaseIPBlockFormSet)
-
-    ip_blocks = IPBlockFormSet(initial=[dict(ip_block=x) for x in
-                                        opts['signup_network_restriction']],
-                               prefix='ip_blocks')
     error = False
     command_output = ''
 
     if request.method == 'POST' and request.user.has_perm('blue_mgnt.can_manage_settings'):
-        if request.POST.get('form', '') == 'ip_block':
-            ip_blocks = IPBlockFormSet(request.POST, prefix='ip_blocks')
-            if ip_blocks.is_valid():
-                return redirect('blue_mgnt:settings_saved')
-            else:
-                error = True
         elif request.POST.get('form', '') == 'reboot':
             log_admin_action(request, 'reboot management vm')
             subprocess.call(['shutdown', '-r', 'now'])
@@ -253,7 +228,6 @@ def settings(request, api, account_info, config, username, saved=False):
         user=request.user,
         username=username,
         features=features,
-        ip_blocks=ip_blocks,
         command_output=command_output,
         options=options,
         saved=saved,
