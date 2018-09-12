@@ -184,7 +184,7 @@ def settings(request, api, account_info, config, username, saved=False):
     command_output = ''
 
     if request.method == 'POST' and request.user.has_perm('blue_mgnt.can_manage_settings'):
-        elif request.POST.get('form', '') == 'reboot':
+        if request.POST.get('form', '') == 'reboot':
             log_admin_action(request, 'reboot management vm')
             subprocess.call(['shutdown', '-r', 'now'])
             return redirect('blue_mgnt:settings_saved')
