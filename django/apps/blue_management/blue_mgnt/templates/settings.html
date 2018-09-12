@@ -3,7 +3,6 @@
 {% block body_classes %}settings {{ block.super }}{% endblock body_classes %}
 {% block breadcrumb %}<a href="{% url 'blue_mgnt:manage' %}">Back to Manage</a>{% endblock breadcrumb %}
 {% block modal_options %}
-    {% include "partials/add-ip-blocks-widget.html" with active="manage" %}
     {% include "partials/reboot-widget.html" %}    
 {% endblock modal_options %}
 {% block navtab %}{% include "partials/navtab-widget.html" with active="manage" %}{% endblock navtab %}
@@ -24,9 +23,6 @@
 <!-- Settings -->
 <h1 class="page-header">
 	<i class="ss-icon">&#x1F464;</i> Accounts
-    <div class="actions">
-		<button id="add-widget" class="button button-primary-basic">Add IP Blocks</button>
-	</div>
 </h1>
 <div class="spacer"></div>
 {% if saved %}
