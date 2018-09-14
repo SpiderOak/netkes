@@ -2,7 +2,12 @@ from django.core.validators import RegexValidator
 import re
 
 name_validator = RegexValidator(
-    regex=r"^[\w\d\_]+$",
-    message="This field can only contain letter, numbers and underscores",
+    regex=r'^[a-zA-Z][a-zA-Z0-9_]{3,37}$',
+    message=(
+        'Usernames must start with a letter, '
+        'be at least four characters long, '
+        'and may contain letters, numbers, '
+        'and underscores.'
+    ),
     flags=re.UNICODE,
 )
