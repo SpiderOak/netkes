@@ -146,6 +146,14 @@ def _csv_create_users(api, account_info, groups, config, request, csv_data):
         if not group:
             msg = 'Invalid data in row %s. Invalid Group' % x
             return x, forms.ValidationError(msg)
+        if not new_user_value_re_tests['avatar']['username'].match(row['name']):
+            return x, forms.ValidationError(
+                'Invalid data in row %s. Invalid Username. ' % x +
+                'Usernames must start with a letter, '
+                'be at least four characters long, '
+                'and may contain letters, numbers, '
+                'and underscores.'
+            )
         group_id = group['group_id']
         config_group = get_config_group(config, group_id)
         if config_group['user_source'] != 'local':
