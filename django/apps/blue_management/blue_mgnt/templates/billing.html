@@ -129,56 +129,13 @@
 <script type="text/x-swig-template" id="template-billing-stripe-payment">
   <form class="so-form">
     <div class="cc-info">
-      <h3>Credit Card Information</h3>
+      <label for="card-element">
+        <h3>Credit or debit card</h3>
+      </label>
       <fieldset>
-        <div class="billing-stripe-name">
-          <label for="stripe_name">Name on Card</label>
-          <input id="stripe_name">
-          <div class="alert">
-            <p></p>
-          </div>
-        </div>
-        <div class="billing-stripe-cc">
-          <label for="stripe_cc">Card Number</label>
-          <input id="stripe_cc">
-          <div class="alert">
-            <p></p>
-          </div>
-        </div>
-        <div class="billing-stripe-csv">
-          <label for="stripe_csv">CSV Code</label>
-          <input id="stripe_csv">
-          <div class="alert">
-            <p></p>
-          </div>
-        </div>
-        <div class="billing-stripe-expiration">
-          <label>Expiration Date</label>
-          <select id="stripe_exp_month">
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
-            <option value="5">5</option>
-            <option value="6">6</option>
-            <option value="7">7</option>
-            <option value="8">8</option>
-            <option value="9">9</option>
-            <option value="10">10</option>
-            <option value="11">11</option>
-            <option value="12">12</option>
-          </select>
-          <select id="stripe_exp_year">
-            {% for y in cc_years %}
-            <option value="{{ y }}">{{ y }}</option>
-            {% endfor %}
-          </select>
-          <div class="alert">
-            <p></p>
-          </div>
-        </div>
+        <div id="card-element"></div>
+        <div id="card-errors" role="alert" class="alert-error"></div>
       </fieldset>
-
     </div>
 
     <div class="onfile-info">
@@ -292,8 +249,7 @@
 <script type="text/javascript" src="/static/blue_mgnt/vendor/backbone-min.js"></script>
 <script type="text/javascript" src="/static/blue_mgnt/vendor/swig.min.js"></script>
 <script type="text/javascript" src="/static/blue_mgnt/vendor/jquery.payment.js"></script>
-<script type="text/javascript" src="https://js.stripe.com/v2/"></script>
-<script type="text/javascript">Stripe.setPublishableKey('{{ billing_info.stripe_public_key }}');</script>
+<script type="text/javascript" src="https://js.stripe.com/v3/"></script>
 <script type="text/javascript">
   var SMB = SMB || {};
   SMB.total_users = {{ account_info.total_users }};
@@ -311,6 +267,12 @@
 {% block js_main_init %}
 <script type="text/javascript">
   init_billing();
+  var stripe_public_key = '{{ billing_info.stripe_public_key }}';
+
+  var stripe = Stripe('{{ billing_info.stripe_public_key }}');
+  var elements = stripe.elements();
+  var card = elements.create('card');
+  card.mount('#card-element');
 </script>
 {% endblock js_main_init %}
 {% endblock js_main %}
