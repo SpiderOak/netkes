@@ -482,42 +482,26 @@
                 pager.switchTo("summary");
                 return;
             }
-            this.model.set({
-                stripe_token: null,
-                stripe_last4: null,
-                stripe_type: null
-            });
-            var name = this.$name.val();
-            var cc = this.$cc.val();
-            var csv = this.$csv.val();
-            var exp_month = this.$exp_month.val();
-            var exp_year = this.$exp_year.val();
-            var tests = [this.checkCC(), this.checkCSV(), this.checkName(), this.checkExpiry()];
-            if (_.all(tests)) {
-                Stripe.card.createToken({
-                    name: name,
-                    number: cc,
-                    cvc: csv,
-                    exp_month: exp_month,
-                    exp_year: exp_year
-                }, _.bind(this.onStripeResponse, this));
-            }
-        },
-        onStripeResponse: function(status, data) {
-            if (status === 200 && data.card) {
-                this.model.set({
-                    stripe_token: data.id,
-                    stripe_last4: data.card.last4,
-                    stripe_type: data.card.type
-                });
-                pager.switchTo("summary");
-            } else {
-                if (data && data.error) {
-                    this.setMessage(this.$cc, "error", data.error.message);
+            var self = this
+            stripe.createToken(card).then(function(result) {
+                if (result.error) {
+                  var errorElement = document.getElementById('card-errors');
+                  errorElement.textContent = result.error.message;
+                  $('.alert-error').show();
                 } else {
-                    console.log(data);
+                  $('.alert-error').hide();
+                  $('.alert-error').text('');
+                  var token = result.token
+                  if (token.card) {
+                      self.model.set({
+                          stripe_token: token.id,
+                          stripe_last4: token.card.last4,
+                          stripe_type: token.card.type
+                      });
+                      pager.switchTo("summary");
+                  }         
                 }
-            }
+            });
         },
         clearMessage: function($child) {
             var $el = $child.closest("div").find("div");
@@ -549,86 +533,10 @@
             $el.find("p").html(msg);
             $el.stop().hide().fadeIn();
         },
-        checkName: function() {
-            var val = this.$name.val();
-            var valid = false;
-            if (val) {
-                valid = true;
-            }
-            if (valid) {
-                this.clearMessage(this.$name);
-            } else {
-                this.setMessage(this.$name, "error", "Required field");
-            }
-            return valid;
-        },
-        checkCC: function() {
-            var val = this.$cc.val();
-            var valid = Stripe.card.validateCardNumber(val);
-            var type = null;
-            if (valid) {
-                type = Stripe.card.cardType(val);
-                this.showCCType(this.$cc, type);
-            } else {
-                this.setMessage(this.$cc, "error", "Invalid Card Number");
-            }
-            return valid;
-        },
-        checkCSV: function() {
-            var val = this.$csv.val();
-            var valid = Stripe.card.validateCVC(val);
-            if (valid) {
-                //this.setMessage(this.$csv, "success", "<i class='ss-icon'>&#x2713;</i>");
-                this.clearMessage(this.$csv);
-            } else {
-                this.setMessage(this.$csv, "error", "Invalid CVC");
-            }
-            return valid;
-        },
-        checkExpiry: function() {
-            var mon = this.$exp_month.val();
-            var year = this.$exp_year.val();
-            var valid = Stripe.card.validateExpiry(mon, year);
-            if (valid) {
-                this.clearMessage(this.$exp_month);
-            } else {
-                this.setMessage(this.$exp_month, "error", "Invalid Expiration");
-            }
-            return valid;
-        },
         initialize: function(options) {
             this.options = options || {};
             this.$el.html(Templates[this.template]());
             this.$el.addClass(this.template);
-            this.$name = this.$("#stripe_name");
-            this.$cc = this.$("#stripe_cc");
-            this.$csv = this.$("#stripe_csv");
-            this.$exp_month = this.$("#stripe_exp_month");
-            this.$exp_year = this.$("#stripe_exp_year");
-
-            this.$cc.payment("formatCardNumber");
-            this.$csv.payment("formatCardCVC");
-            this.$cc.on("focus", _.bind(function(evt) {
-                var val = this.$cc.val();
-                var valid = Stripe.card.validateCardNumber(val);
-                var type = null;
-                if (valid) {
-                    type = Stripe.card.cardType(val);
-                }
-                this.showCCType(this.$cc, type);
-            }, this));
-            this.$csv.on("focus", _.bind(function(evt) {
-                this.clearMessage(this.$csv);
-            }, this));
-            this.$name.on("focus", _.bind(function(evt) {
-                this.clearMessage(this.$name);
-            }, this));
-            this.$cc.on("change blur", _.bind(this.checkCC, this));
-            this.$csv.on("change blur", _.bind(this.checkCSV, this));
-            this.$name.on("change blur", _.bind(this.checkName, this));
-            this.$exp_month.on("change blur", _.bind(this.checkExpiry, this));
-            this.$exp_year.on("change blur", _.bind(this.checkExpiry, this));
-            this.showCCType(this.$cc);
 
             if (!this.options.force_cc_mode) {
                 this.paymentMethod = new PaymentMethodView({model: this.model});
@@ -639,9 +547,6 @@
             }
         },
         render: function(page) {
-            var now = new Date();
-            this.$exp_month.val(now.getMonth() + 1);
-            this.$exp_year.val(now.getFullYear());
             if (this.paymentMethod) {
                 this.paymentMethod.render();
             }
