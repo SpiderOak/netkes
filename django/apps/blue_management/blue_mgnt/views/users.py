@@ -19,6 +19,8 @@ from django.utils.safestring import mark_safe
 from netkes.account_mgr.user_source import local_source
 from blue_mgnt.models import BumpedUser
 import openmanage.models as openmanage_models
+from .validators import name_validator
+
 
 SIZE_OF_BUMP = 5
 
@@ -144,6 +146,14 @@ def _csv_create_users(api, account_info, groups, config, request, csv_data):
         if not group:
             msg = 'Invalid data in row %s. Invalid Group' % x
             return x, forms.ValidationError(msg)
+        if not new_user_value_re_tests['avatar']['username'].match(row['name']):
+            return x, forms.ValidationError(
+                'Invalid data in row %s. Invalid Username. ' % x +
+                'Usernames must start with a letter, '
+                'be at least four characters long, '
+                'and may contain letters, numbers, '
+                'and underscores.'
+            )
         group_id = group['group_id']
         config_group = get_config_group(config, group_id)
         if config_group['user_source'] != 'local':
@@ -201,13 +211,14 @@ def get_new_user_csv_form(api, groups, account_info, config, request):
             return data
     return UserCSVForm
 
-
 def get_new_user_form(api, features, account_info, config, local_groups, groups, request):
     class NewUserForm(forms.Form):
         if not features['email_as_username']:
             username = forms.CharField(max_length=45)
         email = forms.EmailField(max_length=144)
-        name = forms.CharField(max_length=45)
+        name = forms.CharField(max_length=45, validators=[
+            name_validator
+        ])
         group_id = forms.ChoiceField(local_groups, label='Group')
 
         def clean_username(self):
@@ -539,6 +550,11 @@ def user_detail(request, api, account_info, config, username, email, saved=False
             required=False,
         )
 
+        def clean_name(self):
+            name = self.cleaned_data['name']
+            name_validator(name)
+            return name
+
         def clean_email(self):
             new_email = self.cleaned_data['email']
             if new_email and new_email != email:
@@ -574,7 +590,7 @@ def user_detail(request, api, account_info, config, username, email, saved=False
     if not local_user:
         data['group_id'] = get_group_name(groups, data['group_id'])
     user_form = UserForm(initial=data)
-    password_form = PasswordForm()
+    password_form = PasswordForm(config=config)
     if request.method == 'POST':
         if request.POST.get('form', '') == 'edit_user':
             user_form = UserForm(request.POST)
@@ -590,7 +606,7 @@ def user_detail(request, api, account_info, config, username, email, saved=False
                                                       reg_code='not used'))
                 return redirect('blue_mgnt:user_detail_saved', email)
         if request.POST.get('form', '') == 'password':
-            password_form = PasswordForm(request.POST)
+            password_form = PasswordForm(request.POST, config=config)
             if password_form.is_valid():
                 log_admin_action(request, 'change password for: %s' % email)
                 password = password_form.cleaned_data['password'].encode('utf-8')
@@ -624,6 +640,7 @@ def user_detail(request, api, account_info, config, username, email, saved=False
             return redirect('blue_mgnt:user_detail_saved', email)
 
     return render(request, 'user_detail.html', dict(
+        minimum_password_length=config.get('minimum_password_length', 8),
         shares=api.list_shares(email),
         share_url=get_base_url(),
         username=username,

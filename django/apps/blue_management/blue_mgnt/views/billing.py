@@ -5,7 +5,6 @@ from django import forms
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.core.cache import cache
-from django.views.decorators.csrf import csrf_exempt
 from django.core.exceptions import PermissionDenied
 
 from views import enterprise_required, get_billing_api
@@ -58,7 +57,6 @@ def billing_update_cc(request, api, account_info, config, username):
     return _billing(request, api, account_info, config, username, tmpl='billing_update_cc.html')
 
 
-@csrf_exempt
 @enterprise_required
 def check_coupon(request, api, account_info, config, username):
     if request.session.get('username') and request.method == 'POST':
@@ -70,7 +68,6 @@ def check_coupon(request, api, account_info, config, username):
     raise PermissionDenied
 
 
-@csrf_exempt
 @enterprise_required
 def create_subscription(request, api, account_info, config, username):
     if request.session.get('username') and request.method == 'POST':

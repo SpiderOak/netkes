@@ -14,12 +14,16 @@ from django.forms.formsets import formset_factory
 from django.shortcuts import redirect
 from django.contrib.auth.decorators import permission_required
 from django.core.cache import cache
+from django.core.validators import MinLengthValidator
+from django.conf import settings as django_settings
+
 
 from netkes.netkes_agent import config_mgr
 from netkes import account_mgr
 from netkes.account_mgr.user_source.ldap_source import get_auth_username
 
 AGENT_CONFIG_VARS = [
+    'minimum_password_length',
     'api_root',
     'auth_method',
     'dir_auth_source',
@@ -70,18 +74,6 @@ def save_settings(request, api, options):
 
     if 'timezone' in cleaned_data:
         subprocess.call(['timedatectl', 'set-timezone', cleaned_data['timezone']])
-
-
-class IPBlockForm(forms.Form):
-    ip_block = forms.CharField(max_length=43, label='IP Block:')
-
-    def clean_ip_block(self):
-        data = self.cleaned_data['ip_block']
-        try:
-            ip = IP(data)  # NOQA
-        except ValueError:
-            raise forms.ValidationError('Invalid IP Block')
-        return data
 
 
 def login_test(config, username, password):
@@ -147,8 +139,14 @@ def settings(request, api, account_info, config, username, saved=False):
         def __init__(self, *args, **kwargs):
             super(OpenmanageOptsForm, self).__init__(*args, **kwargs)
 
-            if features['ldap']:
-                for var in AGENT_CONFIG_VARS:
+            for var in AGENT_CONFIG_VARS:
+                if var == 'minimum_password_length':
+                    self.fields[var] = forms.IntegerField(
+                        min_value=1,
+                        initial=config.get(var, 8),
+                        required=False,
+                    )
+                elif features['ldap']:
                     if var in ['send_activation_email', 'resolve_sync_conflicts']:
                         if var == 'resolve_sync_conflicts':
                             initial = False
@@ -164,7 +162,6 @@ def settings(request, api, account_info, config, username, saved=False):
                             initial=config.get(var, initial),
                             required=False,
                             help_text=help_text,
-
                         )
                     else:
                         self.fields[var] = forms.CharField(
@@ -183,24 +180,11 @@ def settings(request, api, account_info, config, username, saved=False):
             api.update_enterprise_settings(dict(signup_network_restriction=blocks))
             log_admin_action(request, 'update signup network restrictions: %s' % blocks)
 
-    IPBlockFormSet = formset_factory(IPBlockForm,
-                                     can_delete=True,
-                                     formset=BaseIPBlockFormSet)
-
-    ip_blocks = IPBlockFormSet(initial=[dict(ip_block=x) for x in
-                                        opts['signup_network_restriction']],
-                               prefix='ip_blocks')
     error = False
     command_output = ''
 
     if request.method == 'POST' and request.user.has_perm('blue_mgnt.can_manage_settings'):
-        if request.POST.get('form', '') == 'ip_block':
-            ip_blocks = IPBlockFormSet(request.POST, prefix='ip_blocks')
-            if ip_blocks.is_valid():
-                return redirect('blue_mgnt:settings_saved')
-            else:
-                error = True
-        elif request.POST.get('form', '') == 'reboot':
+        if request.POST.get('form', '') == 'reboot':
             log_admin_action(request, 'reboot management vm')
             subprocess.call(['shutdown', '-r', 'now'])
             return redirect('blue_mgnt:settings_saved')
@@ -244,7 +228,6 @@ def settings(request, api, account_info, config, username, saved=False):
         user=request.user,
         username=username,
         features=features,
-        ip_blocks=ip_blocks,
         command_output=command_output,
         options=options,
         saved=saved,
@@ -254,8 +237,26 @@ def settings(request, api, account_info, config, username, saved=False):
 
 
 class PasswordForm(forms.Form):
-    password = forms.CharField(widget=forms.PasswordInput)
+    password = forms.CharField(
+        widget=forms.PasswordInput,
+        min_length=django_settings.MINIMUM_PASSWORD_LENGTH
+    )
     password_again = forms.CharField(label="Repeat Password", widget=forms.PasswordInput)
+
+    def __init__(self, *args, **kwargs):
+        config = kwargs.pop('config', None)
+        super(PasswordForm, self).__init__(*args, **kwargs)
+        self._init_password_length_from_config(config)
+
+    def _init_password_length_from_config(self, config):
+        try:
+            min_length = int(config['minimum_password_length'])
+        except (KeyError, TypeError):
+            min_length = django_settings.MINIMUM_PASSWORD_LENGTH
+        field = self.fields['password']
+        field.validators.append(
+            MinLengthValidator(min_length)
+        )
 
     def clean_password_again(self):
         password = self.cleaned_data['password_again']
@@ -268,10 +269,10 @@ class PasswordForm(forms.Form):
 @permission_required('blue_mgnt.can_manage_settings', raise_exception=True)
 def password(request, api, account_info, config, username, saved=False):
     features = api.enterprise_features()
-    password_form = PasswordForm()
+    password_form = PasswordForm(config=config)
     if request.method == 'POST':
         if request.POST.get('form', '') == 'password':
-            password_form = PasswordForm(request.POST)
+            password_form = PasswordForm(request.POST, config=config)
             if password_form.is_valid():
                 new_password = password_form.cleaned_data['password'].encode('utf-8')
                 log_admin_action(request, 'change password')
@@ -286,6 +287,7 @@ def password(request, api, account_info, config, username, saved=False):
                 return redirect('blue_mgnt:password_saved')
 
     return render(request, 'password.html', dict(
+        minimum_password_length=config.get('minimum_password_length', 8),
         user=request.user,
         username=username,
         features=features,

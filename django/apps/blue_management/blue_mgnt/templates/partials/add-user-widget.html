@@ -8,7 +8,7 @@
             <form action="{% url 'blue_mgnt:users' %}" enctype="multipart/form-data" method="POST">
                 {% if new_user.non_field_errors %}
                 <span class="error-highlight">
-                    <span class="error-tag">{{ new_user.non_field_errors.0 }}</span>
+                    <div class="error-tag">{{ new_user.non_field_errors.0 }}</div>
                 </span>
                 {% endif %}
                 {% csrf_token %}
@@ -26,7 +26,7 @@
                             {% for error in field.errors %}
                             <span class="error-highlight">
                                 {{ field }}
-                                <span class="error-tag">{{ error }}</span>
+                                <div class="error-tag">{{ error }}</div>
                             </span>
                             {% endfor %}
                         {% else %}
@@ -69,7 +69,7 @@
                                 {% for error in field.errors %}
                                 <span class="error-highlight">
                                     {{ field }}
-                                    <span class="error-tag">{{ error }}</span>
+                                    <div class="error-tag">{{ error }}</div>
                                 </span>
                                 {% endfor %}
                             {% else %}

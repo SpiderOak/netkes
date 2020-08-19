@@ -31,6 +31,7 @@ from django.forms.utils import ErrorList
 from django.forms.forms import NON_FIELD_ERRORS
 from wsgiref.util import FileWrapper
 from django.core.cache import cache
+from django.views.decorators.http import require_POST
 
 from blue_mgnt import models
 from netkes.account_mgr.accounts_api import Api
@@ -41,6 +42,8 @@ from netkes import account_mgr
 from key_escrow import server
 from Pandora import serial
 from Crypto.Util.RFC1751 import key_to_english
+from .utils import escape_row
+
 
 LOG = logging.getLogger('admin_actions')
 
@@ -264,6 +267,27 @@ def set_api_version(api):
         api.update_enterprise_settings(dict(api_version=version))
 
 
+def sanitize_redirect(url):
+    parsed = urlparse.urlparse(url)
+    path = os.path.normpath(
+        parsed.path.strip()
+    )
+    # Change single dot to slash in case it's just a plain domain
+    if path == '.':
+        path = '/'
+    without_netloc = urlparse.ParseResult(
+        scheme=None, netloc=None,
+        path=path,
+        params=None,
+        query=None,
+        fragment=None
+    )
+    final_url = urlparse.urlunparse(without_netloc)
+    if url != final_url:
+        LOG.info('Changed url from {} to {}'.format(url, final_url))
+    return final_url
+
+
 def login_user(request):
     form = LoginForm()
     if request.method == 'POST':
@@ -297,8 +321,10 @@ def login_user(request):
                                  api.info()['brand_identifier']])
 
                 request.session['username'] = username
+                url = urllib.unquote(request.GET.get('next', '/'))
 
-                return redirect(urllib.unquote(request.GET.get('next', '/')))
+                return redirect(sanitize_redirect(url))
+
             else:
                 errors = form._errors.setdefault(NON_FIELD_ERRORS, ErrorList())
                 errors.append('Invalid username or password')
@@ -309,6 +335,7 @@ def login_user(request):
     ))
 
 
+@require_POST
 def logout(request):
     if 'username' in request.session:
         del request.session['username']
@@ -548,7 +575,7 @@ def users_csv_download(request, api, account_info, config, username):
             row[4] = datetime.datetime.fromtimestamp(user['last_login'])
         if not features['email_as_username']:
             row = [user['username'].encode('utf-8')] + row
-        writer.writerow(row)
+        writer.writerow(escape_row(row))
 
     return response
 

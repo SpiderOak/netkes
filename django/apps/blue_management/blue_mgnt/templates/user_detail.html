@@ -232,3 +232,16 @@
                 {% endif %}
             </div>
 {% endblock content %}
+{% block base_styles %}
+    <link rel="stylesheet" href="/static/blue_mgnt/vendor/password-strength-meter-1.2.1/password.min.css" />
+{% endblock base_styles %}
+{% block js_main %}
+    <script type="text/javascript" src="/static/blue_mgnt/vendor/password-strength-meter-1.2.1/password.min.js"></script>
+  <script type="text/javascript">
+  $(function() {
+    $('#id_password').password({
+      minimumLength: {{ minimum_password_length }}
+    })
+  });
+  </script>
+{% endblock js_main %}
