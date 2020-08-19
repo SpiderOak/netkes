@@ -83,13 +83,14 @@ def main():
         if user['purgehold_active']:
             log.info('Skipping user "%s" because purgehold is active', email)
         else:
-            log.info('Purging user "%s"', email)
-            if not dry_run:
+            if dry_run:
+                log.info('Dry run - simulating purging user "%s"', email)
+            else:
                 try:
                     api.delete_user(email)
+                    log.info('User "%s" has been purged', email)
                 except:
                     log.error('Error purging user "%s"', email)
-                log.info('User "%s" has been purged', email)
 
 
 if __name__ == "__main__":
