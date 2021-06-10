@@ -1,5 +1,5 @@
 pip==9.0.1
-Django==1.11
+Django==2.2.24
 pytz==2016.10
 py-bcrypt==0.4
 pycrypto==2.6.1
