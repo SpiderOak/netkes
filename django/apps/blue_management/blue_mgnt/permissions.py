@@ -3,6 +3,8 @@
 import os
 
 os.environ['DJANGO_SETTINGS_MODULE'] = 'omva.settings'
+import django
+django.setup()
 
 from django.contrib.auth.models import Permission  # NOQA
 from django.contrib.contenttypes.models import ContentType  # NOQA

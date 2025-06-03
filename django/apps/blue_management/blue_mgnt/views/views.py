@@ -311,20 +311,43 @@ def login_user(request):
 
                     if api.backup():
                         log_admin_action(request, 'restoring from backup')
-                        subprocess.call(['/opt/openmanage/bin/run_restore_omva.sh', ])
+                        try:
+                            result = subprocess.call(['/opt/openmanage/bin/run_restore_omva.sh'])
+                            
+                            if result != 0:
+                                LOG.error('Backup restore failed with non-zero exit code: %d', result)
+                            else:
+                                LOG.info('Backup restore completed successfully')
+                                
+                                # The restore process will reset the DB connection, 
+                                # so we need to close it and create a new one
+                                from django.db import connection
+                                connection.close()
+                                
+                                # Force creation of a completely new session
+                                request.session.flush()  
+                                request.session.create()  
+                                
+                                # Now authenticate the user in the fresh session
+                                login(request, user)
+                        except Exception as e:
+                            LOG.error('Exception during backup restore: %s', str(e))
+                            import traceback
+                            LOG.error('Traceback: %s', traceback.format_exc())
+                            raise
                     elif not config['groups']:
                         create_initial_group()
 
                 config_mgr_ = config_mgr.ConfigManager(config_mgr.default_config())
                 api = get_api(config_mgr_.config)
-                subprocess.call(['/opt/openmanage/bin/first_setup.sh',
-                                 api.info()['brand_identifier']])
+                
+                subprocess.call(['/opt/openmanage/bin/first_setup.sh', api.info()['brand_identifier']])
 
+                # Set username in session for enterprise_required decorator
                 request.session['username'] = username
                 url = urllib.unquote(request.GET.get('next', '/'))
 
                 return redirect(sanitize_redirect(url))
-
             else:
                 errors = form._errors.setdefault(NON_FIELD_ERRORS, ErrorList())
                 errors.append('Invalid username or password')

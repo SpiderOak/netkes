@@ -5,6 +5,8 @@ from netkes import common
 from netkes.account_mgr.accounts_api import Api
 
 os.environ['DJANGO_SETTINGS_MODULE'] = 'omva.settings'
+import django
+django.setup()
 
 from django.utils.timezone import now
 

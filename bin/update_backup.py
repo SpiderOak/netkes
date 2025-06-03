@@ -7,6 +7,8 @@ import subprocess
 from binascii import b2a_base64
 
 os.environ['DJANGO_SETTINGS_MODULE'] = 'omva.settings'
+import django
+django.setup()
 
 from openmanage.views import create_secret_box
 from netkes import common

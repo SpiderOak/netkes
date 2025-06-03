@@ -43,6 +43,7 @@ touch /opt/openmanage/etc/.ran_firstsetup
 pushd $OPENMANAGE_DJANGO_ROOT/omva
 python manage.py migrate --fake openmanage 0001_initial --noinput
 python manage.py migrate --fake blue_mgnt 0001_initial --noinput
+python manage.py migrate --fake blue_mgnt 0003_invoicenote --noinput
 python manage.py migrate --fake-initial --noinput
 python manage.py migrate --noinput
 popd
@@ -50,4 +51,3 @@ popd
 # Clean up.
 popd
 rm -r openmanage-backup*
-sudo sv restart admin_console
