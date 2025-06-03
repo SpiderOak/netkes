@@ -328,8 +328,15 @@ def login_user(request):
                                 request.session.flush()  
                                 request.session.create()  
                                 
-                                # Now authenticate the user in the fresh session
-                                login(request, user)
+                                # Re-authenticate the user after restore since the old user object
+                                # may no longer be valid in the restored database
+                                restored_user = authenticate(username=username, password=password)
+                                if restored_user and restored_user.is_active:
+                                    login(request, restored_user)
+                                else:
+                                    LOG.error('Failed to re-authenticate user after backup restore')
+                                    # Fallback: redirect to login page
+                                    return redirect('blue_mgnt:login')
                         except Exception as e:
                             LOG.error('Exception during backup restore: %s', str(e))
                             import traceback
